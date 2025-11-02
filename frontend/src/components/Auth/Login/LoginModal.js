@@ -12,7 +12,7 @@ import styles from './LoginModal.module.scss';
 
 const cx = classNames.bind(styles);
 
-const API_BASE_URL = 'http://localhost:8080/lumina_book';
+const API_BASE_URL = 'http://localhost:8080/lila_shop';
 
 export default function LoginModal({ open = false, onClose }) {
     const navigate = useNavigate();
@@ -85,37 +85,43 @@ export default function LoginModal({ open = false, onClose }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         // Validation bình thường cho tất cả tài khoản
         if (!email || email.trim() === '') {
             setError('Vui lòng nhập địa chỉ email');
             return;
         }
-        
-        console.log('Email validation check:', { email: email.trim(), isValid: isValidEmail(email) });
-        
+
+        console.log('Email validation check:', {
+            email: email.trim(),
+            isValid: isValidEmail(email),
+        });
+
         if (!isValidEmail(email)) {
             setError('Email sai định dạng');
             return;
         }
-        
+
         setError('');
         setIsLoading(true);
-        
+
         try {
             const payload = { email: email.trim(), password };
-            console.log('Login attempt with:', { email: email.trim(), password: password ? '***' : 'empty' });
-            
+            console.log('Login attempt with:', {
+                email: email.trim(),
+                password: password ? '***' : 'empty',
+            });
+
             const resp = await fetch(`${API_BASE_URL}/auth/token`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
-            
+
             console.log('Login response status:', resp.status);
             const data = await resp.json().catch(() => ({}));
             console.log('Login response data:', data);
-            
+
             if (resp.ok && data?.result?.token) {
                 // Handle Remember Me
                 if (rememberMe) {
@@ -138,11 +144,11 @@ export default function LoginModal({ open = false, onClose }) {
                     });
                     console.log('API call status:', me.status);
                     const meData = await me.json().catch(() => ({}));
-                    
+
                     // Debug: Log API response để kiểm tra cấu trúc
                     console.log('API Response:', meData);
                     console.log('API Response Status:', me.status);
-                    
+
                     // Thử nhiều cách để lấy displayName
                     const displayNameValue =
                         meData?.result?.fullName ||
@@ -152,26 +158,30 @@ export default function LoginModal({ open = false, onClose }) {
                         meData?.username ||
                         meData?.displayName ||
                         email.trim();
-                    
+
                     console.log('Display Name Value:', displayNameValue);
                     console.log('Setting displayName to localStorage...');
                     setDisplayName(displayNameValue);
                     console.log('DisplayName set successfully');
-                    
+
                     // Dispatch custom event to notify header
                     window.dispatchEvent(new CustomEvent('displayNameUpdated'));
-                    
+
                     // Kiểm tra nếu là admin thì chuyển hướng đến trang admin
-                    const userRole = meData?.result?.role?.name || 
-                                   meData?.result?.role ||
-                                   meData?.result?.authorities?.[0]?.authority ||
-                                   meData?.role?.name ||
-                                   meData?.role ||
-                                   meData?.authorities?.[0]?.authority;
-                    
+                    const userRole =
+                        meData?.result?.role?.name ||
+                        meData?.result?.role ||
+                        meData?.result?.authorities?.[0]?.authority ||
+                        meData?.role?.name ||
+                        meData?.role ||
+                        meData?.authorities?.[0]?.authority;
+
                     console.log('User Role:', userRole);
-                    console.log('Full meData structure:', JSON.stringify(meData, null, 2));
-                    
+                    console.log(
+                        'Full meData structure:',
+                        JSON.stringify(meData, null, 2),
+                    );
+
                     if (userRole === 'ADMIN') {
                         console.log('Admin detected, redirecting to /admin');
                         onClose?.();
@@ -180,18 +190,22 @@ export default function LoginModal({ open = false, onClose }) {
                     }
 
                     if (userRole === 'STAFF' || userRole === 'CUSTOMER_SUPPORT') {
-                        console.log('Staff or Customer Support detected, redirecting to /staff');
+                        console.log(
+                            'Staff or Customer Support detected, redirecting to /staff',
+                        );
                         onClose?.();
                         navigate('/staff', { replace: true });
                         return;
                     }
 
-                    console.log('Role not matched for admin/staff, redirecting to home page');
+                    console.log(
+                        'Role not matched for admin/staff, redirecting to home page',
+                    );
                 } catch (error) {
                     console.log('Error fetching user info:', error);
                     console.log('Setting fallback displayName to email:', email.trim());
                     setDisplayName(email.trim());
-                    
+
                     // Dispatch custom event to notify header
                     window.dispatchEvent(new CustomEvent('displayNameUpdated'));
                 }

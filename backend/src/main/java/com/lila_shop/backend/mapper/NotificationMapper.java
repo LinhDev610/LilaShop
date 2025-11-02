@@ -1,0 +1,42 @@
+package com.lila_shop.backend.mapper;
+
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+
+import com.lila_shop.backend.dto.request.NotificationCreationRequest;
+import com.lila_shop.backend.dto.response.NotificationResponse;
+import com.lila_shop.backend.entity.Notification;
+import com.lila_shop.backend.entity.User;
+
+@Mapper(componentModel = "spring")
+public interface NotificationMapper {
+
+    // Entity to Response
+    @Mapping(target = "userIds", source = "users", qualifiedByName = "mapUserIds")
+    @Mapping(target = "userNames", source = "users", qualifiedByName = "mapUserNames")
+    NotificationResponse toResponse(Notification notification);
+
+    // Request to Entity
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "readAt", ignore = true)
+    @Mapping(target = "isRead", ignore = true)
+    @Mapping(target = "users", ignore = true)
+    Notification toNotification(NotificationCreationRequest request);
+
+    @Named("mapUserIds")
+    default Set<String> mapUserIds(Set<User> users) {
+        if (users == null) return null;
+        return users.stream().map(User::getId).collect(Collectors.toSet());
+    }
+
+    @Named("mapUserNames")
+    default Set<String> mapUserNames(Set<User> users) {
+        if (users == null) return null;
+        return users.stream().map(User::getFullName).collect(Collectors.toSet());
+    }
+}

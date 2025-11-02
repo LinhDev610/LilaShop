@@ -3,7 +3,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #fff;
+    background: #f1efe7;
     padding: 10px 40px;
     border-bottom: 1px solid #ddd;
 }
@@ -26,7 +26,6 @@
     max-width: 400px; /* Tăng max-width tương ứng */
     transition: opacity 0.2s ease;
     margin: 0 30px 0 20px;
-    
 }
 
 .logo a:hover .logo-image {
@@ -90,7 +89,7 @@
     padding: 8px 12px;
     border-radius: 4px;
     min-height: 48px;
-    
+
     &:hover {
         color: #0f2a3f;
         background-color: rgba(0, 0, 0, 0.05);
@@ -112,7 +111,7 @@
     transition: background-color 0.2s ease;
     width: 48px;
     height: 48px;
-    
+
     &:hover {
         background-color: rgba(0, 0, 0, 0.05);
     }
@@ -134,7 +133,7 @@
     transition: background-color 0.2s ease;
     width: 48px;
     height: 48px;
-    
+
     &:hover {
         background-color: rgba(0, 0, 0, 0.05);
     }
@@ -227,7 +226,7 @@
     min-height: 200px;
     background: #fff;
     border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
     padding: 50px 24px 20px;
     text-align: center;
 }

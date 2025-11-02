@@ -7,14 +7,17 @@ import avatarFallback from '../../../../../assets/icons/icon_img_guest.png';
 
 const cx = classNames.bind(styles);
 
-const API_BASE_URL = 'http://localhost:8080/lumina_book';
+const API_BASE_URL = 'http://localhost:8080/lila_shop';
 
 export default function StaffSideBar() {
     const location = useLocation();
     const [displayName] = useLocalStorage('displayName', null);
     const [tokenLS] = useLocalStorage('token', null);
     const token = useMemo(() => tokenLS || sessionStorage.getItem('token'), [tokenLS]);
-    const [profile, setProfile] = useState({ name: displayName || 'Người dùng', role: '' });
+    const [profile, setProfile] = useState({
+        name: displayName || 'Người dùng',
+        role: '',
+    });
 
     useEffect(() => {
         let isMounted = true;
@@ -44,7 +47,8 @@ export default function StaffSideBar() {
                     data?.result?.authorities?.[0]?.authority ||
                     data?.authorities?.[0]?.authority ||
                     '';
-                const role = rawRole === 'CUSTOMER_SUPPORT' ? 'Chăm sóc khách hàng' : 'Nhân viên';
+                const role =
+                    rawRole === 'CUSTOMER_SUPPORT' ? 'Chăm sóc khách hàng' : 'Nhân viên';
                 setProfile({ name, role });
             } catch (_e) {
                 // keep fallback state
@@ -66,33 +70,50 @@ export default function StaffSideBar() {
             <div className={cx('profile')}>
                 <img src={avatarFallback} alt="avatar" className={cx('avatar')} />
                 <div className={cx('info')}>
-                    <div className={cx('name')} title={profile.name}>{profile.name}</div>
+                    <div className={cx('name')} title={profile.name}>
+                        {profile.name}
+                    </div>
                     <div className={cx('role')}>{profile.role}</div>
                 </div>
             </div>
             <ul className={cx('menu')}>
                 <li>
-                    <NavLink to="/staff/products" className={cx('link', { active: isActive('/staff/products') })}>
+                    <NavLink
+                        to="/staff/products"
+                        className={cx('link', { active: isActive('/staff/products') })}
+                    >
                         Quản lý sản phẩm
                     </NavLink>
                 </li>
                 <li>
-                    <NavLink to="/staff/content" className={cx('link', { active: isActive('/staff/content') })}>
+                    <NavLink
+                        to="/staff/content"
+                        className={cx('link', { active: isActive('/staff/content') })}
+                    >
                         Quản lý nội dung
                     </NavLink>
                 </li>
                 <li>
-                    <NavLink to="/staff/vouchers" className={cx('link', { active: isActive('/staff/vouchers') })}>
+                    <NavLink
+                        to="/staff/vouchers"
+                        className={cx('link', { active: isActive('/staff/vouchers') })}
+                    >
                         Voucher & Khuyến mãi
                     </NavLink>
                 </li>
                 <li>
-                    <NavLink to="/staff/orders" className={cx('link', { active: isActive('/staff/orders') })}>
+                    <NavLink
+                        to="/staff/orders"
+                        className={cx('link', { active: isActive('/staff/orders') })}
+                    >
                         Đơn hàng
                     </NavLink>
                 </li>
                 <li>
-                    <NavLink to="/staff/profile" className={cx('link', { active: isActive('/staff/profile') })}>
+                    <NavLink
+                        to="/staff/profile"
+                        className={cx('link', { active: isActive('/staff/profile') })}
+                    >
                         Hồ sơ cá nhân
                     </NavLink>
                 </li>
@@ -100,5 +121,3 @@ export default function StaffSideBar() {
         </div>
     );
 }
-
-

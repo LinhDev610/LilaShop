@@ -37,7 +37,7 @@ function AdminHeader() {
             <header className={cx('header')}>
                 <div className={cx('logo')}>
                     <Link to="/">
-                        <img src={logoIcon} alt="LuminaBook" className={cx('logo-image')} />
+                        <img src={logoIcon} alt="LilaShop" className={cx('logo-image')} />
                     </Link>
                 </div>
                 <div className={cx('admin-info')}>

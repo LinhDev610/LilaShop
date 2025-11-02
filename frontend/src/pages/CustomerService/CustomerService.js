@@ -63,7 +63,7 @@ export default function CustomerService() {
         {
             icon: iconCall,
             question: 'Tôi có thể liên hệ với nhân viên hỗ trợ qua Zalo không?',
-            answer: 'Có, bạn có thể liên hệ qua Zalo: 0123 456 789 hoặc Facebook: Lumina Book để được hỗ trợ nhanh chóng.',
+            answer: 'Có, bạn có thể liên hệ qua Zalo: 0123 456 789 hoặc Facebook: Lila Shop để được hỗ trợ nhanh chóng.',
             link: '/contact'
         },
         {

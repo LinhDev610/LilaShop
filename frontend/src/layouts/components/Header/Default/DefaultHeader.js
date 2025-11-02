@@ -1,11 +1,10 @@
-import config from '../../../../config/';
 import routes from '../../../../config/routes';
 
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 
-import logoIcon from '../../../../assets/icons/logo_luminabook.png';
+import logoIcon from '../../../../assets/icons/logo_lilashop.png';
 import guestIcon from '../../../../assets/icons/icon_guest.png';
 import ringIcon from '../../../../assets/icons/icon_ring.png';
 import useLocalStorage from '../../../../hooks/useLocalStorage';
@@ -44,14 +43,14 @@ function DefaultHeader() {
     // Force re-render when localStorage changes
     useEffect(() => {
         const handleStorageChange = () => {
-            setForceUpdate(prev => prev + 1);
+            setForceUpdate((prev) => prev + 1);
         };
-        
+
         window.addEventListener('storage', handleStorageChange);
-        
+
         // Also listen for custom events from login
         window.addEventListener('displayNameUpdated', handleStorageChange);
-        
+
         return () => {
             window.removeEventListener('storage', handleStorageChange);
             window.removeEventListener('displayNameUpdated', handleStorageChange);
@@ -62,7 +61,10 @@ function DefaultHeader() {
     console.log('DefaultHeader - Token:', currentToken);
     console.log('DefaultHeader - DisplayName:', displayName);
     console.log('DefaultHeader - IsLoggedIn:', isLoggedIn);
-    console.log('DefaultHeader - localStorage displayName:', localStorage.getItem('displayName'));
+    console.log(
+        'DefaultHeader - localStorage displayName:',
+        localStorage.getItem('displayName'),
+    );
     console.log('DefaultHeader - ForceUpdate:', forceUpdate);
 
     const toggleMenu = () => setMenuOpen((v) => !v);
@@ -85,15 +87,11 @@ function DefaultHeader() {
             <header className={cx('header')}>
                 <div className={cx('logo')}>
                     <Link to="/">
-                        <img
-                            src={logoIcon}
-                            alt="LuminaBook"
-                            className={cx('logo-image')}
-                        />
+                        <img src={logoIcon} alt="LilaShop" className={cx('logo-image')} />
                     </Link>
                 </div>
                 <div className={cx('search')}>
-                    <input type="text" placeholder="Tìm kiếm theo tên tác phẩm,…" />
+                    <input type="text" placeholder="Tìm kiếm theo tên sản phẩm,…" />
                     <button>Tìm</button>
                 </div>
                 <div className={cx('actions')}>
@@ -132,10 +130,7 @@ function DefaultHeader() {
                         </div>
                     ) : (
                         <div className={cx('auth-buttons')}>
-                            <button 
-                                onClick={openLoginModal} 
-                                className={cx('login-link')}
-                            >
+                            <button onClick={openLoginModal} className={cx('login-link')}>
                                 <span className={cx('login-text')}>Đăng nhập</span>
                                 <img
                                     src={guestIcon}
@@ -164,10 +159,22 @@ function DefaultHeader() {
                 <div className={cx('modal-overlay')} role="dialog" aria-modal="true">
                     <div className={cx('modal')}>
                         <h3 className={cx('modal-title')}>Đăng xuất tài khoản?</h3>
-                        <p className={cx('modal-desc')}>Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?</p>
+                        <p className={cx('modal-desc')}>
+                            Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?
+                        </p>
                         <div className={cx('modal-actions')}>
-                            <button className={cx('btn', 'btn-muted')} onClick={() => setShowLogoutConfirm(false)}>Hủy</button>
-                            <button className={cx('btn', 'btn-primary')} onClick={handleLogout}>Đăng xuất</button>
+                            <button
+                                className={cx('btn', 'btn-muted')}
+                                onClick={() => setShowLogoutConfirm(false)}
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                className={cx('btn', 'btn-primary')}
+                                onClick={handleLogout}
+                            >
+                                Đăng xuất
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -5,7 +5,7 @@ import styles from './AddEmployeePage.module.scss';
 
 const cx = classNames.bind(styles);
 
-const API_BASE_URL = 'http://localhost:8080/lumina_book';
+const API_BASE_URL = 'http://localhost:8080/lila_shop';
 
 function AddEmployeePage() {
     const navigate = useNavigate();
@@ -14,7 +14,7 @@ function AddEmployeePage() {
         roleName: '',
         email: '',
         phoneNumber: '',
-        address: ''
+        address: '',
     });
 
     const [errors, setErrors] = useState({});
@@ -23,20 +23,20 @@ function AddEmployeePage() {
     // Định nghĩa các vai trò có sẵn
     const availableRoles = [
         { name: 'STAFF', description: 'Nhân viên' },
-        { name: 'CUSTOMER_SUPPORT', description: 'Chăm sóc khách hàng' }
+        { name: 'CUSTOMER_SUPPORT', description: 'Chăm sóc khách hàng' },
     ];
 
     const handleInputChange = (field, value) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [field]: value
+            [field]: value,
         }));
-        
+
         // Clear error when user starts typing
         if (errors[field]) {
-            setErrors(prev => ({
+            setErrors((prev) => ({
                 ...prev,
-                [field]: ''
+                [field]: '',
             }));
         }
     };
@@ -58,7 +58,10 @@ function AddEmployeePage() {
             newErrors.email = 'Email không hợp lệ';
         }
 
-        if (formData.phoneNumber && !/^[0-9]{10,11}$/.test(formData.phoneNumber.replace(/\s/g, ''))) {
+        if (
+            formData.phoneNumber &&
+            !/^[0-9]{10,11}$/.test(formData.phoneNumber.replace(/\s/g, ''))
+        ) {
             newErrors.phoneNumber = 'Số điện thoại không hợp lệ';
         }
 
@@ -70,23 +73,27 @@ function AddEmployeePage() {
         if (validateForm()) {
             setIsLoading(true);
             try {
-                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                const token =
+                    localStorage.getItem('token') || sessionStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/users/staff`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        Authorization: `Bearer ${token}`,
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(formData),
                 });
 
                 const data = await response.json();
-                
+
                 if (response.ok) {
-                    alert('Tạo tài khoản nhân viên thành công! Mật khẩu đã được gửi qua email.');
+                    alert(
+                        'Tạo tài khoản nhân viên thành công! Mật khẩu đã được gửi qua email.',
+                    );
                     navigate('/admin');
                 } else {
-                    const errorMessage = data.message || 'Có lỗi xảy ra khi tạo tài khoản nhân viên';
+                    const errorMessage =
+                        data.message || 'Có lỗi xảy ra khi tạo tài khoản nhân viên';
                     alert(errorMessage);
                 }
             } catch (error) {
@@ -108,7 +115,13 @@ function AddEmployeePage() {
             <div className={cx('page-header')}>
                 <button className={cx('back-btn')} onClick={handleCancel}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path
+                            d="M15 18L9 12L15 6"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
                     </svg>
                 </button>
                 <h1 className={cx('page-title')}>Thêm tài khoản nhân viên</h1>
@@ -124,9 +137,15 @@ function AddEmployeePage() {
                                 className={cx('form-input', { error: errors.fullName })}
                                 placeholder="Nhập họ tên nhân viên"
                                 value={formData.fullName}
-                                onChange={(e) => handleInputChange('fullName', e.target.value)}
+                                onChange={(e) =>
+                                    handleInputChange('fullName', e.target.value)
+                                }
                             />
-                            {errors.fullName && <span className={cx('error-message')}>{errors.fullName}</span>}
+                            {errors.fullName && (
+                                <span className={cx('error-message')}>
+                                    {errors.fullName}
+                                </span>
+                            )}
                         </div>
 
                         <div className={cx('form-group')}>
@@ -134,7 +153,9 @@ function AddEmployeePage() {
                             <select
                                 className={cx('form-select', { error: errors.roleName })}
                                 value={formData.roleName}
-                                onChange={(e) => handleInputChange('roleName', e.target.value)}
+                                onChange={(e) =>
+                                    handleInputChange('roleName', e.target.value)
+                                }
                             >
                                 <option value="">-- Chọn vai trò --</option>
                                 {availableRoles.map((role) => (
@@ -143,7 +164,11 @@ function AddEmployeePage() {
                                     </option>
                                 ))}
                             </select>
-                            {errors.roleName && <span className={cx('error-message')}>{errors.roleName}</span>}
+                            {errors.roleName && (
+                                <span className={cx('error-message')}>
+                                    {errors.roleName}
+                                </span>
+                            )}
                         </div>
 
                         <div className={cx('form-group')}>
@@ -153,21 +178,35 @@ function AddEmployeePage() {
                                 className={cx('form-input', { error: errors.email })}
                                 placeholder="example@gmail.com"
                                 value={formData.email}
-                                onChange={(e) => handleInputChange('email', e.target.value)}
+                                onChange={(e) =>
+                                    handleInputChange('email', e.target.value)
+                                }
                             />
-                            {errors.email && <span className={cx('error-message')}>{errors.email}</span>}
+                            {errors.email && (
+                                <span className={cx('error-message')}>
+                                    {errors.email}
+                                </span>
+                            )}
                         </div>
 
                         <div className={cx('form-group')}>
                             <label className={cx('form-label')}>Số điện thoại</label>
                             <input
                                 type="tel"
-                                className={cx('form-input', { error: errors.phoneNumber })}
+                                className={cx('form-input', {
+                                    error: errors.phoneNumber,
+                                })}
                                 placeholder="Nhập số điện thoại (không bắt buộc)"
                                 value={formData.phoneNumber}
-                                onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                                onChange={(e) =>
+                                    handleInputChange('phoneNumber', e.target.value)
+                                }
                             />
-                            {errors.phoneNumber && <span className={cx('error-message')}>{errors.phoneNumber}</span>}
+                            {errors.phoneNumber && (
+                                <span className={cx('error-message')}>
+                                    {errors.phoneNumber}
+                                </span>
+                            )}
                         </div>
 
                         <div className={cx('form-group')}>
@@ -177,18 +216,27 @@ function AddEmployeePage() {
                                 className={cx('form-input', { error: errors.address })}
                                 placeholder="Nhập địa chỉ (không bắt buộc)"
                                 value={formData.address}
-                                onChange={(e) => handleInputChange('address', e.target.value)}
+                                onChange={(e) =>
+                                    handleInputChange('address', e.target.value)
+                                }
                             />
-                            {errors.address && <span className={cx('error-message')}>{errors.address}</span>}
+                            {errors.address && (
+                                <span className={cx('error-message')}>
+                                    {errors.address}
+                                </span>
+                            )}
                         </div>
                     </div>
 
                     <div className={cx('form-footer')}>
-                        <button className={cx('btn', 'cancel-btn')} onClick={handleCancel}>
+                        <button
+                            className={cx('btn', 'cancel-btn')}
+                            onClick={handleCancel}
+                        >
                             Hủy
                         </button>
-                        <button 
-                            className={cx('btn', 'save-btn')} 
+                        <button
+                            className={cx('btn', 'save-btn')}
                             onClick={handleSave}
                             disabled={isLoading}
                         >
