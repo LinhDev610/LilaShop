@@ -144,7 +144,7 @@ public class AuthenticationService {
         // payload = nhieu claim
         JWTClaimsSet jwtClaimSet = new JWTClaimsSet.Builder()
                 .subject(user.getEmail()) // user đăng nhập là ai
-                .issuer("lumina_book.com") // Định danh ai là người issuer này được issuer từ ai, thường là issue
+                .issuer("lilashop.com") // Định danh ai là người issuer này được issuer từ ai, thường là issue
                 .issueTime(new Date()) // Thời điểm lần đầu login
                 .expirationTime(
                         new Date( // Thời điểm hết hạn token

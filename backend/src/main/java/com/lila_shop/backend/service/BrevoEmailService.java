@@ -45,16 +45,16 @@ public class BrevoEmailService {
 
             // Prepare request body
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("sender", Map.of("email", senderEmail, "name", "LuminaBook"));
+            requestBody.put("sender", Map.of("email", senderEmail, "name", "LilaShop"));
             requestBody.put("to", new Object[] {Map.of("email", toEmail, "name", "User")});
-            requestBody.put("subject", "Mã xác thực OTP - LuminaBook");
+            requestBody.put("subject", "Mã xác thực OTP - LilaShop");
 
             String emailContent = String.format(
                     "Xin chào,\n\n" + "Mã xác thực OTP của bạn là: %s\n\n"
                             + "Mã này có hiệu lực trong 5 phút.\n"
                             + "Vui lòng không chia sẻ mã này với bất kỳ ai.\n\n"
                             + "Trân trọng,\n"
-                            + "Đội ngũ LuminaBook",
+                            + "Đội ngũ LilaShop",
                     otpCode);
 
             requestBody.put("textContent", emailContent);
@@ -89,13 +89,13 @@ public class BrevoEmailService {
 
             // Prepare request body
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("sender", Map.of("email", senderEmail, "name", "LuminaBook Admin"));
+            requestBody.put("sender", Map.of("email", senderEmail, "name", "LilaShop Admin"));
             requestBody.put("to", new Object[] {Map.of("email", toEmail, "name", staffName)});
-            requestBody.put("subject", "Thông tin tài khoản nhân viên - LuminaBook");
+            requestBody.put("subject", "Thông tin tài khoản nhân viên - LilaShop");
 
             String emailContent = String.format(
                     "Xin chào %s,\n\n"
-                            + "Chào mừng bạn đến với đội ngũ LuminaBook!\n\n"
+                            + "Chào mừng bạn đến với đội ngũ LilaShop!\n\n"
                             + "Thông tin tài khoản của bạn:\n"
                             + "- Email: %s\n"
                             + "- Mật khẩu: %s\n"
@@ -104,7 +104,7 @@ public class BrevoEmailService {
                             + "Địa chỉ đăng nhập: http://localhost:3000\n\n"
                             + "Lưu ý: Vui lòng không chia sẻ thông tin này với bất kỳ ai.\n\n"
                             + "Trân trọng,\n"
-                            + "Đội ngũ LuminaBook",
+                            + "Đội ngũ LilaShop",
                     staffName, toEmail, password, role);
 
             requestBody.put("textContent", emailContent);

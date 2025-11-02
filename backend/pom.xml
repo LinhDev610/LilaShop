@@ -17,7 +17,7 @@
 </parent>
 
 <!-- Basic project information -->
-    <groupId>com.lumina_book</groupId>
+    <groupId>com.lila_shop</groupId>
     <artifactId>backend</artifactId>
     <version>0.0.1</version>
     <name>backend</name>
