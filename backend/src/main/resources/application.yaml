@@ -3,12 +3,12 @@
 server:
   port: 8080
   servlet:
-    context-path: /lumina_book
+    context-path: /lila_shop
 
 #  Config cau hinh database
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/lumina_book
+    url: jdbc:mysql://localhost:3307/lila_shop
     driverClassName: com.mysql.cj.jdbc.Driver
     username: root
     password: root
@@ -30,7 +30,7 @@ brevo:
 
 #  Secret Key
 jwt:
-  signerKey: "/nvphzRqEgduNfnKy2ztU3XBeojbmK8jzDivxOxLIGnl+D5GfkjyXdLq15xz9af/\n"
+  signerKey: "905d89cb6be111ee6cfc8f924b40cc77c2ad56754f2985a090a86510d817f585"
   valid-duration: 3600  # in second
   refreshable-duration: 360000 # in seconds
 
