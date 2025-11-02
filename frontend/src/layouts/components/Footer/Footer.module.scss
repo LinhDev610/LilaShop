@@ -1,0 +1,68 @@
+/* Footer Styles */
+.account-footer { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr 1fr; 
+    gap: 20px; 
+    padding: 24px 20px; 
+    border-top: 1px solid #eee; 
+    background: #fff;
+    margin-top: auto; /* Đẩy footer xuống cuối */
+    flex-shrink: 0; /* Không cho footer co lại */
+}
+
+.account-footer h4 { 
+    margin: 0 0 10px; 
+    font-weight: 600;
+    color: #1A3C5A;
+}
+
+.footer-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.footer-col div {
+    color: #666;
+    font-size: 14px;
+}
+
+.footer-col a {
+    color: #666;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+}
+
+.footer-col a:hover {
+    color: #1A3C5A;
+}
+
+/* Social icons row under contact column */
+.social-row {
+    display: flex;
+    align-items: center;
+    gap: 16px; /* spacing between icons */
+    margin-top: 32px; /* push icons downward like reference */
+}
+
+.social-icon {
+    width: 40px; /* enlarge icons */
+    height: 40px;
+    object-fit: contain;
+    filter: grayscale(10%);
+    padding: 6px; /* extra padding around icon */
+    transition: transform 0.15s ease, filter 0.15s ease;
+    cursor: pointer;
+}
+
+.social-icon:hover {
+    transform: translateY(-1px) scale(1.05);
+    filter: none;
+}
+
+/* Solid blue bar like header navbar, empty content */
+.footer-bottom {
+    height: 56px; /* match header height visually */
+    background: #173a55;
+}

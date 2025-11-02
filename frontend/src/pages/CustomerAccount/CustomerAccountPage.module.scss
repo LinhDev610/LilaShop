@@ -1,0 +1,307 @@
+/* =========================
+   ACCOUNT WRAPPER
+========================= */
+.account-wrapper {
+    background: #fff;
+    color: #111;
+    min-height: 70vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* =========================
+   CONTENT AREA
+========================= */
+.account-content {
+    display: flex;
+    gap: 18px;
+    padding: 18px 20px;
+    flex: 1;
+    min-height: 0; /* Cho phép scroll */
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+.account-side {
+    width: 260px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    height: auto;
+}
+
+/* Profile section in sidebar */
+.side-profile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 0 50px;
+    border-bottom: 1px solid #eee;
+}
+
+.side-avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: #1a3c5a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.avatar-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.side-name {
+    font-weight: 600;
+}
+
+/* Menu */
+.side-menu {
+    list-style: none;
+    padding: 12px 0 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #111;
+}
+
+.menu-item .mi {
+    width: 18px;
+    height: 18px;
+    display: inline-block;
+}
+
+.menu-item .mi-large {
+    width: 30px;
+    height: 30px;
+    display: inline-block;
+}
+
+.menu-item.active {
+    background: #edeeef;
+    box-shadow: inset 0 0 0 1px #d6d7d9;
+}
+
+.menu-item.danger {
+    color: #c1121f;
+}
+
+/* =========================
+   MAIN CONTENT
+========================= */
+.account-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    /* Giới hạn chiều cao */
+}
+
+/* Panels */
+.panel {
+    background: #fff;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.panel h3 {
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+}
+
+.panel h3 .icon-user {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #111;
+    display: inline-block;
+}
+
+/* =========================
+   FORMS
+========================= */
+.form-row {
+    display: flex;
+    gap: 40px; /* khoảng cách ngang giữa Username và Gmail */
+    margin-bottom: 28px; /* khoảng cách dọc giữa các hàng */
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* khoảng cách giữa label và input */
+}
+
+.form-group label {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #333;
+}
+
+.form-group input {
+    height: 50px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 0 12px;
+    background: #fff;
+    color: #111;
+    font-size: 15px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.primary {
+    background: #1a3c5a;
+    color: #fff;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    height: 34px;
+    font-weight: 600;
+}
+
+/* Logout confirm modal (reuse style similar to header modal) */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal {
+    width: 520px;
+    max-width: 90vw;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    padding: 24px 24px 20px;
+    text-align: center;
+}
+
+.modal-title { margin: 0 0 8px; font-size: 24px; font-weight: 800; color: #173a55; }
+.modal-desc { margin: 0 0 16px; color: #4b5563; font-size: 16px; }
+.modal-actions { display: flex; gap: 12px; justify-content: center; }
+.btn { min-width: 120px; padding: 10px 14px; border-radius: 12px; border: none; cursor: pointer; font-weight: 700; }
+.btn-muted { background: #c7ccd1; color: #0f172a; }
+.btn-primary { background: #173a55; color: #fff; }
+
+/* =========================
+   ORDERS
+========================= */
+.orders h3 {
+    margin-bottom: 6px;
+}
+
+.order-tabs {
+    display: flex;
+    gap: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.order-tabs button {
+    background: transparent;
+    border: none;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.order-tabs .active {
+    background: #f3f4f6;
+}
+
+.order-card {
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-top: 12px;
+}
+
+.order-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.order-id {
+    font-weight: 600;
+}
+
+.order-date {
+    color: #666;
+    font-size: 12px;
+}
+
+.status {
+    background: #f43f5e;
+    color: #fff;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+.order-body {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+}
+
+.thumb {
+    width: 62px;
+    height: 62px;
+    background: #ddd;
+    border-radius: 6px;
+}
+
+.meta {
+    flex: 1;
+}
+
+.title {
+    font-size: 13px;
+}
+
+.qty {
+    color: #666;
+    font-size: 12px;
+}
+
+.price {
+    font-weight: 700;
+    color: #d00000;
+}

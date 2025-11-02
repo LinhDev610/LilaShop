@@ -1,70 +1,167 @@
-# Getting Started with Create React App
+# 📚 LUMINA BOOK - WEBSITE BÁN SÁCH
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 🎯 Giới thiệu
 
-## Available Scripts
+LuminaBook là website bán sách trực tuyến được xây dựng bằng React với CSS Modules và classnames/bind pattern. Dự án sử dụng layout system linh hoạt và component-based architecture.
 
-In the project directory, you can run:
+## 🚀 Tính năng chính
 
-### `npm start`
+-   ✅ **Trang chủ**: Hero banner, sản phẩm nổi bật, promotions
+-   ✅ **Layout System**: DefaultLayout, CustomLayout, Fragment
+-   ✅ **Authentication**: Login, Register, Forgot Password
+-   ✅ **Product Management**: Card, List, Detail
+-   ✅ **Shopping Cart**: Thêm/sửa/xóa sản phẩm
+-   ✅ **User Account**: Profile, Order History
+-   ✅ **Responsive Design**: Mobile-first approach
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 🛠️ Công nghệ sử dụng
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+-   **Frontend**: React 19.2.0
+-   **Routing**: React Router DOM 7.9.3
+-   **Styling**: CSS Modules + SCSS
+-   **State Management**: React Context API
+-   **Build Tool**: Create React App
+-   **Package Manager**: Yarn
 
-### `npm test`
+## 📦 Dependencies chính
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```json
+{
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.3",
+    "classnames": "^2.1.1",
+    "sass": "^1.93.2"
+}
+```
 
-### `npm run build`
+## 🚀 Quick Start
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### **1. Cài đặt dependencies**
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+# Sử dụng yarn (khuyến nghị)
+yarn install
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# Hoặc sử dụng npm
+npm install
+```
 
-### `npm run eject`
+### **2. Chạy development server**
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```bash
+# Sử dụng yarn
+yarn start
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+# Hoặc sử dụng npm
+npm start
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### **3. Build production**
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```bash
+# Sử dụng yarn
+yarn build
 
-## Learn More
+# Hoặc sử dụng npm
+npm run build
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 📁 Cấu trúc dự án
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```
+src/
+├── layouts/              # Layout system
+│   ├── components/      # Header, Footer, Search
+│   ├── DefaultLayout/   # Layout mặc định
+│   └── CustomLayout/    # Layout tùy chỉnh
+├── pages/               # Các trang chính
+├── components/          # Component tái sử dụng
+├── contexts/            # State management
+├── services/            # API và logic
+├── hooks/               # Custom hooks
+├── assets/              # Tài nguyên
+└── routes/              # Định tuyến
+```
 
-### Code Splitting
+## 🎨 CSS Modules + classnames/bind
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```javascript
+// Import
+import classNames from 'classnames/bind';
+import styles from './Component.module.scss';
 
-### Analyzing the Bundle Size
+// Bind styles
+const cx = classNames.bind(styles);
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+// Sử dụng
+<div className={cx('wrapper', 'active')}>
+    <h1 className={cx('title')}>Title</h1>
+</div>;
+```
 
-### Making a Progressive Web App
+## 🛠️ Development Commands
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```bash
+# Development
+yarn start          # Chạy dev server (port 3000)
+yarn build          # Build production
+yarn test           # Chạy tests
+yarn eject          # Eject CRA (không khuyến nghị)
 
-### Advanced Configuration
+# Code Quality
+yarn lint           # ESLint
+yarn format         # Prettier
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 📋 Project Status
 
-### Deployment
+### ✅ Completed
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+-   [x] Project setup với React + CSS Modules
+-   [x] Layout system (DefaultLayout, CustomLayout)
+-   [x] Header component với navigation
+-   [x] Footer component
+-   [x] Home page với hero banner
+-   [x] Routing system
+-   [x] CSS Modules + classnames/bind
+-   [x] Responsive design
 
-### `npm run build` fails to minify
+### 🚧 In Progress
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+-   [ ] Authentication system
+-   [ ] Product management
+-   [ ] Shopping cart
+-   [ ] User account
+
+### 📝 TODO
+
+-   [ ] API integration
+-   [ ] State management (Context)
+-   [ ] Testing setup
+-   [ ] Performance optimization
+-   [ ] SEO optimization
+
+## 🤝 Contributing
+
+1. Fork repository
+2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Tạo Pull Request
+
+## 📚 Documentation
+
+-   **Chi tiết cấu trúc**: Xem [FOLDER_STRUCTURE.md](./FOLDER_STRUCTURE.md)
+-   **API Documentation**: Xem [API.md](./API.md) (sắp có)
+-   **Component Guide**: Xem [COMPONENTS.md](./COMPONENTS.md) (sắp có)
+
+## 📞 Support
+
+-   **Issues**: [GitHub Issues](https://github.com/your-repo/issues)
+-   **Discussions**: [GitHub Discussions](https://github.com/your-repo/discussions)
+-   **Email**: support@luminabook.com
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

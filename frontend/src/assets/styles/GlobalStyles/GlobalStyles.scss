@@ -1,7 +1,7 @@
 @import 'normalize.css';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-
 }
 
 * {
@@ -9,9 +9,14 @@
 }
 
 html {
-
 }
 
 body {
     text-rendering: optimizeSpeed;
+    margin: 0;
+    font-family: 'Inter', Arial, Helvetica, sans-serif;
+}
+
+button, input, select, textarea {
+    font-family: inherit;
 }
