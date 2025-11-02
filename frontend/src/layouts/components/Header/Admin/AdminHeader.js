@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 
-import logoIcon from '../../../../assets/icons/logo_luminabook.png';
+import logoIcon from '../../../../assets/icons/logo_lilashop.png';
 import guestIcon from '../../../../assets/icons/icon_guest.png';
 import useLocalStorage from '../../../../hooks/useLocalStorage';
 
