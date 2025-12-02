@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './ManageStaffAccountsPage.module.scss';
 import SearchAndSort from '../../../components/Common/SearchAndSort';
+import ConfirmDialog from '../../../components/Common/ConfirmDialog/DeleteAccountDialog';
+import Notification from '../../../components/Common/Notification/Notification';
+import { getAllUsers, updateUser, deleteUser } from '../../../services';
 
 const cx = classNames.bind(styles);
 
@@ -10,115 +13,313 @@ function ManageStaffAccountsPage() {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState('all');
-    const [allEmployees, setAllEmployees] = useState([
-        {
-            id: 'NV001',
-            name: 'Nguyễn Văn A',
-            email: 'vana@lila.com',
-            phone: '0123456789',
-            status: 'active',
-        },
-        {
-            id: 'NV002',
-            name: 'Trần Thị B',
-            email: 'thib@lila.com',
-            phone: '0123456788',
-            status: 'active',
-        },
-        {
-            id: 'NV003',
-            name: 'Lê Văn C',
-            email: 'levanc@lila.com',
-            phone: '0123456787',
-            status: 'locked',
-        },
-        {
-            id: 'NV004',
-            name: 'Phạm Thị D',
-            email: 'phamthid@lila.com',
-            phone: '0123456786',
-            status: 'locked',
-        },
-        {
-            id: 'NV005',
-            name: 'Hoàng Văn E',
-            email: 'hoangvane@lila.com',
-            phone: '0123456785',
-            status: 'active',
-        },
-    ]);
-    const [filteredEmployees, setFilteredEmployees] = useState(allEmployees);
+    const [allEmployees, setAllEmployees] = useState([]);
+    const [filteredEmployees, setFilteredEmployees] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const initialConfirmState = {
+        open: false,
+        title: '',
+        message: '',
+        onConfirm: null,
+    };
+    const [confirmDialog, setConfirmDialog] = useState(initialConfirmState);
+    const [notif, setNotif] = useState({ open: false, type: 'success', title: '', message: '', duration: 3000 });
 
-    // Auto-search is now handled by onChange, no need for Enter key handler
+    // Helper function to get token from storage
+    const getStoredToken = () => {
+        try {
+            const raw = localStorage.getItem('token');
+            if (!raw) return sessionStorage.getItem('token');
+            if ((raw.startsWith('"') && raw.endsWith('"')) || raw.startsWith('{') || raw.startsWith('[')) {
+                return JSON.parse(raw);
+            }
+            return raw;
+        } catch (_) {
+            return sessionStorage.getItem('token');
+        }
+    };
+
+    // Fetch staff from API - tách thành function để có thể gọi lại
+    const fetchStaff = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const token = getStoredToken();
+            if (!token) {
+                setError('Vui lòng đăng nhập để tiếp tục');
+                setLoading(false);
+                return;
+            }
+
+            const users = await getAllUsers(token);
+
+            // Filter only staff (role.name === 'STAFF' or 'CUSTOMER_SUPPORT')
+            const employees = users
+                .filter(user => {
+                    const roleName = user?.role?.name;
+                    return roleName === 'STAFF' || roleName === 'CUSTOMER_SUPPORT';
+                })
+                .map(user => {
+                    // Handle fullName - check both camelCase and snake_case
+                    const fullName = user.fullName || user.full_name || '';
+
+                    // Handle isActive - check field name
+                    let activeValue;
+                    if ('isActive' in user) {
+                        activeValue = user.isActive;
+                    } else if ('active' in user) {
+                        activeValue = user.active;
+                    } else {
+                        activeValue = user.isActive !== undefined ? user.isActive : user.active;
+                    }
+
+                    // Determine active status
+                    let isActiveStatus = false;
+                    if (activeValue !== undefined && activeValue !== null) {
+                        if (typeof activeValue === 'number') {
+                            isActiveStatus = activeValue === 1;
+                        } else if (typeof activeValue === 'boolean') {
+                            isActiveStatus = activeValue === true;
+                        } else if (typeof activeValue === 'string') {
+                            const lower = String(activeValue).toLowerCase().trim();
+                            isActiveStatus = lower === '1' || lower === 'true';
+                        } else {
+                            isActiveStatus = Boolean(activeValue);
+                        }
+                    }
+
+                    return {
+                        id: user.id,
+                        name: fullName || user.email?.split('@')[0] || 'N/A',
+                        email: user.email || '',
+                        phone: user.phoneNumber || user.phone_number || '',
+                        status: isActiveStatus ? 'active' : 'locked',
+                        fullName: fullName,
+                        role: user?.role?.name || '',
+                    };
+                });
+
+            setAllEmployees(employees);
+            setFilteredEmployees(employees);
+        } catch (err) {
+            console.error('Error fetching staff:', err);
+            // Display more detailed error message
+            const errorMessage = err.message || 'Không thể tải dữ liệu nhân viên. Vui lòng thử lại sau.';
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Fetch staff khi component mount
+    useEffect(() => {
+        fetchStaff();
+    }, []);
+
+    // Search and sort options for staff accounts
+    const staffSearchPlaceholder = "Tìm kiếm theo Họ tên, Email, SDT,...";
+    const staffSortOptions = [
+        { value: 'all', label: 'Tất cả' },
+        { value: 'active', label: 'Hoạt động' },
+        { value: 'locked', label: 'Đã khóa' }
+    ];
 
     const handleSearchChange = (e) => {
         const newSearchTerm = e.target.value;
         setSearchTerm(newSearchTerm);
-
-        // Apply filters immediately when search term changes
         applyFilters(newSearchTerm, sortBy);
     };
 
     const handleSort = (e) => {
         const newSortBy = e.target.value;
         setSortBy(newSortBy);
-
-        // Apply filters immediately when status changes
         applyFilters(searchTerm, newSortBy);
-    };
-
-    const applyFilters = (search, status) => {
-        let filtered = allEmployees;
-
-        // Filter by search term (name, email, phone)
-        if (search && search.trim()) {
-            const searchLower = search.toLowerCase().trim();
-            filtered = filtered.filter(
-                (employee) =>
-                    employee.name.toLowerCase().includes(searchLower) ||
-                    employee.email.toLowerCase().includes(searchLower) ||
-                    employee.phone.includes(search.trim()),
-            );
-        }
-
-        // Filter by status - only if not "all"
-        if (status !== 'all') {
-            filtered = filtered.filter((employee) => employee.status === status);
-        }
-
-        setFilteredEmployees(filtered);
-    };
-
-    const getStatusText = (status) => {
-        return status === 'active' ? 'Hoạt động' : 'Đã khóa';
-    };
-
-    const getStatusClass = (status) => {
-        return status === 'active' ? 'active' : 'locked';
-    };
-
-    const handleAddEmployee = () => {
-        navigate('/admin/add-employee');
     };
 
     const handleSearchClick = () => {
         applyFilters(searchTerm, sortBy);
     };
 
-    // Search and sort options for staff accounts
-    const staffSearchPlaceholder = 'Tìm kiếm theo Email, SDT,...';
-    const staffSortOptions = [
-        { value: 'all', label: 'Tất cả' },
-        { value: 'active', label: 'Hoạt động' },
-        { value: 'locked', label: 'Đã khóa' },
-    ];
+    // Helper function to apply filters with specific data
+    const applyFiltersWithData = (search, status, employees) => {
+        let filtered = employees;
+
+        // Filter by search term (fullName, email, phone)
+        if (search && search.trim()) {
+            const searchLower = search.toLowerCase().trim();
+            filtered = filtered.filter(employee =>
+                (employee.fullName || '').toLowerCase().includes(searchLower) ||
+                (employee.name || '').toLowerCase().includes(searchLower) ||
+                (employee.email || '').toLowerCase().includes(searchLower) ||
+                (employee.phone || '').includes(search.trim())
+            );
+        }
+
+        // Filter by status - only if not "all"
+        if (status !== 'all') {
+            filtered = filtered.filter(employee => employee.status === status);
+        }
+
+        setFilteredEmployees(filtered);
+    };
+
+    const applyFilters = (search, status) => {
+        applyFiltersWithData(search, status, allEmployees);
+    };
+
+    const getStatusText = (status) => {
+        // isActive = 1 → status = 'active' → hiển thị 'Hoạt động'
+        // isActive = 0 → status = 'locked' → hiển thị 'Đã khóa'
+        if (status === 'active') {
+            return 'Hoạt động';
+        }
+        return 'Đã khóa';
+    };
+
+    const getStatusClass = (status) => {
+        return status === 'active' ? 'active' : 'locked';
+    };
+
+    // Handle lock/unlock staff account
+    const handleToggleLock = (employeeId, currentStatus) => {
+        // Nếu đang active thì khóa (isActive = false), nếu đang locked thì mở khóa (isActive = true)
+        const isCurrentlyActive = currentStatus === 'active';
+        const action = isCurrentlyActive ? 'khóa' : 'mở khóa';
+        const employee = allEmployees.find(e => e.id === employeeId);
+        const employeeName = employee?.fullName || employee?.name || employee?.email || `#${employeeId}`;
+
+        setConfirmDialog({
+            open: true,
+            title: 'Xác nhận hành động',
+            message: `Bạn có chắc chắn muốn ${action} tài khoản ${employeeName}?`,
+            onConfirm: () => performToggleLock(employeeId, currentStatus),
+        });
+    };
+
+    const performToggleLock = async (employeeId, currentStatus) => {
+        setConfirmDialog(initialConfirmState);
+
+        const isCurrentlyActive = currentStatus === 'active';
+        const newIsActive = !isCurrentlyActive;
+        const action = isCurrentlyActive ? 'khóa' : 'mở khóa';
+
+        try {
+            const token = getStoredToken();
+            if (!token) {
+                setNotif({
+                    open: true,
+                    type: 'error',
+                    title: 'Chưa đăng nhập',
+                    message: 'Vui lòng đăng nhập để tiếp tục',
+                    duration: 3000,
+                });
+                return;
+            }
+
+            const requestBody = { isActive: newIsActive };
+            await updateUser(employeeId, requestBody, token);
+
+            // Cập nhật state local thay vì refetch để tránh nhấp nháy
+            setAllEmployees(prevEmployees =>
+                prevEmployees.map(employee =>
+                    employee.id === employeeId
+                        ? { ...employee, status: newIsActive ? 'active' : 'locked' }
+                        : employee
+                )
+            );
+            setFilteredEmployees(prevFiltered =>
+                prevFiltered.map(employee =>
+                    employee.id === employeeId
+                        ? { ...employee, status: newIsActive ? 'active' : 'locked' }
+                        : employee
+                )
+            );
+
+            setNotif({
+                open: true,
+                type: 'success',
+                title: 'Thành công',
+                message: `Đã ${action} tài khoản thành công`,
+                duration: 3000
+            });
+        } catch (err) {
+            console.error(`Error ${action} staff:`, err);
+            setNotif({
+                open: true,
+                type: 'error',
+                title: 'Thất bại',
+                message: `Không thể ${action} tài khoản: ${err.message || 'Vui lòng thử lại sau.'}`,
+                duration: 4000
+            });
+        }
+    };
+
+    // Handle delete staff account
+    const handleDelete = (employeeId) => {
+        const employee = allEmployees.find((e) => e.id === employeeId);
+        const employeeName = employee?.fullName || employee?.name || employee?.email || `#${employeeId}`;
+        setConfirmDialog({
+            open: true,
+            title: 'Xác nhận xóa tài khoản',
+            message: `Bạn có chắc chắn muốn xóa tài khoản ${employeeName}? Hành động này không thể hoàn tác.`,
+            onConfirm: () => performDelete(employeeId),
+        });
+    };
+
+    const performDelete = async (employeeId) => {
+        setConfirmDialog(initialConfirmState);
+
+        try {
+            const token = getStoredToken();
+            if (!token) {
+                setNotif({
+                    open: true,
+                    type: 'error',
+                    title: 'Chưa đăng nhập',
+                    message: 'Vui lòng đăng nhập để tiếp tục',
+                    duration: 3000,
+                });
+                return;
+            }
+
+            await deleteUser(employeeId, token);
+
+            // Sau khi xóa thành công, fetch lại dữ liệu từ backend để đảm bảo hiển thị đúng
+            await fetchStaff();
+            setNotif({
+                open: true,
+                type: 'success',
+                title: 'Thành công',
+                message: 'Đã xóa tài khoản thành công',
+                duration: 3000,
+            });
+        } catch (err) {
+            console.error('Error deleting staff:', err);
+            setNotif({
+                open: true,
+                type: 'error',
+                title: 'Thất bại',
+                message: 'Không thể xóa tài khoản. Vui lòng thử lại sau.',
+                duration: 4000,
+            });
+        }
+    };
+
+    const handleViewDetails = (employeeId) => {
+        navigate(`/admin/staff/${employeeId}`);
+    };
+
+    const handleAddEmployee = () => {
+        navigate('/admin/add-employee');
+    };
 
     const additionalButtons = [
         {
             text: 'Thêm nhân viên',
             className: 'add-btn',
-            onClick: handleAddEmployee,
-        },
+            onClick: handleAddEmployee
+        }
     ];
 
     return (
@@ -137,55 +338,102 @@ function ManageStaffAccountsPage() {
                 additionalButtons={additionalButtons}
             />
 
-            <div className={cx('table-container')}>
-                <table className={cx('data-table')}>
-                    <thead>
-                        <tr className={cx('table-header')}>
-                            <th>Mã nhân viên</th>
-                            <th>Tên nhân viên</th>
-                            <th>Email</th>
-                            <th>SĐT</th>
-                            <th>Trạng thái</th>
-                            <th>Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredEmployees.map((employee) => (
-                            <tr key={employee.id} className={cx('table-row')}>
-                                <td>{employee.id}</td>
-                                <td>{employee.name}</td>
-                                <td>{employee.email}</td>
-                                <td>{employee.phone}</td>
-                                <td
-                                    className={cx(
-                                        'status',
-                                        getStatusClass(employee.status),
-                                    )}
-                                >
-                                    {getStatusText(employee.status)}
-                                </td>
-                                <td className={cx('actions')}>
-                                    <button className={cx('btn', 'edit-btn')}>Sửa</button>
-                                    {employee.status === 'active' ? (
-                                        <button className={cx('btn', 'lock-btn')}>
-                                            Khóa
-                                        </button>
-                                    ) : (
-                                        <button className={cx('btn', 'unlock-btn')}>
-                                            Mở khóa
-                                        </button>
-                                    )}
-                                    <button className={cx('btn', 'delete-btn')}>
-                                        Xóa
-                                    </button>
-                                </td>
+            {loading ? (
+                <div className={cx('loading-container')}>
+                    <p>Đang tải dữ liệu...</p>
+                </div>
+            ) : error ? (
+                <div className={cx('error-container')}>
+                    <p>{error}</p>
+                    <button onClick={() => window.location.reload()}>Tải lại</button>
+                </div>
+            ) : (
+                <div className={cx('table-container')}>
+                    <table className={cx('data-table')}>
+                        <thead>
+                            <tr className={cx('table-header')}>
+                                <th>Mã nhân viên</th>
+                                <th>Tên nhân viên</th>
+                                <th>Email</th>
+                                <th>SĐT</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                                <th>Chi tiết nhân viên</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            {filteredEmployees.length === 0 ? (
+                                <tr>
+                                    <td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>
+                                        Không có dữ liệu nhân viên
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredEmployees.map((employee) => (
+                                    <tr key={employee.id} className={cx('table-row')}>
+                                        <td>{employee.id}</td>
+                                        <td>{employee.fullName || employee.name || 'N/A'}</td>
+                                        <td>{employee.email}</td>
+                                        <td>{employee.phone}</td>
+                                        <td className={cx('status', getStatusClass(employee.status))}>
+                                            {getStatusText(employee.status)}
+                                        </td>
+                                        <td className={cx('actions')}>
+                                            <button
+                                                className={cx('btn', 'edit-btn')}
+                                                onClick={() => navigate(`/admin/staff/${employee.id}`)}
+                                            >
+                                                Sửa
+                                            </button>
+                                            {employee.status === 'active' ? (
+                                                <button
+                                                    className={cx('btn', 'lock-btn')}
+                                                    onClick={() => handleToggleLock(employee.id, employee.status)}
+                                                >
+                                                    Khóa
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className={cx('btn', 'unlock-btn')}
+                                                    onClick={() => handleToggleLock(employee.id, employee.status)}
+                                                >
+                                                    Mở khóa
+                                                </button>
+                                            )}
+                                        </td>
+                                        <td>
+                                            <button
+                                                className={cx('btn', 'detail-btn')}
+                                                onClick={() => handleViewDetails(employee.id)}
+                                            >
+                                                Xem chi tiết
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+            <ConfirmDialog
+                open={confirmDialog.open}
+                title={confirmDialog.title}
+                message={confirmDialog.message}
+                onConfirm={confirmDialog.onConfirm || (() => { })}
+                onCancel={() => setConfirmDialog(initialConfirmState)}
+            />
+            <Notification
+                open={notif.open}
+                type={notif.type}
+                title={notif.title}
+                message={notif.message}
+                duration={notif.duration}
+                onClose={() => setNotif((n) => ({ ...n, open: false }))}
+            />
         </div>
     );
 }
 
 export default ManageStaffAccountsPage;
+

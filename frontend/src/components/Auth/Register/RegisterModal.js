@@ -3,9 +3,9 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useLocalStorage from '../../../hooks/useLocalStorage';
 import { useAuth } from '../../../contexts/AuthContext';
 import { isValidEmail, validatePassword } from '../../../services/utils';
+import { register, sendOTP } from '../../../services';
 import '../Auth.module.scss';
 import visibleIcon from '../../../assets/icons/icon-visible.png';
 import invisibleIcon from '../../../assets/icons/icon-invisible.png';
@@ -15,20 +15,15 @@ import styles from './RegisterModal.module.scss';
 
 const cx = classNames.bind(styles);
 
-const API_BASE_URL = 'http://localhost:8080/lila_shop';
-
 export default function RegisterModal({ open = false, onClose }) {
     const navigate = useNavigate();
-    const { switchToLogin, switchToVerifyCode, registerStep, setRegisterStep } =
-        useAuth();
-    const [token, setToken] = useLocalStorage('token', null);
-    const [displayName, setDisplayName] = useLocalStorage('displayName', null);
+    const { switchToLogin, switchToVerifyCode, registerStep, setRegisterStep } = useAuth();
     const [email, setEmail] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     // register state
-    const [username, setUsername] = useState('');
+    const [fullName, setFullName] = useState('');
     const [password, setPassword] = useState('');
     const [confirm, setConfirm] = useState('');
     const [agree, setAgree] = useState(false);
@@ -54,7 +49,7 @@ export default function RegisterModal({ open = false, onClose }) {
 
         setError('');
         setIsLoading(false);
-        setUsername('');
+        setFullName('');
         setPassword('');
         setConfirm('');
         setAgree(false);
@@ -79,7 +74,7 @@ export default function RegisterModal({ open = false, onClose }) {
         return () => {
             document.removeEventListener('keydown', handleKeyPress);
         };
-    }, [open, registerStep, email, username, password, confirm]);
+    }, [open, registerStep, email, fullName, password, confirm]);
 
     if (!open) return null;
 
@@ -96,22 +91,18 @@ export default function RegisterModal({ open = false, onClose }) {
         setIsLoading(true);
         setError('');
         try {
-            const response = await fetch(
-                `${API_BASE_URL}/auth/send-otp?email=${encodeURIComponent(
-                    email,
-                )}&mode=register`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                },
-            );
-            const data = await response.json();
-            if (response.ok && data.code === 200) {
+            const { ok, data } = await sendOTP(email, 'register');
+            if (ok && data.code === 200) {
                 // Switch to verify code modal
                 switchToVerifyCode(email, 'register');
             } else {
-                const msg = data.message || 'Không thể gửi mã code. Vui lòng thử lại.';
-                setError(msg === 'Email đã được sử dụng' ? 'Email đã được sử dụng' : msg);
+                const msg =
+                    data.message || 'Không thể gửi mã code. Vui lòng thử lại.';
+                setError(
+                    msg === 'Email đã được sử dụng'
+                        ? 'Email đã được sử dụng'
+                        : msg,
+                );
             }
         } catch (err) {
             setError('Có lỗi xảy ra khi gửi mã code. Vui lòng thử lại.');
@@ -120,10 +111,16 @@ export default function RegisterModal({ open = false, onClose }) {
         }
     };
 
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!agree) return setError('Hãy đồng ý điều khoản');
 
+        // Validate password rỗng trước
+        if (!password || password.trim() === '') {
+            setError('Vui lòng nhập mật khẩu');
+            return;
+        }
         // Validate password using utility function
         const passwordValidation = validatePassword(password, confirm);
         if (!passwordValidation.isValid) {
@@ -136,51 +133,47 @@ export default function RegisterModal({ open = false, onClose }) {
             const payload = {
                 email: (email || '').trim(),
                 password,
-                fullName: (username || '').trim(),
+                fullName: (fullName || '').trim(),
             };
-            const resp = await fetch(`${API_BASE_URL}/users`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-            const data = await resp.json().catch(() => ({}));
-            if (resp.ok && (data?.result || data?.code === 200)) {
-                try {
-                    const loginResp = await fetch(`${API_BASE_URL}/auth/token`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            email: (email || '').trim(),
-                            password,
-                        }),
-                    });
-                    const loginData = await loginResp.json().catch(() => ({}));
-                    if (loginResp.ok && loginData?.result?.token) {
-                        setToken(loginData.result.token);
-                        setDisplayName((username || '').trim() || (email || '').trim());
-                        onClose?.();
-                        navigate(0);
-                    } else {
-                        onClose?.();
-                        navigate('/login');
-                    }
-                } catch (_) {
-                    onClose?.();
-                    navigate('/login');
-                }
+            const { ok, data: registerData, status } = await register(payload);
+            // Backend trả về ApiResponse<UserResponse> với code 1000 (default) khi thành công
+            // Nếu ok = true: extractResult() đã lấy result (UserResponse object), code không còn
+            // Nếu ok = false: giữ nguyên cấu trúc ApiResponse với code/message
+            // Kiểm tra: ok = true và có registerData (UserResponse object có id/email/fullName/username)
+            const hasSuccessCode = registerData?.code === 1000 || registerData?.code === 200;
+            const hasValidUserData = registerData && (registerData.id || registerData.email || registerData.fullName || registerData.username);
+            // Nếu ok = true và có user data hợp lệ thì thành công
+            const isSuccess = ok && hasValidUserData;
+            
+            if (isSuccess) {
+                // Đăng ký thành công: không tự đăng nhập
+                // Clear verification data (giống ForgotPasswordModal)
+                localStorage.removeItem('verifiedEmail');
+                localStorage.removeItem('emailVerified');
+                localStorage.removeItem('verifiedOtp');
+                
+                // Reset form state (giống ForgotPasswordModal)
+                setRegisterStep(1);
+                setEmail('');
+                setFullName('');
+                setPassword('');
+                setConfirm('');
+                setAgree(false);
+                setShow1(false);
+                setShow2(false);
+                
+                // Chuyển về modal đăng nhập (giống ForgotPasswordModal)
+                // switchToLogin() chỉ chuyển step, modal vẫn mở
+                switchToLogin();
+                // KHÔNG gọi onClose() - để modal vẫn mở và hiển thị form đăng nhập
             } else {
                 // Handle backend validation errors
-                const code = data?.code;
-                if (code === 1004 || (data?.message || '').includes('INVALID_PASSWORD')) {
-                    setError(
-                        'Mật khẩu ít nhất phải chứa một chữ cái thường, 1 chữ cái in hoa,1 số và 1 kí tự đặc biệt',
-                    );
+                const code = registerData?.code;
+                if (code === 1004 || (registerData?.message || '').includes('INVALID_PASSWORD')) {
+                    setError('Mật khẩu ít nhất phải chứa một chữ cái thường, 1 chữ cái in hoa,1 số và 1 kí tự đặc biệt');
                 } else {
-                    const message =
-                        data?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
-                    setError(
-                        message === 'User existed' ? 'Tài khoản đã tồn tại' : message,
-                    );
+                    const message = registerData?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
+                    setError(message === 'User existed' ? 'Tài khoản đã tồn tại' : message);
                 }
             }
         } catch (err) {
@@ -208,9 +201,7 @@ export default function RegisterModal({ open = false, onClose }) {
                     {registerStep === 1 ? (
                         <form onSubmit={handleSendEmail}>
                             <div className={cx('standalone-form-group')}>
-                                <label className={cx('standalone-label')}>
-                                    Địa chỉ Email
-                                </label>
+                                <label className={cx('standalone-label')}>Địa chỉ Email</label>
                                 <input
                                     type="text"
                                     value={email}
@@ -219,11 +210,11 @@ export default function RegisterModal({ open = false, onClose }) {
                                     className={cx('standalone-input')}
                                 />
                             </div>
-                            <p className={cx('standalone-description')}>
-                                Mã xác nhận sẽ được gửi đến địa chỉ email của bạn.
-                            </p>
+                            <p className={cx('standalone-description')}>Mã xác nhận sẽ được gửi đến địa chỉ email của bạn.</p>
                             {error && (
-                                <div className={cx('standalone-error')}>{error}</div>
+                                <div className={cx('standalone-error')}>
+                                    {error}
+                                </div>
                             )}
                             <Button
                                 type="submit"
@@ -236,12 +227,10 @@ export default function RegisterModal({ open = false, onClose }) {
                     ) : (
                         <form onSubmit={handleSubmit}>
                             <div className={cx('standalone-form-group')}>
-                                <label className={cx('standalone-label')}>
-                                    Tên đăng nhập
-                                </label>
+                                <label className={cx('standalone-label')}>Tên đăng nhập</label>
                                 <input
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
                                     placeholder="Tên đăng nhập"
                                     className={cx('standalone-input')}
                                 />
@@ -252,19 +241,14 @@ export default function RegisterModal({ open = false, onClose }) {
                                     <input
                                         type={show1 ? 'text' : 'password'}
                                         value={password}
-                                        onChange={(e) => {
-                                            setPassword(e.target.value);
-                                            setError('');
-                                        }}
+                                        onChange={(e) => { setPassword(e.target.value); setError(''); }}
                                         placeholder="********"
                                         className={cx('standalone-password-input')}
                                     />
                                     <Button
                                         type="button"
                                         onClick={() => setShow1(!show1)}
-                                        aria-label={
-                                            show1 ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'
-                                        }
+                                        aria-label={show1 ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                                         className={cx('standalone-password-toggle')}
                                     >
                                         <img
@@ -276,26 +260,19 @@ export default function RegisterModal({ open = false, onClose }) {
                                 </div>
                             </div>
                             <div className={cx('standalone-password-group')}>
-                                <label className={cx('standalone-label')}>
-                                    Xác nhận mật khẩu
-                                </label>
+                                <label className={cx('standalone-label')}>Xác nhận mật khẩu</label>
                                 <div className={cx('standalone-password-wrapper')}>
                                     <input
                                         type={show2 ? 'text' : 'password'}
                                         value={confirm}
-                                        onChange={(e) => {
-                                            setConfirm(e.target.value);
-                                            setError('');
-                                        }}
+                                        onChange={(e) => { setConfirm(e.target.value); setError(''); }}
                                         placeholder="********"
                                         className={cx('standalone-password-input')}
                                     />
                                     <Button
                                         type="button"
                                         onClick={() => setShow2(!show2)}
-                                        aria-label={
-                                            show2 ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'
-                                        }
+                                        aria-label={show2 ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                                         className={cx('standalone-password-toggle')}
                                     >
                                         <img
@@ -313,15 +290,10 @@ export default function RegisterModal({ open = false, onClose }) {
                                         checked={agree}
                                         onChange={(e) => setAgree(e.target.checked)}
                                     />
-                                    <span>
-                                        Tôi đồng ý với các điều khoản và chính sách bảo
-                                        mật
-                                    </span>
+                                    <span>Tôi đồng ý với các điều khoản và chính sách bảo mật</span>
                                 </label>
                             </div>
-                            {error && (
-                                <div className={cx('standalone-error')}>{error}</div>
-                            )}
+                            {error && <div className={cx('standalone-error')}>{error}</div>}
                             <Button
                                 type="submit"
                                 className={cx('standalone-submit-dark')}
@@ -361,9 +333,7 @@ export default function RegisterModal({ open = false, onClose }) {
                             className={cx('form-input')}
                         />
                     </div>
-                    <p className={cx('auth-description')}>
-                        Mã xác nhận sẽ được gửi đến địa chỉ email của bạn.
-                    </p>
+                    <p className={cx('auth-description')}>Mã xác nhận sẽ được gửi đến địa chỉ email của bạn.</p>
                     {error && <div className={cx('error-text')}>{error}</div>}
                     <Button
                         type="submit"
@@ -374,7 +344,10 @@ export default function RegisterModal({ open = false, onClose }) {
                     </Button>
                     <p className={cx('auth-subtext')}>
                         Đã có tài khoản?{' '}
-                        <button onClick={switchToLogin} className={cx('auth-link')}>
+                        <button
+                            onClick={switchToLogin}
+                            className={cx('auth-link')}
+                        >
                             Đăng nhập
                         </button>
                     </p>
@@ -386,8 +359,8 @@ export default function RegisterModal({ open = false, onClose }) {
                     <div className={cx('form-group')}>
                         <label className={cx('form-label')}>Tên hiển thị</label>
                         <input
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
                             placeholder="Tên hiển thị"
                             className={cx('form-input')}
                         />
@@ -398,10 +371,7 @@ export default function RegisterModal({ open = false, onClose }) {
                             <input
                                 type={show1 ? 'text' : 'password'}
                                 value={password}
-                                onChange={(e) => {
-                                    setPassword(e.target.value);
-                                    setError('');
-                                }}
+                                onChange={(e) => { setPassword(e.target.value); setError(''); }}
                                 placeholder="********"
                                 className={cx('form-input', 'pw-input')}
                             />
@@ -411,11 +381,7 @@ export default function RegisterModal({ open = false, onClose }) {
                                 aria-label={show1 ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                                 className={cx('pw-toggle')}
                             >
-                                <img
-                                    src={show1 ? invisibleIcon : visibleIcon}
-                                    alt={show1 ? 'Ẩn' : 'Hiện'}
-                                    className={cx('pw-icon')}
-                                />
+                                <img src={show1 ? invisibleIcon : visibleIcon} alt={show1 ? 'Ẩn' : 'Hiện'} className={cx('pw-icon')} />
                             </Button>
                         </div>
                     </div>
@@ -425,10 +391,7 @@ export default function RegisterModal({ open = false, onClose }) {
                             <input
                                 type={show2 ? 'text' : 'password'}
                                 value={confirm}
-                                onChange={(e) => {
-                                    setConfirm(e.target.value);
-                                    setError('');
-                                }}
+                                onChange={(e) => { setConfirm(e.target.value); setError(''); }}
                                 placeholder="********"
                                 className={cx('form-input', 'pw-input')}
                             />
@@ -438,21 +401,13 @@ export default function RegisterModal({ open = false, onClose }) {
                                 aria-label={show2 ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                                 className={cx('pw-toggle')}
                             >
-                                <img
-                                    src={show2 ? invisibleIcon : visibleIcon}
-                                    alt={show2 ? 'Ẩn' : 'Hiện'}
-                                    className={cx('pw-icon')}
-                                />
+                                <img src={show2 ? invisibleIcon : visibleIcon} alt={show2 ? 'Ẩn' : 'Hiện'} className={cx('pw-icon')} />
                             </Button>
                         </div>
                     </div>
                     <div className={cx('form-group')}>
                         <label className={cx('agree')}>
-                            <input
-                                type="checkbox"
-                                checked={agree}
-                                onChange={(e) => setAgree(e.target.checked)}
-                            />
+                            <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
                             Tôi đồng ý với điều khoản
                         </label>
                     </div>

@@ -91,7 +91,7 @@ mvn spring-boot:run
 
 ### Frontend (React)
 ```bash
-cd D:\LilaShop\lilashop
+cd D:\LuminaBook\luminabook
 npm start
 ```
 
