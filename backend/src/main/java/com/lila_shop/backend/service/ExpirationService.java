@@ -1,15 +1,15 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.entity.ExpiredPromotion;
-import com.lumina_book.backend.entity.ExpiredVoucher;
-import com.lumina_book.backend.entity.Promotion;
-import com.lumina_book.backend.entity.Voucher;
-import com.lumina_book.backend.enums.PromotionStatus;
-import com.lumina_book.backend.enums.VoucherStatus;
-import com.lumina_book.backend.repository.ExpiredPromotionRepository;
-import com.lumina_book.backend.repository.ExpiredVoucherRepository;
-import com.lumina_book.backend.repository.PromotionRepository;
-import com.lumina_book.backend.repository.VoucherRepository;
+import com.lila_shop.backend.entity.ExpiredPromotion;
+import com.lila_shop.backend.entity.ExpiredVoucher;
+import com.lila_shop.backend.entity.Promotion;
+import com.lila_shop.backend.entity.Voucher;
+import com.lila_shop.backend.enums.PromotionStatus;
+import com.lila_shop.backend.enums.VoucherStatus;
+import com.lila_shop.backend.repository.ExpiredPromotionRepository;
+import com.lila_shop.backend.repository.ExpiredVoucherRepository;
+import com.lila_shop.backend.repository.PromotionRepository;
+import com.lila_shop.backend.repository.VoucherRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

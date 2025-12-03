@@ -1,9 +1,9 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.client.MomoApi;
-import com.lumina_book.backend.dto.request.CreateMomoRequest;
-import com.lumina_book.backend.dto.request.MomoIpnRequest;
-import com.lumina_book.backend.dto.response.CreateMomoResponse;
+import com.lila_shop.backend.client.MomoApi;
+import com.lila_shop.backend.dto.request.CreateMomoRequest;
+import com.lila_shop.backend.dto.request.MomoIpnRequest;
+import com.lila_shop.backend.dto.response.CreateMomoResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

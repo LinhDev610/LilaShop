@@ -1,20 +1,20 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.constant.GhnConstants;
-import com.lumina_book.backend.dto.request.GhnCalculateFeeRequest;
-import com.lumina_book.backend.dto.request.GhnCreateOrderRequest;
-import com.lumina_book.backend.dto.request.GhnLeadtimeRequest;
-import com.lumina_book.backend.dto.request.GhnOrderItemRequest;
-import com.lumina_book.backend.dto.response.*;
-import com.lumina_book.backend.entity.*;
-import com.lumina_book.backend.enums.*;
-import com.lumina_book.backend.exception.AppException;
-import com.lumina_book.backend.exception.ErrorCode;
-import com.lumina_book.backend.mapper.GhnMapper;
-import com.lumina_book.backend.mapper.ShipmentMapper;
-import com.lumina_book.backend.repository.OrderRepository;
-import com.lumina_book.backend.repository.ShipmentRepository;
-import com.lumina_book.backend.service.FinancialService;
+import com.lila_shop.backend.constant.GhnConstants;
+import com.lila_shop.backend.dto.request.GhnCalculateFeeRequest;
+import com.lila_shop.backend.dto.request.GhnCreateOrderRequest;
+import com.lila_shop.backend.dto.request.GhnLeadtimeRequest;
+import com.lila_shop.backend.dto.request.GhnOrderItemRequest;
+import com.lila_shop.backend.dto.response.*;
+import com.lila_shop.backend.entity.*;
+import com.lila_shop.backend.enums.*;
+import com.lila_shop.backend.exception.AppException;
+import com.lila_shop.backend.exception.ErrorCode;
+import com.lila_shop.backend.mapper.GhnMapper;
+import com.lila_shop.backend.mapper.ShipmentMapper;
+import com.lila_shop.backend.repository.OrderRepository;
+import com.lila_shop.backend.repository.ShipmentRepository;
+import com.lila_shop.backend.service.FinancialService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -79,7 +79,7 @@ public class ShipmentService {
 
     /**
      * Ước tính chi phí GHN khi khách trả hàng về kho mặc định.
-     * Lấy địa chỉ khách (điểm đến ban đầu) làm điểm lấy hàng và kho Lumina làm điểm giao.
+     * Lấy địa chỉ khách (điểm đến ban đầu) làm điểm lấy hàng và kho LilaShop làm điểm giao.
      */
     public double estimateReturnShippingFee(Order order) {
         if (order == null) {

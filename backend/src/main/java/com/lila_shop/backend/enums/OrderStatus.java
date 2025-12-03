@@ -1,4 +1,4 @@
-package com.lumina_book.backend.enums;
+package com.lila_shop.backend.enums;
 
 public enum OrderStatus {
     CREATED,

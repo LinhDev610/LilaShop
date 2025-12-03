@@ -1,18 +1,16 @@
-package com.lumina_book.backend.controller;
+package com.lila_shop.backend.controller;
 
-import java.util.List;
-
-import org.springframework.web.bind.annotation.*;
-
-import com.lumina_book.backend.dto.request.ApiResponse;
-import com.lumina_book.backend.dto.request.PermissionRequest;
-import com.lumina_book.backend.dto.response.PermissionResponse;
-import com.lumina_book.backend.service.PermissionService;
-
+import com.lila_shop.backend.dto.request.ApiResponse;
+import com.lila_shop.backend.dto.request.PermissionRequest;
+import com.lila_shop.backend.dto.response.PermissionResponse;
+import com.lila_shop.backend.service.PermissionService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/permissions")

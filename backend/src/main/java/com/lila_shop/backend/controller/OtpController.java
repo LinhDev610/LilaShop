@@ -1,20 +1,17 @@
-package com.lumina_book.backend.controller;
+package com.lila_shop.backend.controller;
 
+import com.lila_shop.backend.dto.request.ApiResponse;
+import com.lila_shop.backend.dto.request.OtpVerificationRequest;
+import com.lila_shop.backend.repository.UserRepository;
+import com.lila_shop.backend.service.OtpService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-
-import org.springframework.web.bind.annotation.*;
-
-import com.lumina_book.backend.dto.request.ApiResponse;
-import com.lumina_book.backend.dto.request.OtpVerificationRequest;
-import com.lumina_book.backend.repository.UserRepository;
-import com.lumina_book.backend.service.OtpService;
-
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")

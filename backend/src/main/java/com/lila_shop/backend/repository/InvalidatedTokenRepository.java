@@ -1,7 +1,6 @@
-package com.lumina_book.backend.repository;
+package com.lila_shop.backend.repository;
 
-import java.util.Date;
-
+import com.lila_shop.backend.entity.InvalidatedToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -9,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.lumina_book.backend.entity.InvalidatedToken;
+import java.util.Date;
 
 // Lưu trữ token hết hạn
 @Repository

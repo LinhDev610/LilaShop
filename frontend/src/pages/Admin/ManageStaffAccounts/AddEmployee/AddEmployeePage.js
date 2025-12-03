@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './AddEmployeePage.module.scss';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { useNotification } from '../../../../components/Common/Notification';
+import { refreshToken, createStaff } from '../../../../services';
 
 const cx = classNames.bind(styles);
 
-const API_BASE_URL = 'http://localhost:8080/lumina_book';
-
 function AddEmployeePage() {
     const navigate = useNavigate();
+    const { openLoginModal } = useAuth();
+    const { success, error, notify } = useNotification();
     const [formData, setFormData] = useState({
         fullName: '',
         roleName: '',
@@ -19,6 +22,20 @@ function AddEmployeePage() {
 
     const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
+    // Đọc token/refreshToken từ storage và chuẩn hóa (vì useLocalStorage lưu JSON.stringify)
+    const getStoredToken = (key) => {
+        try {
+            const raw = localStorage.getItem(key);
+            if (!raw) return null;
+            // Nếu giá trị được stringify, parse ra; nếu không, dùng trực tiếp
+            if ((raw.startsWith('"') && raw.endsWith('"')) || raw.startsWith('{') || raw.startsWith('[')) {
+                return JSON.parse(raw);
+            }
+            return raw;
+        } catch (_) {
+            return null;
+        }
+    };
 
     // Định nghĩa các vai trò có sẵn
     const availableRoles = [
@@ -31,8 +48,8 @@ function AddEmployeePage() {
             ...prev,
             [field]: value
         }));
-        
-        // Clear error when user starts typing
+
+        // xóa error khi người dùng nhập
         if (errors[field]) {
             setErrors(prev => ({
                 ...prev,
@@ -66,32 +83,60 @@ function AddEmployeePage() {
         return Object.keys(newErrors).length === 0;
     };
 
+    const refreshTokenIfNeeded = async () => {
+        const refreshTokenValue = getStoredToken('refreshToken');
+        if (!refreshTokenValue) return null;
+        try {
+            const { ok, data: responseData } = await refreshToken(refreshTokenValue);
+            if (ok && responseData?.token) {
+                localStorage.setItem('token', responseData.token);
+                localStorage.setItem('refreshToken', responseData.token);
+                return responseData.token;
+            }
+        } catch (_) { }
+        return null;
+    };
+
     const handleSave = async () => {
         if (validateForm()) {
             setIsLoading(true);
             try {
-                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}/users/staff`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData),
-                });
+                let token = getStoredToken('token') || sessionStorage.getItem('token');
+                if (!token) {
+                    error('Thiếu token xác thực. Vui lòng đăng nhập lại bằng tài khoản admin.');
+                    setIsLoading(false);
+                    return;
+                }
+                let result = await createStaff(formData, token);
 
-                const data = await response.json();
-                
-                if (response.ok) {
-                    alert('Tạo tài khoản nhân viên thành công! Mật khẩu đã được gửi qua email.');
+                // Nếu hết hạn -> thử refresh và gọi lại 1 lần
+                if (!result) {
+                    const newToken = await refreshTokenIfNeeded();
+                    if (newToken) {
+                        token = newToken;
+                        result = await createStaff(formData, token);
+                    } else {
+                        // Không có refreshToken (user không tick Ghi nhớ) -> buộc đăng nhập lại
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('refreshToken');
+                        sessionStorage.removeItem('token');
+                        error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                        navigate('/', { replace: true });
+                        // Mở modal đăng nhập nếu có sẵn context
+                        try { openLoginModal?.(); } catch (_) { }
+                        return;
+                    }
+                }
+
+                if (result) {
+                    success('Tạo tài khoản nhân viên thành công! Mật khẩu đã được gửi qua email.');
                     navigate('/admin');
                 } else {
-                    const errorMessage = data.message || 'Có lỗi xảy ra khi tạo tài khoản nhân viên';
-                    alert(errorMessage);
+                    error('Không thể tạo tài khoản. Vui lòng thử lại.');
                 }
             } catch (error) {
                 console.error('Error creating staff:', error);
-                alert('Không thể kết nối máy chủ. Vui lòng thử lại.');
+                notify('error', 'Không thể kết nối máy chủ. Vui lòng thử lại.');
             } finally {
                 setIsLoading(false);
             }
@@ -108,7 +153,7 @@ function AddEmployeePage() {
             <div className={cx('page-header')}>
                 <button className={cx('back-btn')} onClick={handleCancel}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                 </button>
                 <h1 className={cx('page-title')}>Thêm tài khoản nhân viên</h1>
@@ -187,8 +232,8 @@ function AddEmployeePage() {
                         <button className={cx('btn', 'cancel-btn')} onClick={handleCancel}>
                             Hủy
                         </button>
-                        <button 
-                            className={cx('btn', 'save-btn')} 
+                        <button
+                            className={cx('btn', 'save-btn')}
                             onClick={handleSave}
                             disabled={isLoading}
                         >

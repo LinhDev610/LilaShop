@@ -1,7 +1,6 @@
-package com.lumina_book.backend.dto.request;
+package com.lila_shop.backend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
-
 import lombok.Data;
 
 @Data

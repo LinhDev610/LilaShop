@@ -1,11 +1,11 @@
-package com.lumina_book.backend.dto.request;
-
-import java.time.LocalDate;
+package com.lila_shop.backend.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 
 @Data
 @Builder

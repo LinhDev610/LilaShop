@@ -1,22 +1,20 @@
-package com.lumina_book.backend.controller;
+package com.lila_shop.backend.controller;
 
-import java.text.ParseException;
-
+import com.lila_shop.backend.dto.request.*;
+import com.lila_shop.backend.dto.request.ApiResponse;
+import com.lila_shop.backend.dto.response.AuthenticationResponse;
+import com.lila_shop.backend.dto.response.IntrospectResponse;
+import com.lila_shop.backend.service.AuthenticationService;
+import com.nimbusds.jose.JOSEException;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.lumina_book.backend.dto.request.*;
-import com.lumina_book.backend.dto.request.ApiResponse;
-import com.lumina_book.backend.dto.response.AuthenticationResponse;
-import com.lumina_book.backend.dto.response.IntrospectResponse;
-import com.lumina_book.backend.service.AuthenticationService;
-import com.nimbusds.jose.JOSEException;
-
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
+import java.text.ParseException;
 
 @RestController
 @RequestMapping("/auth")

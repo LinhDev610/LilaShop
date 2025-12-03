@@ -1,4 +1,4 @@
-package com.lumina_book.backend.constant;
+package com.lila_shop.backend.constant;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

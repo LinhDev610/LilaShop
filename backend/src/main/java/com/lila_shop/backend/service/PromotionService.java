@@ -1,24 +1,24 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.dto.request.ApprovePromotionRequest;
-import com.lumina_book.backend.dto.request.PromotionCreationRequest;
-import com.lumina_book.backend.dto.request.PromotionUpdateRequest;
-import com.lumina_book.backend.dto.response.PromotionResponse;
-import com.lumina_book.backend.entity.Category;
-import com.lumina_book.backend.entity.Product;
-import com.lumina_book.backend.entity.Promotion;
-import com.lumina_book.backend.entity.User;
-import com.lumina_book.backend.enums.DiscountApplyScope;
-import com.lumina_book.backend.enums.ProductStatus;
-import com.lumina_book.backend.enums.PromotionStatus;
-import com.lumina_book.backend.exception.AppException;
-import com.lumina_book.backend.exception.ErrorCode;
-import com.lumina_book.backend.mapper.PromotionMapper;
-import com.lumina_book.backend.repository.CategoryRepository;
-import com.lumina_book.backend.repository.ProductRepository;
-import com.lumina_book.backend.repository.PromotionRepository;
-import com.lumina_book.backend.repository.UserRepository;
-import com.lumina_book.backend.util.SecurityUtil;
+import com.lila_shop.backend.dto.request.ApprovePromotionRequest;
+import com.lila_shop.backend.dto.request.PromotionCreationRequest;
+import com.lila_shop.backend.dto.request.PromotionUpdateRequest;
+import com.lila_shop.backend.dto.response.PromotionResponse;
+import com.lila_shop.backend.entity.Category;
+import com.lila_shop.backend.entity.Product;
+import com.lila_shop.backend.entity.Promotion;
+import com.lila_shop.backend.entity.User;
+import com.lila_shop.backend.enums.DiscountApplyScope;
+import com.lila_shop.backend.enums.ProductStatus;
+import com.lila_shop.backend.enums.PromotionStatus;
+import com.lila_shop.backend.exception.AppException;
+import com.lila_shop.backend.exception.ErrorCode;
+import com.lila_shop.backend.mapper.PromotionMapper;
+import com.lila_shop.backend.repository.CategoryRepository;
+import com.lila_shop.backend.repository.ProductRepository;
+import com.lila_shop.backend.repository.PromotionRepository;
+import com.lila_shop.backend.repository.UserRepository;
+import com.lila_shop.backend.util.SecurityUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -848,9 +848,9 @@ public class PromotionService {
                 URI uri = URI.create(url);
                 String path = uri.getPath();
                 if (path != null && !path.isBlank()) {
-                    // Loại bỏ context path nếu có (ví dụ: /lumina_book)
-                    if (path.startsWith("/lumina_book")) {
-                        path = path.substring("/lumina_book".length());
+                    // Loại bỏ context path nếu có (ví dụ: /lila_shop)
+                    if (path.startsWith("/lila_shop")) {
+                        path = path.substring("/lila_shop".length());
                     }
                     // Tìm phần path sau /promotion_media/ hoặc legacy /promotions/
                     if (path.contains("/promotion_media/")) {
@@ -879,8 +879,8 @@ public class PromotionService {
                     } catch (Exception ignored) { }
                 }
                 // Loại bỏ context path nếu có
-                if (path.startsWith("/lumina_book")) {
-                    path = path.substring("/lumina_book".length());
+                if (path.startsWith("/lila_shop")) {
+                    path = path.substring("/lila_shop".length());
                 }
                 if (path.startsWith("/")) path = path.substring(1);
                 if (path.startsWith("uploads/promotions/")) {

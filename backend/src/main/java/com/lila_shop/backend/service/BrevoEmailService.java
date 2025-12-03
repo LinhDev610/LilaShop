@@ -1,9 +1,9 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.entity.Order;
-import com.lumina_book.backend.entity.OrderItem;
-import com.lumina_book.backend.exception.AppException;
-import com.lumina_book.backend.exception.ErrorCode;
+import com.lila_shop.backend.entity.Order;
+import com.lila_shop.backend.entity.OrderItem;
+import com.lila_shop.backend.exception.AppException;
+import com.lila_shop.backend.exception.ErrorCode;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -44,16 +44,16 @@ public class BrevoEmailService {
 
             // Prepare request body
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("sender", Map.of("email", senderEmail, "name", "LuminaBook"));
+            requestBody.put("sender", Map.of("email", senderEmail, "name", "LilaShop"));
             requestBody.put("to", new Object[] {Map.of("email", toEmail, "name", "User")});
-            requestBody.put("subject", "Mã xác thực OTP - LuminaBook");
+            requestBody.put("subject", "Mã xác thực OTP - LilaShop");
 
             String emailContent = String.format(
                     "Xin chào,\n\n" + "Mã xác thực OTP của bạn là: %s\n\n"
                             + "Mã này có hiệu lực trong 5 phút.\n"
                             + "Vui lòng không chia sẻ mã này với bất kỳ ai.\n\n"
                             + "Trân trọng,\n"
-                            + "Đội ngũ LuminaBook",
+                            + "Đội ngũ LilaShop",
                     otpCode);
 
             requestBody.put("textContent", emailContent);
@@ -85,13 +85,13 @@ public class BrevoEmailService {
 
             // Prepare request body
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("sender", Map.of("email", senderEmail, "name", "LuminaBook Admin"));
+            requestBody.put("sender", Map.of("email", senderEmail, "name", "LilaShop Admin"));
             requestBody.put("to", new Object[] {Map.of("email", toEmail, "name", staffName)});
-            requestBody.put("subject", "Thông tin tài khoản nhân viên - LuminaBook");
+            requestBody.put("subject", "Thông tin tài khoản nhân viên - LilaShop");
 
             String emailContent = String.format(
                     "Xin chào %s,\n\n"
-                            + "Chào mừng bạn đến với đội ngũ LuminaBook!\n\n"
+                            + "Chào mừng bạn đến với đội ngũ LilaShop!\n\n"
                             + "Thông tin tài khoản của bạn:\n"
                             + "- Email: %s\n"
                             + "- Mật khẩu: %s\n"
@@ -100,7 +100,7 @@ public class BrevoEmailService {
                             + "Địa chỉ đăng nhập: http://localhost:3000\n\n"
                             + "Lưu ý: Vui lòng không chia sẻ thông tin này với bất kỳ ai.\n\n"
                             + "Trân trọng,\n"
-                            + "Đội ngũ LuminaBook",
+                            + "Đội ngũ LilaShop",
                     staffName, toEmail, password, role);
 
             requestBody.put("textContent", emailContent);
@@ -133,9 +133,9 @@ public class BrevoEmailService {
 
             // Prepare request body
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("sender", Map.of("email", senderEmail, "name", "LuminaBook Admin"));
+            requestBody.put("sender", Map.of("email", senderEmail, "name", "LilaShop Admin"));
             requestBody.put("to", new Object[] {Map.of("email", toEmail, "name", userName != null ? userName : "User")});
-            requestBody.put("subject", "Thông báo: Tài khoản của bạn đã bị khóa - LuminaBook");
+            requestBody.put("subject", "Thông báo: Tài khoản của bạn đã bị khóa - LilaShop");
 
             String roleDisplayName = "Khách hàng";
             if (roleName != null) {
@@ -155,7 +155,7 @@ public class BrevoEmailService {
 
             String emailContent = String.format(
                     "Xin chào %s,\n\n"
-                            + "Chúng tôi xin thông báo rằng tài khoản %s của bạn tại LuminaBook đã bị khóa.\n\n"
+                            + "Chúng tôi xin thông báo rằng tài khoản %s của bạn tại LilaShop đã bị khóa.\n\n"
                             + "Thông tin tài khoản:\n"
                             + "- Email: %s\n"
                             + "- Vai trò: %s\n\n"
@@ -165,7 +165,7 @@ public class BrevoEmailService {
                             + "- Hoặc liên hệ qua hotline:  \n\n"
                             + "Chúng tôi sẽ xem xét và phản hồi yêu cầu của bạn trong thời gian sớm nhất.\n\n"
                             + "Trân trọng,\n"
-                            + "Đội ngũ LuminaBook",
+                            + "Đội ngũ LilaShop",
                     userName != null ? userName : "Quý khách", roleDisplayName, toEmail, roleDisplayName, senderEmail);
 
             requestBody.put("textContent", emailContent);
@@ -199,9 +199,9 @@ public class BrevoEmailService {
 
             // Prepare request body
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("sender", Map.of("email", senderEmail, "name", "LuminaBook Admin"));
+            requestBody.put("sender", Map.of("email", senderEmail, "name", "LilaShop Admin"));
             requestBody.put("to", new Object[] {Map.of("email", toEmail, "name", userName != null ? userName : "User")});
-            requestBody.put("subject", "Thông báo: Tài khoản của bạn đã được mở khóa - LuminaBook");
+            requestBody.put("subject", "Thông báo: Tài khoản của bạn đã được mở khóa - LilaShop");
 
             String roleDisplayName = "Khách hàng";
             if (roleName != null) {
@@ -221,7 +221,7 @@ public class BrevoEmailService {
 
             String emailContent = String.format(
                     "Xin chào %s,\n\n"
-                            + "Chúng tôi xin thông báo rằng tài khoản %s của bạn tại LuminaBook đã được mở khóa.\n\n"
+                            + "Chúng tôi xin thông báo rằng tài khoản %s của bạn tại LilaShop đã được mở khóa.\n\n"
                             + "Thông tin tài khoản:\n"
                             + "- Email: %s\n"
                             + "- Vai trò: %s\n\n"
@@ -229,9 +229,9 @@ public class BrevoEmailService {
                             + "Nếu bạn có bất kỳ câu hỏi nào hoặc cần hỗ trợ, vui lòng liên hệ với chúng tôi:\n"
                             + "- Email hỗ trợ: %s\n"
                             + "- Hoặc liên hệ qua hotline:  \n\n"
-                            + "Cảm ơn bạn đã sử dụng dịch vụ của LuminaBook.\n\n"
+                            + "Cảm ơn bạn đã sử dụng dịch vụ của LilaShop.\n\n"
                             + "Trân trọng,\n"
-                            + "Đội ngũ LuminaBook",
+                            + "Đội ngũ LilaShop",
                     userName != null ? userName : "Quý khách", roleDisplayName, toEmail, roleDisplayName, senderEmail);
 
             requestBody.put("textContent", emailContent);
@@ -329,7 +329,7 @@ public class BrevoEmailService {
             // Text content
             String textContent = String.format(
                     "Xin chào %s,\n\n"
-                            + "Cảm ơn bạn đã đặt hàng tại LuminaBook!\n\n"
+                            + "Cảm ơn bạn đã đặt hàng tại LilaShop!\n\n"
                             + "Đơn hàng %s của bạn đã được xác nhận thành công.\n\n"
                             + "THÔNG TIN ĐƠN HÀNG:\n"
                             + "Mã đơn hàng: %s\n"
@@ -341,7 +341,7 @@ public class BrevoEmailService {
                             + "ĐỊA CHỈ GIAO HÀNG:\n%s\n\n"
                             + "Chúng tôi sẽ liên hệ với bạn khi đơn hàng được giao cho đơn vị vận chuyển.\n"
                             + "Bạn có thể theo dõi trạng thái đơn hàng tại: http://localhost:3000/customer-account/orders\n\n"
-                            + "Trân trọng,\nĐội ngũ LuminaBook",
+                            + "Trân trọng,\nĐội ngũ LilaShop",
                     customerName,
                     order.getCode(),
                     order.getCode(),
@@ -372,7 +372,7 @@ public class BrevoEmailService {
                     "<div class='header'><h1>Xác nhận đơn hàng</h1></div>" +
                     "<div class='content'>" +
                     "<p>Xin chào <strong>%s</strong>,</p>" +
-                    "<p>Cảm ơn bạn đã đặt hàng tại <strong>LuminaBook</strong>!</p>" +
+                    "<p>Cảm ơn bạn đã đặt hàng tại <strong>LilaShop</strong>!</p>" +
                     "<div class='order-info'>" +
                     "<h3>Thông tin đơn hàng</h3>" +
                     "<p><strong>Mã đơn hàng:</strong> %s</p>" +
@@ -398,7 +398,7 @@ public class BrevoEmailService {
                     "<a href='http://localhost:3000/customer-account/orders'>Xem đơn hàng của tôi</a></p>" +
                     "</div>" +
                     "<div class='footer'>" +
-                    "<p>Trân trọng,<br>Đội ngũ LuminaBook</p>" +
+                    "<p>Trân trọng,<br>Đội ngũ LilaShop</p>" +
                     "</div></div></body></html>",
                     customerName,
                     order.getCode(),
@@ -410,9 +410,9 @@ public class BrevoEmailService {
                     shippingAddressText != null ? shippingAddressText.replace("\n", "<br>") : "Chưa có địa chỉ");
 
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("sender", Map.of("email", senderEmail, "name", "LuminaBook"));
+            requestBody.put("sender", Map.of("email", senderEmail, "name", "LilaShop"));
             requestBody.put("to", new Object[] {Map.of("email", toEmail, "name", customerName)});
-            requestBody.put("subject", "Xác nhận đơn hàng " + order.getCode() + " - LuminaBook");
+            requestBody.put("subject", "Xác nhận đơn hàng " + order.getCode() + " - LilaShop");
             requestBody.put("textContent", textContent);
             requestBody.put("htmlContent", htmlContent);
 
@@ -462,7 +462,7 @@ public class BrevoEmailService {
                             + "Đơn hàng hiện đang được chuyển sang bộ phận kho để kiểm tra hàng hóa. "
                             + "Sau khi nhân viên kho xác nhận tình trạng sản phẩm, chúng tôi sẽ cập nhật kết quả hoàn tiền cho bạn.%n%n"
                             + "Bạn có thể theo dõi trạng thái đơn tại mục 'Hoàn tiền/ trả hàng' trong tài khoản của mình.%n%n"
-                            + "Trân trọng,%nĐội ngũ LuminaBook",
+                            + "Trân trọng,%nĐội ngũ LilaShop",
                     customerName,
                     orderCode,
                     orderCode,
@@ -472,7 +472,7 @@ public class BrevoEmailService {
             String htmlContent = textContent.replace("\n", "<br>");
 
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("sender", Map.of("email", senderEmail, "name", "LuminaBook CSKH"));
+            requestBody.put("sender", Map.of("email", senderEmail, "name", "LilaShop CSKH"));
             requestBody.put("to", new Object[] {Map.of("email", toEmail, "name", customerName)});
             requestBody.put("subject", "CSKH đã xác nhận yêu cầu hoàn tiền cho đơn hàng " + orderCode);
             requestBody.put("textContent", textContent);
@@ -548,7 +548,7 @@ public class BrevoEmailService {
                             + "- Số tiền dự kiến hoàn lại: %s%n%n"
                             + "Admin sẽ tiến hành hoàn tiền theo kết quả trên trong thời gian sớm nhất.%n"
                             + "Bạn có thể theo dõi trạng thái đơn tại mục 'Hoàn tiền/ trả hàng' trong tài khoản của mình.%n%n"
-                            + "Trân trọng,%nĐội ngũ LuminaBook",
+                            + "Trân trọng,%nĐội ngũ LilaShop",
                     customerName,
                     orderCode,
                     faultSide,
@@ -559,7 +559,7 @@ public class BrevoEmailService {
             String htmlContent = textContent.replace("\n", "<br>");
 
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("sender", Map.of("email", senderEmail, "name", "LuminaBook Kho hàng"));
+            requestBody.put("sender", Map.of("email", senderEmail, "name", "LilaShop Kho hàng"));
             requestBody.put("to", new Object[] {Map.of("email", toEmail, "name", customerName)});
             requestBody.put("subject", "Kết quả kiểm tra hàng trả về cho đơn hàng " + orderCode);
             requestBody.put("textContent", textContent);
@@ -617,8 +617,8 @@ public class BrevoEmailService {
                     "Xin chào %s,%n%n"
                             + "Yêu cầu trả hàng/hoàn tiền cho đơn hàng %s của bạn đã bị TỪ CHỐI bởi %s.%n%n"
                             + "LÝ DO TỪ CHỐI:%n%s%n%n"
-                            + "Nếu bạn cần làm rõ thêm, vui lòng liên hệ lại với bộ phận hỗ trợ của LuminaBook.%n%n"
-                            + "Trân trọng,%nĐội ngũ LuminaBook",
+                            + "Nếu bạn cần làm rõ thêm, vui lòng liên hệ lại với bộ phận hỗ trợ của LilaShop.%n%n"
+                            + "Trân trọng,%nĐội ngũ LilaShop",
                     customerName,
                     orderCode,
                     sourceDisplay,
@@ -627,7 +627,7 @@ public class BrevoEmailService {
             String htmlContent = textContent.replace("\n", "<br>");
 
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("sender", Map.of("email", senderEmail, "name", "LuminaBook CSKH"));
+            requestBody.put("sender", Map.of("email", senderEmail, "name", "LilaShop CSKH"));
             requestBody.put("to", new Object[] {Map.of("email", toEmail, "name", customerName)});
             requestBody.put("subject", "Thông báo từ chối yêu cầu hoàn tiền cho đơn hàng " + orderCode);
             requestBody.put("textContent", textContent);

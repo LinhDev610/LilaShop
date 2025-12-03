@@ -1,24 +1,21 @@
-package com.lumina_book.backend.controller;
+package com.lila_shop.backend.controller;
 
-import java.util.List;
-
+import com.lila_shop.backend.dto.request.ApiResponse;
+import com.lila_shop.backend.dto.request.StaffCreationRequest;
+import com.lila_shop.backend.dto.request.UserCreationRequest;
+import com.lila_shop.backend.dto.request.UserUpdateRequest;
+import com.lila_shop.backend.dto.response.UserResponse;
+import com.lila_shop.backend.entity.Role;
+import com.lila_shop.backend.repository.RoleRepository;
+import com.lila_shop.backend.service.UserService;
 import jakarta.validation.Valid;
-
-import org.springframework.web.bind.annotation.*;
-
-import com.lumina_book.backend.dto.request.ApiResponse;
-import com.lumina_book.backend.dto.request.StaffCreationRequest;
-import com.lumina_book.backend.dto.request.UserCreationRequest;
-import com.lumina_book.backend.dto.request.UserUpdateRequest;
-import com.lumina_book.backend.dto.response.UserResponse;
-import com.lumina_book.backend.entity.Role;
-import com.lumina_book.backend.repository.RoleRepository;
-import com.lumina_book.backend.service.UserService;
-
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")

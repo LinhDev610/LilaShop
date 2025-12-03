@@ -1,10 +1,10 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.entity.Inventory;
-import com.lumina_book.backend.entity.Product;
-import com.lumina_book.backend.exception.AppException;
-import com.lumina_book.backend.exception.ErrorCode;
-import com.lumina_book.backend.repository.InventoryRepository;
+import com.lila_shop.backend.entity.Inventory;
+import com.lila_shop.backend.entity.Product;
+import com.lila_shop.backend.exception.AppException;
+import com.lila_shop.backend.exception.ErrorCode;
+import com.lila_shop.backend.repository.InventoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

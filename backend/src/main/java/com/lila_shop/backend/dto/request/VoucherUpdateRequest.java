@@ -1,15 +1,13 @@
-package com.lumina_book.backend.dto.request;
+package com.lila_shop.backend.dto.request;
+
+import com.lila_shop.backend.enums.DiscountApplyScope;
+import com.lila_shop.backend.enums.DiscountValueType;
+import jakarta.validation.constraints.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.util.Set;
-
-import jakarta.validation.constraints.*;
-
-import com.lumina_book.backend.enums.DiscountApplyScope;
-import com.lumina_book.backend.enums.DiscountValueType;
-
-import lombok.*;
-import lombok.experimental.FieldDefaults;
 
 @Data
 @Builder

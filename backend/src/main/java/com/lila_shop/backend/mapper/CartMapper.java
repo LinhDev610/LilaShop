@@ -1,15 +1,14 @@
-package com.lumina_book.backend.mapper;
+package com.lila_shop.backend.mapper;
 
-import java.util.List;
-
+import com.lila_shop.backend.dto.response.CartItemResponse;
+import com.lila_shop.backend.dto.response.CartResponse;
+import com.lila_shop.backend.entity.Cart;
+import com.lila_shop.backend.entity.CartItem;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
-import com.lumina_book.backend.dto.response.CartItemResponse;
-import com.lumina_book.backend.dto.response.CartResponse;
-import com.lumina_book.backend.entity.Cart;
-import com.lumina_book.backend.entity.CartItem;
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface CartMapper {
@@ -23,7 +22,7 @@ public interface CartMapper {
 
     @Named("mapItems")
     default List<CartItemResponse> mapItems(List<CartItem> items) {
-        if (items == null) return java.util.List.of();
+        if (items == null) return List.of();
         return items.stream().map(this::toItemResponse).toList();
     }
 }

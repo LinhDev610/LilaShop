@@ -1,20 +1,19 @@
-package com.lumina_book.backend.mapper;
+package com.lila_shop.backend.mapper;
 
-import java.util.List;
-
+import com.lila_shop.backend.dto.request.ProductCreationRequest;
+import com.lila_shop.backend.dto.request.ProductUpdateRequest;
+import com.lila_shop.backend.dto.response.ProductResponse;
+import com.lila_shop.backend.entity.Product;
+import com.lila_shop.backend.entity.ProductMedia;
+import com.lila_shop.backend.entity.Promotion;
+import com.lila_shop.backend.entity.Review;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.lumina_book.backend.dto.request.ProductCreationRequest;
-import com.lumina_book.backend.dto.request.ProductUpdateRequest;
-import com.lumina_book.backend.dto.response.ProductResponse;
-import com.lumina_book.backend.entity.Product;
-import com.lumina_book.backend.entity.ProductMedia;
-import com.lumina_book.backend.entity.Promotion;
-import com.lumina_book.backend.entity.Review;
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
@@ -87,7 +86,7 @@ public interface ProductMapper {
         if (lower.startsWith("http://") || lower.startsWith("https://")) {
             return url;
         }
-        // Nếu URL bắt đầu với /product_media, thì thêm thông tin context path (ví dụ: /lumina_book)
+        // Nếu URL bắt đầu với /product_media, thì thêm thông tin context path (ví dụ: /lila_shop)
         if (url.startsWith("/product_media")) {
             String base = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
             return base + url;

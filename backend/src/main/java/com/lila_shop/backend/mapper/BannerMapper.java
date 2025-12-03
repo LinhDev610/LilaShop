@@ -1,17 +1,16 @@
-package com.lumina_book.backend.mapper;
+package com.lila_shop.backend.mapper;
 
-import java.util.List;
-
+import com.lila_shop.backend.dto.request.BannerCreationRequest;
+import com.lila_shop.backend.dto.request.BannerUpdateRequest;
+import com.lila_shop.backend.dto.response.BannerResponse;
+import com.lila_shop.backend.entity.Banner;
+import com.lila_shop.backend.entity.Product;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 
-import com.lumina_book.backend.dto.request.BannerCreationRequest;
-import com.lumina_book.backend.dto.request.BannerUpdateRequest;
-import com.lumina_book.backend.dto.response.BannerResponse;
-import com.lumina_book.backend.entity.Banner;
-import com.lumina_book.backend.entity.Product;
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface BannerMapper {

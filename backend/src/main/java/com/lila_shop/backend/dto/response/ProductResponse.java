@@ -1,6 +1,6 @@
 package com.lila_shop.backend.dto.response;
 
-import com.lumina_book.backend.enums.ProductStatus;
+import com.lila_shop.backend.enums.ProductStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

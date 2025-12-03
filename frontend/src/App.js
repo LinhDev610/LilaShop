@@ -1,71 +1,46 @@
-import { Fragment } from 'react/jsx-runtime';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { publicRoutes, privateRoutes } from './routes';
-import DefaultLayout from './layouts/DefaultLayout';
+import { DefaultLayout } from './layouts';
 import PrivateRoute from './routes/PrivateRoute';
-import { AuthProvider } from './contexts/AuthContext';
 import AdminRedirectHandler from './components/AdminRedirectHandler';
 
 function App() {
     return (
-        <AuthProvider>
-            <Router>
-                <div className="App">
-                    <AdminRedirectHandler />
-                    <Routes>
-                        {/* Public Routes */}
-                        {publicRoutes.map((route, index) => {
-                            const Page = route.component;
-                            let Layout = DefaultLayout;
+        <Router>
+            {/* Tự động redirect ADMIN/STAFF khi đang ở trang chủ */}
+            <AdminRedirectHandler />
+            <Routes>
+                {publicRoutes.map(({ path, component: Component }) => (
+                    <Route
+                        key={path}
+                        path={path}
+                        element={
+                            <DefaultLayout>
+                                <Component />
+                            </DefaultLayout>
+                        }
+                    />
+                ))}
 
-                            if (route.layout) {
-                                Layout = route.layout;
-                            } else if (route.layout === null) {
-                                Layout = Fragment;
+                {privateRoutes.map(({ path, component: Component, layout: LayoutComponent }) => {
+                    const Layout = LayoutComponent || DefaultLayout;
+                    return (
+                        <Route
+                            key={path}
+                            path={path}
+                            element={
+                                <PrivateRoute>
+                                    <Layout>
+                                        <Component />
+                                    </Layout>
+                                </PrivateRoute>
                             }
-
-                            return (
-                                <Route
-                                    key={index}
-                                    path={route.path}
-                                    element={
-                                        <Layout>
-                                            <Page />
-                                        </Layout>
-                                    }
-                                />
-                            );
-                        })}
-
-                        {/* Private Routes */}
-                        {privateRoutes.map((route, index) => {
-                            const Page = route.component;
-                            let Layout = DefaultLayout;
-
-                            if (route.layout) {
-                                Layout = route.layout;
-                            } else if (route.layout === null) {
-                                Layout = Fragment;
-                            }
-
-                            return (
-                                <Route
-                                    key={`private-${index}`}
-                                    path={route.path}
-                                    element={
-                                        <PrivateRoute>
-                                            <Layout>
-                                                <Page />
-                                            </Layout>
-                                        </PrivateRoute>
-                                    }
-                                />
-                            );
-                        })}
-                    </Routes>
-                </div>
-            </Router>
-        </AuthProvider>
+                        />
+                    );
+                })}
+            </Routes>
+        </Router>
     );
 }
 

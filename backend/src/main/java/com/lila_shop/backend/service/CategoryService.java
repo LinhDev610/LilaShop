@@ -1,13 +1,13 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.dto.request.CategoryCreationRequest;
-import com.lumina_book.backend.dto.request.CategoryUpdateRequest;
-import com.lumina_book.backend.dto.response.CategoryResponse;
-import com.lumina_book.backend.entity.Category;
-import com.lumina_book.backend.exception.AppException;
-import com.lumina_book.backend.exception.ErrorCode;
-import com.lumina_book.backend.mapper.CategoryMapper;
-import com.lumina_book.backend.repository.CategoryRepository;
+import com.lila_shop.backend.dto.request.CategoryCreationRequest;
+import com.lila_shop.backend.dto.request.CategoryUpdateRequest;
+import com.lila_shop.backend.dto.response.CategoryResponse;
+import com.lila_shop.backend.entity.Category;
+import com.lila_shop.backend.exception.AppException;
+import com.lila_shop.backend.exception.ErrorCode;
+import com.lila_shop.backend.mapper.CategoryMapper;
+import com.lila_shop.backend.repository.CategoryRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

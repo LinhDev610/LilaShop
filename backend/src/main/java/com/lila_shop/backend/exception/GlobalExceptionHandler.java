@@ -1,9 +1,8 @@
-package com.lumina_book.backend.exception;
+package com.lila_shop.backend.exception;
 
-import java.util.Map;
-import java.util.Objects;
-
+import com.lila_shop.backend.dto.request.ApiResponse;
 import jakarta.validation.ConstraintViolation;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,9 +13,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import com.lumina_book.backend.dto.request.ApiResponse;
-
-import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
+import java.util.Objects;
 
 @ControllerAdvice
 @Slf4j

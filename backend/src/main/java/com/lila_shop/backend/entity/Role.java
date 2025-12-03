@@ -1,11 +1,13 @@
-package com.lumina_book.backend.entity;
+package com.lila_shop.backend.entity;
 
-import java.util.Set;
-
-import jakarta.persistence.*;
-
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.Set;
 
 @Getter
 @Setter

@@ -1,11 +1,10 @@
-package com.lumina_book.backend.mapper;
+package com.lila_shop.backend.mapper;
 
+import com.lila_shop.backend.dto.request.ReviewCreationRequest;
+import com.lila_shop.backend.dto.response.ReviewResponse;
+import com.lila_shop.backend.entity.Review;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-
-import com.lumina_book.backend.dto.request.ReviewCreationRequest;
-import com.lumina_book.backend.dto.response.ReviewResponse;
-import com.lumina_book.backend.entity.Review;
 
 @Mapper(componentModel = "spring")
 public interface ReviewMapper {

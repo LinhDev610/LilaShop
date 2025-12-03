@@ -1,14 +1,14 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.configuration.GhnProperties;
-import com.lumina_book.backend.constant.ApiConstants;
-import com.lumina_book.backend.dto.request.GhnCalculateFeeRequest;
-import com.lumina_book.backend.dto.request.GhnCreateOrderRequest;
-import com.lumina_book.backend.dto.response.*;
-import com.lumina_book.backend.dto.response.GhnOrderDetailResponse;
-import com.lumina_book.backend.exception.AppException;
-import com.lumina_book.backend.exception.ErrorCode;
-import com.lumina_book.backend.util.ApiUtil;
+import com.lila_shop.backend.configuration.GhnProperties;
+import com.lila_shop.backend.constant.ApiConstants;
+import com.lila_shop.backend.dto.request.GhnCalculateFeeRequest;
+import com.lila_shop.backend.dto.request.GhnCreateOrderRequest;
+import com.lila_shop.backend.dto.response.*;
+import com.lila_shop.backend.dto.response.GhnOrderDetailResponse;
+import com.lila_shop.backend.exception.AppException;
+import com.lila_shop.backend.exception.ErrorCode;
+import com.lila_shop.backend.util.ApiUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -141,7 +141,7 @@ public class GhnService {
                 ApiConstants.GHN_SHIPPING_ORDER_DETAIL,
                 HttpMethod.POST,
                 payload,
-                new ParameterizedTypeReference<GhnApiResponse<com.lumina_book.backend.dto.response.GhnOrderDetailResponse>>() {},
+                new ParameterizedTypeReference<GhnApiResponse<com.lila_shop.backend.dto.response.GhnOrderDetailResponse>>() {},
                 ghnProperties.getToken(),
                 ghnProperties.getShopId());
     }

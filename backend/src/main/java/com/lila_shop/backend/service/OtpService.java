@@ -1,9 +1,9 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.entity.Otp;
-import com.lumina_book.backend.exception.AppException;
-import com.lumina_book.backend.exception.ErrorCode;
-import com.lumina_book.backend.repository.OtpRepository;
+import com.lila_shop.backend.entity.Otp;
+import com.lila_shop.backend.exception.AppException;
+import com.lila_shop.backend.exception.ErrorCode;
+import com.lila_shop.backend.repository.OtpRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

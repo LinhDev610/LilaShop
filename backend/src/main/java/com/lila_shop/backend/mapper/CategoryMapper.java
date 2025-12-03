@@ -1,16 +1,15 @@
-package com.lumina_book.backend.mapper;
+package com.lila_shop.backend.mapper;
 
-import java.util.List;
-
+import com.lila_shop.backend.dto.request.CategoryCreationRequest;
+import com.lila_shop.backend.dto.request.CategoryUpdateRequest;
+import com.lila_shop.backend.dto.response.CategoryResponse;
+import com.lila_shop.backend.entity.Category;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 
-import com.lumina_book.backend.dto.request.CategoryCreationRequest;
-import com.lumina_book.backend.dto.request.CategoryUpdateRequest;
-import com.lumina_book.backend.dto.response.CategoryResponse;
-import com.lumina_book.backend.entity.Category;
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface CategoryMapper {

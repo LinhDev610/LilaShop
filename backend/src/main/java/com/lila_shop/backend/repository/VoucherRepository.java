@@ -1,16 +1,15 @@
-package com.lumina_book.backend.repository;
+package com.lila_shop.backend.repository;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-
+import com.lila_shop.backend.entity.User;
+import com.lila_shop.backend.entity.Voucher;
+import com.lila_shop.backend.enums.VoucherStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.lumina_book.backend.entity.Voucher;
-import com.lumina_book.backend.entity.User;
-import com.lumina_book.backend.enums.VoucherStatus;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 public interface VoucherRepository extends JpaRepository<Voucher, String> {
     Optional<Voucher> findByCode(String code);

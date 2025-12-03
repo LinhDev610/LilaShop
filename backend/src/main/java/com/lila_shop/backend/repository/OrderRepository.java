@@ -1,9 +1,6 @@
-package com.lumina_book.backend.repository;
+package com.lila_shop.backend.repository;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
+import com.lila_shop.backend.entity.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -11,7 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.lumina_book.backend.entity.Order;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, String> {
 
@@ -46,7 +45,7 @@ public interface OrderRepository extends JpaRepository<Order, String> {
      */
     @EntityGraph(attributePaths = {"items", "items.product", "items.product.defaultMedia", "items.product.mediaList", "user"})
     @Query("SELECT o FROM Order o WHERE o.status IN :statuses ORDER BY o.orderDateTime DESC")
-    List<Order> findByStatusIn(@Param("statuses") List<com.lumina_book.backend.enums.OrderStatus> statuses);
+    List<Order> findByStatusIn(@Param("statuses") List<com.lila_shop.backend.enums.OrderStatus> statuses);
 
     /**
      * Tìm đơn hàng MoMo pending (chưa thanh toán) của user trong vòng 30 phút gần đây.
@@ -60,7 +59,7 @@ public interface OrderRepository extends JpaRepository<Order, String> {
            "ORDER BY o.orderDateTime DESC")
     List<Order> findPendingMomoOrdersByUserSince(
             @Param("email") String email,
-            @Param("sinceTime") java.time.LocalDateTime sinceTime);
+            @Param("sinceTime") LocalDateTime sinceTime);
     // Tìm các đơn hàng trong khoảng thời gian, sắp xếp theo orderDateTime DESC
     @EntityGraph(attributePaths = {"items", "items.product", "items.product.defaultMedia", "items.product.mediaList", "user"})
     @Query("SELECT o FROM Order o WHERE o.orderDateTime BETWEEN :start AND :end ORDER BY o.orderDateTime DESC")

@@ -1,6 +1,6 @@
 package com.lila_shop.backend.dto.response;
 
-import com.lumina_book.backend.enums.PaymentMethod;
+import com.lila_shop.backend.enums.PaymentMethod;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

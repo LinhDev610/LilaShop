@@ -1,23 +1,16 @@
-package com.lumina_book.backend.controller;
+package com.lila_shop.backend.controller;
 
-import java.util.List;
-
+import com.lila_shop.backend.dto.request.*;
+import com.lila_shop.backend.dto.response.ProductResponse;
+import com.lila_shop.backend.service.ProductService;
 import jakarta.validation.Valid;
-
-import org.springframework.web.bind.annotation.*;
-
-import com.lumina_book.backend.dto.request.ApiResponse;
-import com.lumina_book.backend.dto.request.ApproveProductRequest;
-import com.lumina_book.backend.dto.request.ProductCreationRequest;
-import com.lumina_book.backend.dto.request.ProductRestockRequest;
-import com.lumina_book.backend.dto.request.ProductUpdateRequest;
-import com.lumina_book.backend.dto.response.ProductResponse;
-import com.lumina_book.backend.service.ProductService;
-
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * Product Controller

@@ -1,15 +1,14 @@
-package com.lumina_book.backend.repository;
+package com.lila_shop.backend.repository;
 
-import java.util.List;
-import java.util.Optional;
-
+import com.lila_shop.backend.entity.ProductMedia;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.lumina_book.backend.entity.ProductMedia;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductMediaRepository extends JpaRepository<ProductMedia, String> {

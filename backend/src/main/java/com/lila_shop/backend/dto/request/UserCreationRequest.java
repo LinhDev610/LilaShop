@@ -1,12 +1,10 @@
-package com.lumina_book.backend.dto.request;
+package com.lila_shop.backend.dto.request;
 
+import com.lila_shop.backend.constant.PredefinedRole;
+import com.lila_shop.backend.validator.EmailConstraint;
+import com.lila_shop.backend.validator.PasswordConstraint;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
-import com.lumina_book.backend.constant.PredefinedRole;
-import com.lumina_book.backend.validator.EmailConstraint;
-import com.lumina_book.backend.validator.PasswordConstraint;
-
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

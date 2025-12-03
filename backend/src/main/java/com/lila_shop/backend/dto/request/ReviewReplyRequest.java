@@ -1,7 +1,7 @@
-package com.lumina_book.backend.dto.request;
+package com.lila_shop.backend.dto.request;
 
-import jakarta.validation.constraints.*;
-
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

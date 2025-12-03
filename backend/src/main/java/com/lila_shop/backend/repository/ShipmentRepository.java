@@ -1,12 +1,11 @@
-package com.lumina_book.backend.repository;
+package com.lila_shop.backend.repository;
 
-import java.util.Optional;
-
+import com.lila_shop.backend.entity.Shipment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.lumina_book.backend.entity.Shipment;
+import java.util.Optional;
 
 public interface ShipmentRepository extends JpaRepository<Shipment, String> {
     Optional<Shipment> findByOrderCode(String orderCode);

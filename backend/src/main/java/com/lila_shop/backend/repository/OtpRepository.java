@@ -1,15 +1,14 @@
-package com.lumina_book.backend.repository;
+package com.lila_shop.backend.repository;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
-
+import com.lila_shop.backend.entity.Otp;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.lumina_book.backend.entity.Otp;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Repository
 public interface OtpRepository extends JpaRepository<Otp, String> {

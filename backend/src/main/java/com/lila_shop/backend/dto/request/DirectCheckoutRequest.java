@@ -1,4 +1,4 @@
-package com.lumina_book.backend.dto.request;
+package com.lila_shop.backend.dto.request;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;

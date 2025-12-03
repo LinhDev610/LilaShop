@@ -1,4 +1,4 @@
-package com.lumina_book.backend.service;
+package com.lila_shop.backend.service;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -19,11 +19,11 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.servlet.support.WebContentGenerator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lumina_book.backend.dto.request.UserCreationRequest;
-import com.lumina_book.backend.dto.response.UserResponse;
-import com.lumina_book.backend.entity.User;
-import com.lumina_book.backend.exception.AppException;
-import com.lumina_book.backend.repository.UserRepository;
+import com.lila_shop.backend.dto.request.UserCreationRequest;
+import com.lila_shop.backend.dto.response.UserResponse;
+import com.lila_shop.backend.entity.User;
+import com.lila_shop.backend.exception.AppException;
+import com.lila_shop.backend.repository.UserRepository;
 
 @SpringBootTest
 @TestPropertySource("/test.properties") // Chỉ định ghi đè file cấu hình riêng cho môi trường test.

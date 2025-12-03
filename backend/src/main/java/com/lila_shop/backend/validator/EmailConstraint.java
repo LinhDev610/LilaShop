@@ -1,9 +1,9 @@
-package com.lumina_book.backend.validator;
-
-import java.lang.annotation.*;
+package com.lila_shop.backend.validator;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
+
+import java.lang.annotation.*;
 
 @Documented
 @Constraint(validatedBy = EmailValidator.class)

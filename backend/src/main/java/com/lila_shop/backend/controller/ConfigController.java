@@ -1,16 +1,14 @@
-package com.lumina_book.backend.controller;
+package com.lila_shop.backend.controller;
 
+import com.lila_shop.backend.dto.request.ApiResponse;
+import com.lila_shop.backend.dto.response.ConfigResponse;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.lumina_book.backend.dto.request.ApiResponse;
-import com.lumina_book.backend.dto.response.ConfigResponse;
-
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/config")

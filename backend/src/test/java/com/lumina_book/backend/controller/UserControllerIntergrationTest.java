@@ -1,4 +1,4 @@
-package com.lumina_book.backend.controller;
+package com.lila_shop.backend.controller;
 
 import java.time.LocalDate;
 
@@ -19,8 +19,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.lumina_book.backend.dto.request.UserCreationRequest;
-import com.lumina_book.backend.dto.response.UserResponse;
+import com.lila_shop.backend.dto.request.UserCreationRequest;
+import com.lila_shop.backend.dto.response.UserResponse;
 
 import lombok.extern.slf4j.Slf4j;
 

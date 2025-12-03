@@ -1,18 +1,15 @@
-package com.lumina_book.backend.controller;
+package com.lila_shop.backend.controller;
 
-import java.util.List;
-
+import com.lila_shop.backend.dto.request.ApiResponse;
+import com.lila_shop.backend.dto.request.TicketCreationRequest;
+import com.lila_shop.backend.dto.request.TicketUpdateRequest;
+import com.lila_shop.backend.dto.response.TicketResponse;
+import com.lila_shop.backend.service.TicketService;
 import jakarta.validation.Valid;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import com.lumina_book.backend.dto.request.ApiResponse;
-import com.lumina_book.backend.dto.request.TicketCreationRequest;
-import com.lumina_book.backend.dto.request.TicketUpdateRequest;
-import com.lumina_book.backend.dto.response.TicketResponse;
-import com.lumina_book.backend.service.TicketService;
-
-import lombok.RequiredArgsConstructor;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/tickets")

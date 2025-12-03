@@ -1,16 +1,15 @@
-package com.lumina_book.backend.mapper;
+package com.lila_shop.backend.mapper;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import com.lila_shop.backend.dto.request.NotificationCreationRequest;
+import com.lila_shop.backend.dto.response.NotificationResponse;
+import com.lila_shop.backend.entity.Notification;
+import com.lila_shop.backend.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
-import com.lumina_book.backend.dto.request.NotificationCreationRequest;
-import com.lumina_book.backend.dto.response.NotificationResponse;
-import com.lumina_book.backend.entity.Notification;
-import com.lumina_book.backend.entity.User;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface NotificationMapper {

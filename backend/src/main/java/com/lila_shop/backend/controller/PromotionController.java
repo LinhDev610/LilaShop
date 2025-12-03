@@ -1,23 +1,20 @@
-package com.lumina_book.backend.controller;
+package com.lila_shop.backend.controller;
 
-import java.util.List;
-
+import com.lila_shop.backend.dto.request.ApiResponse;
+import com.lila_shop.backend.dto.request.ApprovePromotionRequest;
+import com.lila_shop.backend.dto.request.PromotionCreationRequest;
+import com.lila_shop.backend.dto.request.PromotionUpdateRequest;
+import com.lila_shop.backend.dto.response.PromotionResponse;
+import com.lila_shop.backend.enums.PromotionStatus;
+import com.lila_shop.backend.service.PromotionService;
 import jakarta.validation.Valid;
-
-import org.springframework.web.bind.annotation.*;
-
-import com.lumina_book.backend.dto.request.ApiResponse;
-import com.lumina_book.backend.dto.request.ApprovePromotionRequest;
-import com.lumina_book.backend.dto.request.PromotionCreationRequest;
-import com.lumina_book.backend.dto.request.PromotionUpdateRequest;
-import com.lumina_book.backend.dto.response.PromotionResponse;
-import com.lumina_book.backend.enums.PromotionStatus;
-import com.lumina_book.backend.service.PromotionService;
-
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/promotions")

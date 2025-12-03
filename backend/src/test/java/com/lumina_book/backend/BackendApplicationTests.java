@@ -1,4 +1,4 @@
-package com.lumina_book.backend;
+package com.lila_shop.backend;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

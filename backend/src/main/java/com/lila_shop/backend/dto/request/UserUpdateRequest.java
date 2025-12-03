@@ -1,9 +1,8 @@
-package com.lumina_book.backend.dto.request;
+package com.lila_shop.backend.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.lumina_book.backend.validator.EmailConstraint;
-import com.lumina_book.backend.validator.PasswordConstraint;
-
+import com.lila_shop.backend.validator.EmailConstraint;
+import com.lila_shop.backend.validator.PasswordConstraint;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

@@ -1,4 +1,4 @@
-package com.lumina_book.backend.exception;
+package com.lila_shop.backend.exception;
 
 public class AppException extends RuntimeException {
     public AppException(ErrorCode errorCode) {

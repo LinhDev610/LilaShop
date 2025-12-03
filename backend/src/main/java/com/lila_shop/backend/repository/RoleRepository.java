@@ -1,9 +1,8 @@
-package com.lumina_book.backend.repository;
+package com.lila_shop.backend.repository;
 
+import com.lila_shop.backend.entity.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import com.lumina_book.backend.entity.Role;
 
 @Repository
 public interface RoleRepository extends JpaRepository<Role, String> {}

@@ -1,17 +1,15 @@
-package com.lumina_book.backend.entity;
+package com.lila_shop.backend.entity;
+
+import com.lila_shop.backend.enums.ProductStatus;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import jakarta.persistence.*;
-
-import com.lumina_book.backend.enums.ProductStatus;
-
-import lombok.*;
-import lombok.experimental.FieldDefaults;
 
 @Getter
 @Setter

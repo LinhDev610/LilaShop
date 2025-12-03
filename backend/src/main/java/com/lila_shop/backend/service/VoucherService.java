@@ -1,23 +1,23 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.dto.request.ApproveVoucherRequest;
-import com.lumina_book.backend.dto.request.VoucherCreationRequest;
-import com.lumina_book.backend.dto.request.VoucherUpdateRequest;
-import com.lumina_book.backend.dto.response.VoucherResponse;
-import com.lumina_book.backend.entity.Category;
-import com.lumina_book.backend.entity.Product;
-import com.lumina_book.backend.entity.User;
-import com.lumina_book.backend.entity.Voucher;
-import com.lumina_book.backend.enums.DiscountApplyScope;
-import com.lumina_book.backend.enums.VoucherStatus;
-import com.lumina_book.backend.exception.AppException;
-import com.lumina_book.backend.exception.ErrorCode;
-import com.lumina_book.backend.mapper.VoucherMapper;
-import com.lumina_book.backend.repository.CategoryRepository;
-import com.lumina_book.backend.repository.ProductRepository;
-import com.lumina_book.backend.repository.UserRepository;
-import com.lumina_book.backend.repository.VoucherRepository;
-import com.lumina_book.backend.util.SecurityUtil;
+import com.lila_shop.backend.dto.request.ApproveVoucherRequest;
+import com.lila_shop.backend.dto.request.VoucherCreationRequest;
+import com.lila_shop.backend.dto.request.VoucherUpdateRequest;
+import com.lila_shop.backend.dto.response.VoucherResponse;
+import com.lila_shop.backend.entity.Category;
+import com.lila_shop.backend.entity.Product;
+import com.lila_shop.backend.entity.User;
+import com.lila_shop.backend.entity.Voucher;
+import com.lila_shop.backend.enums.DiscountApplyScope;
+import com.lila_shop.backend.enums.VoucherStatus;
+import com.lila_shop.backend.exception.AppException;
+import com.lila_shop.backend.exception.ErrorCode;
+import com.lila_shop.backend.mapper.VoucherMapper;
+import com.lila_shop.backend.repository.CategoryRepository;
+import com.lila_shop.backend.repository.ProductRepository;
+import com.lila_shop.backend.repository.UserRepository;
+import com.lila_shop.backend.repository.VoucherRepository;
+import com.lila_shop.backend.util.SecurityUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -318,9 +318,9 @@ public class VoucherService {
                 java.net.URI uri = java.net.URI.create(url);
                 String path = uri.getPath();
                 if (path != null && !path.isBlank()) {
-                    // Loại bỏ context path nếu có (ví dụ: /lumina_book)
-                    if (path.startsWith("/lumina_book")) {
-                        path = path.substring("/lumina_book".length());
+                    // Loại bỏ context path nếu có (ví dụ: /lila_shop)
+                    if (path.startsWith("/lila_shop")) {
+                        path = path.substring("/lila_shop".length());
                     }
                     // Tìm phần path sau /voucher_media/ hoặc legacy /vouchers/
                     if (path.contains("/voucher_media/")) {
@@ -349,8 +349,8 @@ public class VoucherService {
                     } catch (Exception ignored) { }
                 }
                 // Loại bỏ context path nếu có
-                if (path.startsWith("/lumina_book")) {
-                    path = path.substring("/lumina_book".length());
+                if (path.startsWith("/lila_shop")) {
+                    path = path.substring("/lila_shop".length());
                 }
                 if (path.startsWith("/")) path = path.substring(1);
                 if (path.startsWith("uploads/vouchers/")) {

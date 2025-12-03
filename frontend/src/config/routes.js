@@ -1,8 +1,9 @@
 const routes = {
     home: '/',
     cart: '/cart',
+    search: '/search',
     contact: '/contact',
-    customerSupport: '/customer-support',
+    customerSupport: '/support',
     login: './login',
     register: './register',
     forgotPassword: './forgot-password',

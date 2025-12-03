@@ -1,7 +1,7 @@
 package com.lila_shop.backend.dto.response;
 
-import com.lumina_book.backend.enums.ShipmentProvider;
-import com.lumina_book.backend.enums.ShipmentStatus;
+import com.lila_shop.backend.enums.ShipmentProvider;
+import com.lila_shop.backend.enums.ShipmentStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

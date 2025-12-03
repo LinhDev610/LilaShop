@@ -1,10 +1,10 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.dto.request.PermissionRequest;
-import com.lumina_book.backend.dto.response.PermissionResponse;
-import com.lumina_book.backend.entity.Permission;
-import com.lumina_book.backend.mapper.PermissionMapper;
-import com.lumina_book.backend.repository.PermissionRepository;
+import com.lila_shop.backend.dto.request.PermissionRequest;
+import com.lila_shop.backend.dto.response.PermissionResponse;
+import com.lila_shop.backend.entity.Permission;
+import com.lila_shop.backend.mapper.PermissionMapper;
+import com.lila_shop.backend.repository.PermissionRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

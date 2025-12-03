@@ -1,23 +1,17 @@
-package com.lumina_book.backend.mapper;
+package com.lila_shop.backend.mapper;
+
+import com.lila_shop.backend.dto.request.VoucherCreationRequest;
+import com.lila_shop.backend.dto.request.VoucherUpdateRequest;
+import com.lila_shop.backend.dto.response.VoucherResponse;
+import com.lila_shop.backend.entity.Category;
+import com.lila_shop.backend.entity.Product;
+import com.lila_shop.backend.entity.Voucher;
+import org.mapstruct.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.Named;
-import org.mapstruct.NullValuePropertyMappingStrategy;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import com.lumina_book.backend.dto.request.VoucherCreationRequest;
-import com.lumina_book.backend.dto.request.VoucherUpdateRequest;
-import com.lumina_book.backend.dto.response.VoucherResponse;
-import com.lumina_book.backend.entity.Category;
-import com.lumina_book.backend.entity.Product;
-import com.lumina_book.backend.entity.Voucher;
 
 @Mapper(componentModel = "spring")
 public interface VoucherMapper {

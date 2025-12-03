@@ -1,21 +1,18 @@
-package com.lumina_book.backend.controller;
+package com.lila_shop.backend.controller;
 
-import java.util.List;
-
+import com.lila_shop.backend.dto.request.ApiResponse;
+import com.lila_shop.backend.dto.request.ReviewCreationRequest;
+import com.lila_shop.backend.dto.request.ReviewReplyRequest;
+import com.lila_shop.backend.dto.response.ReviewResponse;
+import com.lila_shop.backend.service.ReviewService;
 import jakarta.validation.Valid;
-
-import org.springframework.web.bind.annotation.*;
-
-import com.lumina_book.backend.dto.request.ApiResponse;
-import com.lumina_book.backend.dto.request.ReviewCreationRequest;
-import com.lumina_book.backend.dto.request.ReviewReplyRequest;
-import com.lumina_book.backend.dto.response.ReviewResponse;
-import com.lumina_book.backend.service.ReviewService;
-
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/reviews")

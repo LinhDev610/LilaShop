@@ -1,6 +1,6 @@
-package com.lumina_book.backend.constant;
+package com.lila_shop.backend.constant;
 
-import com.lumina_book.backend.entity.Role;
+import com.lila_shop.backend.entity.Role;
 
 public class PredefinedRole {
     //    public static final String USER_ROLE = "USER";

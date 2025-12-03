@@ -1,4 +1,4 @@
-package com.lumina_book.backend.constant;
+package com.lila_shop.backend.constant;
 
 public final class ApiConstants {
     private ApiConstants() {}

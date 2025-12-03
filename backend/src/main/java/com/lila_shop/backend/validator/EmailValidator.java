@@ -1,4 +1,4 @@
-package com.lumina_book.backend.validator;
+package com.lila_shop.backend.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

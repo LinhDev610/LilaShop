@@ -1,11 +1,10 @@
-package com.lumina_book.backend.entity;
-
-import java.util.List;
+package com.lila_shop.backend.entity;
 
 import jakarta.persistence.*;
-
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.List;
 
 @Getter
 @Setter

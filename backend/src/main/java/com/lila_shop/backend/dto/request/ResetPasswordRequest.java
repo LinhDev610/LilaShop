@@ -1,10 +1,8 @@
-package com.lumina_book.backend.dto.request;
+package com.lila_shop.backend.dto.request;
 
+import com.lila_shop.backend.validator.PasswordConstraint;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-
-import com.lumina_book.backend.validator.PasswordConstraint;
-
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

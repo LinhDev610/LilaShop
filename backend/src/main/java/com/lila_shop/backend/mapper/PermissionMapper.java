@@ -1,10 +1,9 @@
-package com.lumina_book.backend.mapper;
+package com.lila_shop.backend.mapper;
 
+import com.lila_shop.backend.dto.request.PermissionRequest;
+import com.lila_shop.backend.dto.response.PermissionResponse;
+import com.lila_shop.backend.entity.Permission;
 import org.mapstruct.Mapper;
-
-import com.lumina_book.backend.dto.request.PermissionRequest;
-import com.lumina_book.backend.dto.response.PermissionResponse;
-import com.lumina_book.backend.entity.Permission;
 
 @Mapper(componentModel = "spring")
 public interface PermissionMapper {

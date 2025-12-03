@@ -1,14 +1,12 @@
-package com.lumina_book.backend.entity;
+package com.lila_shop.backend.entity;
 
-import java.time.LocalDateTime;
-
+import com.lila_shop.backend.enums.TicketAssignee;
+import com.lila_shop.backend.enums.TicketStatus;
 import jakarta.persistence.*;
-
-import com.lumina_book.backend.enums.TicketAssignee;
-import com.lumina_book.backend.enums.TicketStatus;
-
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Setter

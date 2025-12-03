@@ -1,7 +1,7 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.entity.User;
-import com.lumina_book.backend.repository.UserRepository;
+import com.lila_shop.backend.entity.User;
+import com.lila_shop.backend.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

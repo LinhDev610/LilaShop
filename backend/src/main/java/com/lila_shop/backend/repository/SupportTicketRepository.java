@@ -1,11 +1,10 @@
-package com.lumina_book.backend.repository;
+package com.lila_shop.backend.repository;
 
-import java.util.List;
-
+import com.lila_shop.backend.entity.SupportTicket;
+import com.lila_shop.backend.enums.TicketStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.lumina_book.backend.entity.SupportTicket;
-import com.lumina_book.backend.enums.TicketStatus;
+import java.util.List;
 
 public interface SupportTicketRepository extends JpaRepository<SupportTicket, String> {
     List<SupportTicket> findByStatus(TicketStatus status);

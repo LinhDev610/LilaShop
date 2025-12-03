@@ -1,15 +1,10 @@
-package com.lumina_book.backend.mapper;
+package com.lila_shop.backend.mapper;
 
+import com.lila_shop.backend.constant.GhnConstants;
+import com.lila_shop.backend.dto.request.*;
+import com.lila_shop.backend.entity.OrderItem;
+import com.lila_shop.backend.entity.Product;
 import org.mapstruct.Mapper;
-
-import com.lumina_book.backend.constant.GhnConstants;
-import com.lumina_book.backend.dto.request.GhnCalculateFeeRequest;
-import com.lumina_book.backend.dto.request.GhnCreateOrderRequest;
-import com.lumina_book.backend.dto.request.GhnLeadtimeRequest;
-import com.lumina_book.backend.dto.request.GhnOrderItemCategoryRequest;
-import com.lumina_book.backend.dto.request.GhnOrderItemRequest;
-import com.lumina_book.backend.entity.OrderItem;
-import com.lumina_book.backend.entity.Product;
 
 @Mapper(componentModel = "spring")
 public interface GhnMapper {

@@ -1,9 +1,9 @@
-package com.lumina_book.backend.dto.request;
-
-import java.util.Set;
+package com.lila_shop.backend.dto.request;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.Set;
 
 @Data
 @NoArgsConstructor

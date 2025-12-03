@@ -1,10 +1,9 @@
-package com.lumina_book.backend.mapper;
+package com.lila_shop.backend.mapper;
 
+import com.lila_shop.backend.dto.response.ShipmentResponse;
+import com.lila_shop.backend.entity.Shipment;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-
-import com.lumina_book.backend.dto.response.ShipmentResponse;
-import com.lumina_book.backend.entity.Shipment;
 
 @Mapper(componentModel = "spring")
 public interface ShipmentMapper {

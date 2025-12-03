@@ -1,11 +1,10 @@
-package com.lumina_book.backend.mapper;
+package com.lila_shop.backend.mapper;
 
+import com.lila_shop.backend.dto.request.TicketCreationRequest;
+import com.lila_shop.backend.dto.response.TicketResponse;
+import com.lila_shop.backend.entity.SupportTicket;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-
-import com.lumina_book.backend.dto.request.TicketCreationRequest;
-import com.lumina_book.backend.dto.response.TicketResponse;
-import com.lumina_book.backend.entity.SupportTicket;
 
 @Mapper(componentModel = "spring")
 public interface TicketMapper {

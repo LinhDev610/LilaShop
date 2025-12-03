@@ -1,13 +1,11 @@
-package com.lumina_book.backend.validator;
+package com.lila_shop.backend.validator;
 
-import java.time.LocalDate;
-
+import com.lila_shop.backend.dto.request.PromotionCreationRequest;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-
 import org.springframework.stereotype.Component;
 
-import com.lumina_book.backend.dto.request.PromotionCreationRequest;
+import java.time.LocalDate;
 
 @Component
 public class PromotionDateValidator implements ConstraintValidator<PromotionDateConstraint, PromotionCreationRequest> {

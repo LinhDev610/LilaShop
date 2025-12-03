@@ -1,13 +1,12 @@
-package com.lumina_book.backend.mapper;
+package com.lila_shop.backend.mapper;
 
+import com.lila_shop.backend.dto.request.UserCreationRequest;
+import com.lila_shop.backend.dto.request.UserUpdateRequest;
+import com.lila_shop.backend.dto.response.UserResponse;
+import com.lila_shop.backend.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-
-import com.lumina_book.backend.dto.request.UserCreationRequest;
-import com.lumina_book.backend.dto.request.UserUpdateRequest;
-import com.lumina_book.backend.dto.response.UserResponse;
-import com.lumina_book.backend.entity.User;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {

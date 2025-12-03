@@ -1,18 +1,18 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.dto.request.AuthenticationRequest;
-import com.lumina_book.backend.dto.request.IntrospectRequest;
-import com.lumina_book.backend.dto.request.LogoutRequest;
-import com.lumina_book.backend.dto.request.RefreshRequest;
-import com.lumina_book.backend.dto.response.AuthenticationResponse;
-import com.lumina_book.backend.dto.response.IntrospectResponse;
-import com.lumina_book.backend.entity.InvalidatedToken;
-import com.lumina_book.backend.entity.Role;
-import com.lumina_book.backend.entity.User;
-import com.lumina_book.backend.exception.AppException;
-import com.lumina_book.backend.exception.ErrorCode;
-import com.lumina_book.backend.repository.InvalidatedTokenRepository;
-import com.lumina_book.backend.repository.UserRepository;
+import com.lila_shop.backend.dto.request.AuthenticationRequest;
+import com.lila_shop.backend.dto.request.IntrospectRequest;
+import com.lila_shop.backend.dto.request.LogoutRequest;
+import com.lila_shop.backend.dto.request.RefreshRequest;
+import com.lila_shop.backend.dto.response.AuthenticationResponse;
+import com.lila_shop.backend.dto.response.IntrospectResponse;
+import com.lila_shop.backend.entity.InvalidatedToken;
+import com.lila_shop.backend.entity.Role;
+import com.lila_shop.backend.entity.User;
+import com.lila_shop.backend.exception.AppException;
+import com.lila_shop.backend.exception.ErrorCode;
+import com.lila_shop.backend.repository.InvalidatedTokenRepository;
+import com.lila_shop.backend.repository.UserRepository;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -160,7 +160,7 @@ public class AuthenticationService {
         // payload = nhieu claim
         JWTClaimsSet jwtClaimSet = new JWTClaimsSet.Builder()
                 .subject(user.getEmail()) // user đăng nhập là ai
-                .issuer("lumina_book.com") // Định danh ai là người issuer này được issuer từ ai, thường là issue
+                .issuer("lila_shop.com") // Định danh ai là người issuer này được issuer từ ai, thường là issue
                 .issueTime(new Date()) // Thời điểm lần đầu login
                 .expirationTime(
                         new Date( // Thời điểm hết hạn token

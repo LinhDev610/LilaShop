@@ -1,12 +1,11 @@
-package com.lumina_book.backend.entity;
-
-import java.util.Date;
+package com.lila_shop.backend.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.Date;
 
 @Getter
 @Setter

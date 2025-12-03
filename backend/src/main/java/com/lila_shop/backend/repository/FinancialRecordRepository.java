@@ -1,14 +1,13 @@
-package com.lumina_book.backend.repository;
+package com.lila_shop.backend.repository;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
+import com.lila_shop.backend.entity.FinancialRecord;
+import com.lila_shop.backend.enums.FinancialRecordType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.lumina_book.backend.entity.FinancialRecord;
-import com.lumina_book.backend.enums.FinancialRecordType;
+import java.time.LocalDateTime;
+import java.util.List;
 
 public interface FinancialRecordRepository extends JpaRepository<FinancialRecord, String> {
 

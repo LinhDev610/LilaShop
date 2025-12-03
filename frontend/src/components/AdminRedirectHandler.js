@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useLocalStorage from '../hooks/useLocalStorage';
 
 // Component để xử lý redirect admin một cách mượt mà
-const API_BASE_URL = 'http://localhost:8080/lumina_book';
+const API_BASE_URL = 'http://localhost:8080/lila_shop';
 
 function AdminRedirectHandler() {
     const navigate = useNavigate();
@@ -18,7 +18,7 @@ function AdminRedirectHandler() {
         // 2. Đang ở trang chủ (không phải admin page)
         const hasToken = token || sessionToken;
         const isOnHomePage = location.pathname === '/';
-        
+
         // Kiểm tra role từ API để quyết định redirect
         if (hasToken && isOnHomePage) {
             (async () => {

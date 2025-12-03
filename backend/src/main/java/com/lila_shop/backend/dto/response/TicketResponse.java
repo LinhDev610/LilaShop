@@ -1,7 +1,7 @@
 package com.lila_shop.backend.dto.response;
 
-import com.lumina_book.backend.enums.TicketAssignee;
-import com.lumina_book.backend.enums.TicketStatus;
+import com.lila_shop.backend.enums.TicketAssignee;
+import com.lila_shop.backend.enums.TicketStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

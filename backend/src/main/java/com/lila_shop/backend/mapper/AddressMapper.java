@@ -1,13 +1,12 @@
-package com.lumina_book.backend.mapper;
+package com.lila_shop.backend.mapper;
 
+import com.lila_shop.backend.dto.request.AddressCreationRequest;
+import com.lila_shop.backend.dto.request.AddressUpdateRequest;
+import com.lila_shop.backend.dto.response.AddressResponse;
+import com.lila_shop.backend.entity.Address;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-
-import com.lumina_book.backend.dto.request.AddressCreationRequest;
-import com.lumina_book.backend.dto.request.AddressUpdateRequest;
-import com.lumina_book.backend.dto.response.AddressResponse;
-import com.lumina_book.backend.entity.Address;
 
 @Mapper(componentModel = "spring")
 public interface AddressMapper {

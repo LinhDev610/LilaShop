@@ -1,16 +1,16 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.dto.request.SendMessageRequest;
-import com.lumina_book.backend.dto.response.ChatConversationResponse;
-import com.lumina_book.backend.dto.response.ChatMessageResponse;
-import com.lumina_book.backend.dto.response.UserResponse;
-import com.lumina_book.backend.entity.ChatMessage;
-import com.lumina_book.backend.entity.User;
-import com.lumina_book.backend.exception.AppException;
-import com.lumina_book.backend.exception.ErrorCode;
-import com.lumina_book.backend.repository.ChatMessageRepository;
-import com.lumina_book.backend.repository.UserRepository;
-import com.lumina_book.backend.util.SecurityUtil;
+import com.lila_shop.backend.dto.request.SendMessageRequest;
+import com.lila_shop.backend.dto.response.ChatConversationResponse;
+import com.lila_shop.backend.dto.response.ChatMessageResponse;
+import com.lila_shop.backend.dto.response.UserResponse;
+import com.lila_shop.backend.entity.ChatMessage;
+import com.lila_shop.backend.entity.User;
+import com.lila_shop.backend.exception.AppException;
+import com.lila_shop.backend.exception.ErrorCode;
+import com.lila_shop.backend.repository.ChatMessageRepository;
+import com.lila_shop.backend.repository.UserRepository;
+import com.lila_shop.backend.util.SecurityUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

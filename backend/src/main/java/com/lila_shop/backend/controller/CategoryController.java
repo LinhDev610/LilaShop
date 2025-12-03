@@ -1,21 +1,18 @@
-package com.lumina_book.backend.controller;
+package com.lila_shop.backend.controller;
 
-import java.util.List;
-
+import com.lila_shop.backend.dto.request.ApiResponse;
+import com.lila_shop.backend.dto.request.CategoryCreationRequest;
+import com.lila_shop.backend.dto.request.CategoryUpdateRequest;
+import com.lila_shop.backend.dto.response.CategoryResponse;
+import com.lila_shop.backend.service.CategoryService;
 import jakarta.validation.Valid;
-
-import org.springframework.web.bind.annotation.*;
-
-import com.lumina_book.backend.dto.request.ApiResponse;
-import com.lumina_book.backend.dto.request.CategoryCreationRequest;
-import com.lumina_book.backend.dto.request.CategoryUpdateRequest;
-import com.lumina_book.backend.dto.response.CategoryResponse;
-import com.lumina_book.backend.service.CategoryService;
-
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/categories")

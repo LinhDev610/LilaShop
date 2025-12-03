@@ -1,13 +1,10 @@
-package com.lumina_book.backend.validator;
+package com.lila_shop.backend.validator;
 
-import jakarta.validation.ConstraintValidatorContext;
+import com.lila_shop.backend.repository.VoucherRepository;
 import jakarta.validation.ConstraintValidator;
-
-import org.springframework.stereotype.Component;
-
-import com.lumina_book.backend.repository.VoucherRepository;
-
+import jakarta.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor

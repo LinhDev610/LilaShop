@@ -1,10 +1,10 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.dto.request.RoleRequest;
-import com.lumina_book.backend.dto.response.RoleResponse;
-import com.lumina_book.backend.mapper.RoleMapper;
-import com.lumina_book.backend.repository.PermissionRepository;
-import com.lumina_book.backend.repository.RoleRepository;
+import com.lila_shop.backend.dto.request.RoleRequest;
+import com.lila_shop.backend.dto.response.RoleResponse;
+import com.lila_shop.backend.mapper.RoleMapper;
+import com.lila_shop.backend.repository.PermissionRepository;
+import com.lila_shop.backend.repository.RoleRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

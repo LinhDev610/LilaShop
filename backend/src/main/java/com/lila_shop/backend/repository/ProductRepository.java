@@ -1,15 +1,14 @@
-package com.lumina_book.backend.repository;
+package com.lila_shop.backend.repository;
 
-import java.util.List;
-
+import com.lila_shop.backend.entity.Product;
+import com.lila_shop.backend.entity.User;
+import com.lila_shop.backend.enums.ProductStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.lumina_book.backend.entity.Product;
-import com.lumina_book.backend.entity.User;
-import com.lumina_book.backend.enums.ProductStatus;
+import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, String> {

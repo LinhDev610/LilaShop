@@ -1,18 +1,16 @@
-package com.lumina_book.backend.entity;
+package com.lila_shop.backend.entity;
+
+import com.lila_shop.backend.enums.DiscountApplyScope;
+import com.lila_shop.backend.enums.DiscountValueType;
+import com.lila_shop.backend.enums.VoucherStatus;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
-
-import jakarta.persistence.*;
-
-import com.lumina_book.backend.enums.VoucherStatus;
-import com.lumina_book.backend.enums.DiscountApplyScope;
-import com.lumina_book.backend.enums.DiscountValueType;
-
-import lombok.*;
-import lombok.experimental.FieldDefaults;
 
 @Getter
 @Setter

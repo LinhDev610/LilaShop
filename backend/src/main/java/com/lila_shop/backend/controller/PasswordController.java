@@ -1,20 +1,20 @@
-package com.lumina_book.backend.controller;
+package com.lila_shop.backend.controller;
 
+import com.lila_shop.backend.dto.request.ApiResponse;
+import com.lila_shop.backend.dto.request.ChangePasswordRequest;
+import com.lila_shop.backend.dto.request.ResetPasswordRequest;
+import com.lila_shop.backend.service.PasswordService;
 import jakarta.validation.Valid;
-
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
-
-import com.lumina_book.backend.dto.request.ApiResponse;
-import com.lumina_book.backend.dto.request.ChangePasswordRequest;
-import com.lumina_book.backend.dto.request.ResetPasswordRequest;
-import com.lumina_book.backend.service.PasswordService;
-
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")

@@ -1,7 +1,7 @@
-package com.lumina_book.backend.util;
+package com.lila_shop.backend.util;
 
-import com.lumina_book.backend.exception.AppException;
-import com.lumina_book.backend.exception.ErrorCode;
+import com.lila_shop.backend.exception.AppException;
+import com.lila_shop.backend.exception.ErrorCode;
 
 public final class ParseUtil {
     private ParseUtil() {

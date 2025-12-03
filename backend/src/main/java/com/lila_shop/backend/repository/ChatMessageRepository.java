@@ -1,14 +1,13 @@
-package com.lumina_book.backend.repository;
+package com.lila_shop.backend.repository;
 
-import java.util.List;
-
+import com.lila_shop.backend.entity.ChatMessage;
+import com.lila_shop.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.lumina_book.backend.entity.ChatMessage;
-import com.lumina_book.backend.entity.User;
+import java.util.List;
 
 @Repository
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, String> {

@@ -1,12 +1,12 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.entity.*;
-import com.lumina_book.backend.enums.DiscountApplyScope;
-import com.lumina_book.backend.enums.DiscountValueType;
-import com.lumina_book.backend.exception.AppException;
-import com.lumina_book.backend.exception.ErrorCode;
-import com.lumina_book.backend.repository.*;
-import com.lumina_book.backend.util.SecurityUtil;
+import com.lila_shop.backend.entity.*;
+import com.lila_shop.backend.enums.DiscountApplyScope;
+import com.lila_shop.backend.enums.DiscountValueType;
+import com.lila_shop.backend.exception.AppException;
+import com.lila_shop.backend.exception.ErrorCode;
+import com.lila_shop.backend.repository.*;
+import com.lila_shop.backend.util.SecurityUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -154,7 +154,7 @@ public class CartService {
         if (cart.getAppliedVoucherCode() != null && !cart.getAppliedVoucherCode().isEmpty()) {
             try {
                 var voucher = voucherRepository.findByCode(cart.getAppliedVoucherCode()).orElse(null);
-                if (voucher != null && voucher.getIsActive() && voucher.getStatus() == com.lumina_book.backend.enums.VoucherStatus.APPROVED) {
+                if (voucher != null && voucher.getIsActive() && voucher.getStatus() == com.lila_shop.backend.enums.VoucherStatus.APPROVED) {
                     double applicableSubtotal = calculateApplicableSubtotal(cart, voucher);
                     
                     // Kiểm tra lại minOrderValue
@@ -223,7 +223,7 @@ public class CartService {
         var voucher =
                 voucherRepository.findByCode(code).orElseThrow(() -> new AppException(ErrorCode.VOUCHER_NOT_EXISTED));
 
-        if (!voucher.getIsActive() || voucher.getStatus() != com.lumina_book.backend.enums.VoucherStatus.APPROVED) {
+        if (!voucher.getIsActive() || voucher.getStatus() != com.lila_shop.backend.enums.VoucherStatus.APPROVED) {
             throw new AppException(ErrorCode.VOUCHER_NOT_EXISTED);
         }
         LocalDate today = LocalDate.now();

@@ -1,16 +1,16 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.dto.request.AddressCreationRequest;
-import com.lumina_book.backend.dto.request.AddressUpdateRequest;
-import com.lumina_book.backend.dto.response.AddressResponse;
-import com.lumina_book.backend.entity.Address;
-import com.lumina_book.backend.entity.User;
-import com.lumina_book.backend.exception.AppException;
-import com.lumina_book.backend.exception.ErrorCode;
-import com.lumina_book.backend.mapper.AddressMapper;
-import com.lumina_book.backend.repository.AddressRepository;
-import com.lumina_book.backend.repository.UserRepository;
-import com.lumina_book.backend.util.SecurityUtil;
+import com.lila_shop.backend.dto.request.AddressCreationRequest;
+import com.lila_shop.backend.dto.request.AddressUpdateRequest;
+import com.lila_shop.backend.dto.response.AddressResponse;
+import com.lila_shop.backend.entity.Address;
+import com.lila_shop.backend.entity.User;
+import com.lila_shop.backend.exception.AppException;
+import com.lila_shop.backend.exception.ErrorCode;
+import com.lila_shop.backend.mapper.AddressMapper;
+import com.lila_shop.backend.repository.AddressRepository;
+import com.lila_shop.backend.repository.UserRepository;
+import com.lila_shop.backend.util.SecurityUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

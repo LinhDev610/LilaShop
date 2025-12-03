@@ -1,7 +1,7 @@
 package com.lila_shop.backend.service;
 
-import com.lumina_book.backend.exception.AppException;
-import com.lumina_book.backend.exception.ErrorCode;
+import com.lila_shop.backend.exception.AppException;
+import com.lila_shop.backend.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -79,9 +79,9 @@ public class FileStorageService {
                 java.net.URI uri = java.net.URI.create(url);
                 String path = uri.getPath();
                 if (path != null && !path.isBlank()) {
-                    // Loại bỏ context path nếu có (ví dụ: /lumina_book)
-                    if (path.startsWith("/lumina_book")) {
-                        path = path.substring("/lumina_book".length());
+                    // Loại bỏ context path nếu có (ví dụ: /lila_shop)
+                    if (path.startsWith("/lila_shop")) {
+                        path = path.substring("/lila_shop".length());
                     }
                     // Tìm phần path sau /profile_media/
                     if (path.contains(PROFILE_MEDIA_URL)) {

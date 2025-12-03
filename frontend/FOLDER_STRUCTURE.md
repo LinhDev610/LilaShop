@@ -2,7 +2,7 @@
 
 ## Mục đích
 
-Cấu trúc folder cho website bán sách LuminaBook, sử dụng React với CSS Modules và classnames/bind pattern.
+Cấu trúc folder cho website bán sách LilaShop, sử dụng React với CSS Modules và classnames/bind pattern.
 
 ## Cấu trúc tổng quan
 

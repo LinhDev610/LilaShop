@@ -1,10 +1,10 @@
-package com.lumina_book.backend.constant;
+package com.lila_shop.backend.constant;
 
 public final class GhnConstants {
     private GhnConstants() {}
 
     // Default shop info (from api_ghn.txt)
-    public static final String DEFAULT_FROM_NAME = "LuminaShop";
+    public static final String DEFAULT_FROM_NAME = "LilaShop";
     public static final String DEFAULT_FROM_PHONE = "0846120004";
     public static final String DEFAULT_FROM_ADDRESS = "136 Xuân Thủy, Dịch Vọng Hậu, Cầu Giấy, Hà Nội, Vietnam";
     public static final String DEFAULT_FROM_WARD_CODE = "1A0602";
@@ -24,6 +24,6 @@ public final class GhnConstants {
 
     // Other constants
     public static final String REQUIRED_NOTE = "CHOTHUHANG";
-    public static final String CONTENT = "Sách từ LuminaBook";
+    public static final String CONTENT = "Sách từ LilaShop";
 }
 

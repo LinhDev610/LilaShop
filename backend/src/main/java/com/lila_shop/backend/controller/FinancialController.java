@@ -1,20 +1,17 @@
-package com.lumina_book.backend.controller;
+package com.lila_shop.backend.controller;
+
+import com.lila_shop.backend.dto.request.ApiResponse;
+import com.lila_shop.backend.dto.response.*;
+import com.lila_shop.backend.service.FinancialService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
-
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import com.lumina_book.backend.dto.request.ApiResponse;
-import com.lumina_book.backend.dto.response.PaymentRevenue;
-import com.lumina_book.backend.dto.response.ProductRevenue;
-import com.lumina_book.backend.dto.response.RevenuePoint;
-import com.lumina_book.backend.dto.response.RevenueSummary;
-import com.lumina_book.backend.dto.response.FinancialSummary;
-import com.lumina_book.backend.service.FinancialService;
-
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/financial")

@@ -1,7 +1,6 @@
-package com.lumina_book.backend.repository;
+package com.lila_shop.backend.repository;
 
+import com.lila_shop.backend.entity.Notification;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.lumina_book.backend.entity.Notification;
 
 public interface NotificationRepository extends JpaRepository<Notification, String> {}

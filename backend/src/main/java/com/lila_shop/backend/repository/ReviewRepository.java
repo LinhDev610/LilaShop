@@ -1,8 +1,8 @@
-package com.lumina_book.backend.repository;
+package com.lila_shop.backend.repository;
 
-import java.util.List;
-import java.util.Optional;
-
+import com.lila_shop.backend.entity.Product;
+import com.lila_shop.backend.entity.Review;
+import com.lila_shop.backend.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,9 +10,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.lumina_book.backend.entity.Product;
-import com.lumina_book.backend.entity.Review;
-import com.lumina_book.backend.entity.User;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, String> {

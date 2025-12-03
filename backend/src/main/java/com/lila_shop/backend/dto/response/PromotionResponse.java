@@ -1,8 +1,8 @@
 package com.lila_shop.backend.dto.response;
 
-import com.lumina_book.backend.enums.DiscountApplyScope;
-import com.lumina_book.backend.enums.DiscountValueType;
-import com.lumina_book.backend.enums.PromotionStatus;
+import com.lila_shop.backend.enums.DiscountApplyScope;
+import com.lila_shop.backend.enums.DiscountValueType;
+import com.lila_shop.backend.enums.PromotionStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

@@ -1,9 +1,8 @@
-package com.lumina_book.backend.repository;
+package com.lila_shop.backend.repository;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-
+import com.lila_shop.backend.entity.Promotion;
+import com.lila_shop.backend.entity.User;
+import com.lila_shop.backend.enums.PromotionStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,9 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.lumina_book.backend.entity.Promotion;
-import com.lumina_book.backend.entity.User;
-import com.lumina_book.backend.enums.PromotionStatus;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PromotionRepository extends JpaRepository<Promotion, String> {
