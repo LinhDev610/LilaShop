@@ -11,3 +11,4 @@ public interface CosmeticProductRepository
         extends JpaRepository<CosmeticProduct, String>, JpaSpecificationExecutor<CosmeticProduct> {}
 
 
+
