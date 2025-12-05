@@ -65,7 +65,7 @@ function Footer() {
                     <h4>Thông tin liên hệ</h4>
                     <div>136 Xuân Thủy, phường Cầu Giấy, TP.Hà Nội</div>
                     <div>Hotline: 0123 456 789</div>
-                    <div>Email: support@luminabook.com</div>
+                    <div>Email: support@lilashop.com</div>
                     <div>Hỗ trợ 24/7</div>
                     <div className={cx('social-row')}>
                         <img className={cx('social-icon')} src={iconFb} alt="Facebook" />
@@ -76,7 +76,7 @@ function Footer() {
                 </div>
 
                 <div className={cx('footer-col')}>
-                    <h4>Danh mục sách</h4>
+                    <h4>Danh mục mỹ phẩm</h4>
                     {categoriesLoading ? (
                         <div>Đang tải...</div>
                     ) : categories.length > 0 ? (

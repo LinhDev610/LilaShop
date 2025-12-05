@@ -33,8 +33,17 @@ function UpdateProductPage() {
     const [productId, setProductId] = useState('');
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
-    const [author, setAuthor] = useState('');
-    const [publisher, setPublisher] = useState('');
+    const [brand, setBrand] = useState('');
+    const [shadeColor, setShadeColor] = useState('');
+    const [finish, setFinish] = useState('');
+    const [skinType, setSkinType] = useState('');
+    const [skinConcern, setSkinConcern] = useState('');
+    const [volume, setVolume] = useState('');
+    const [origin, setOrigin] = useState('');
+    const [expiryDate, setExpiryDate] = useState('');
+    const [ingredients, setIngredients] = useState('');
+    const [usageInstructions, setUsageInstructions] = useState('');
+    const [safetyNote, setSafetyNote] = useState('');
     const [weight, setWeight] = useState(0.0);
     const [length, setLength] = useState(1);
     const [width, setWidth] = useState(1);
@@ -45,7 +54,6 @@ function UpdateProductPage() {
     const [discountValue, setDiscountValue] = useState(0.0);
     const [categoryId, setCategoryId] = useState('');
     const [categories, setCategories] = useState([]);
-    const [publicationDate, setPublicationDate] = useState('');
     const [stockQuantity, setStockQuantity] = useState('');
     const [status, setStatus] = useState('PENDING');
     const [errors, setErrors] = useState({});
@@ -87,8 +95,19 @@ function UpdateProductPage() {
                 setProductId(product.id || id || '');
                 setName(product.name || '');
                 setDescription(product.description || '');
-                setAuthor(product.author || '');
-                setPublisher(product.publisher || '');
+                setBrand(product.brand || '');
+                setShadeColor(product.shadeColor || '');
+                setFinish(product.finish || '');
+                setSkinType(product.skinType || '');
+                setSkinConcern(product.skinConcern || '');
+                setVolume(product.volume || '');
+                setOrigin(product.origin || '');
+                setExpiryDate(
+                    product.expiryDate ? product.expiryDate.split('T')[0] : '',
+                );
+                setIngredients(product.ingredients || '');
+                setUsageInstructions(product.usageInstructions || '');
+                setSafetyNote(product.safetyNote || '');
                 setWeight(product.weight || 0.0);
                 setLength(product.length || 1);
                 setWidth(product.width || 1);
@@ -106,9 +125,6 @@ function UpdateProductPage() {
                 setTaxPercent(product.tax ? String(Math.round(product.tax * 100)) : '0');
                 setDiscountValue(product.discountValue || 0.0);
                 setCategoryId(product.categoryId || '');
-                setPublicationDate(
-                    product.publicationDate ? product.publicationDate.split('T')[0] : '',
-                );
                 const inventoryQuantity = product.stockQuantity ?? null;
                 setStockQuantity(
                     inventoryQuantity !== undefined && inventoryQuantity !== null
@@ -167,10 +183,8 @@ function UpdateProductPage() {
         const newErrors = {};
         if (!productId.trim()) newErrors.productId = 'Vui lòng nhập mã sản phẩm.';
         if (!name.trim()) newErrors.name = 'Vui lòng nhập tên sản phẩm.';
-        if (!author.trim()) newErrors.author = 'Vui lòng nhập tên tác giả.';
-        if (!publisher.trim()) newErrors.publisher = 'Vui lòng nhập nhà xuất bản.';
+        if (!brand.trim()) newErrors.brand = 'Vui lòng nhập thương hiệu.';
         if (!categoryId) newErrors.categoryId = 'Vui lòng chọn danh mục.';
-        if (!publicationDate) newErrors.publicationDate = 'Vui lòng chọn ngày xuất bản.';
 
         // Validate price - must be a valid number and >= 0
         const priceNum = Number(price);
@@ -418,13 +432,21 @@ function UpdateProductPage() {
             const payload = {
                 name: (name || '').trim(),
                 description: (description || '').trim() || null,
-                author: (author || '').trim(),
-                publisher: (publisher || '').trim(),
+                brand: (brand || '').trim(),
+                shadeColor: (shadeColor || '').trim() || null,
+                finish: (finish || '').trim() || null,
+                skinType: (skinType || '').trim() || null,
+                skinConcern: (skinConcern || '').trim() || null,
+                volume: (volume || '').trim() || null,
+                origin: (origin || '').trim() || null,
+                expiryDate: expiryDate || null,
+                ingredients: (ingredients || '').trim() || null,
+                usageInstructions: (usageInstructions || '').trim() || null,
+                safetyNote: (safetyNote || '').trim() || null,
                 unitPrice: Number(price) || 0,
                 price: Number.isFinite(finalPrice) ? finalPrice : 0,
                 tax: taxDecimal || 0,
                 categoryId: (categoryId || '').trim(),
-                publicationDate: publicationDate || null,
                 status: 'PENDING', // Luôn đặt về PENDING khi gửi lại để duyệt
             };
 
@@ -618,7 +640,7 @@ function UpdateProductPage() {
                     <div className={cx('row')}>
                         <label>Tên sản phẩm</label>
                         <input
-                            placeholder="VD: Sách lập trình C++"
+                            placeholder="VD: Kem dưỡng ẩm cho da khô"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                         />
@@ -626,29 +648,105 @@ function UpdateProductPage() {
                             <div className={cx('errorText')}>{errors.name}</div>
                         )}
                     </div>
+                    <div className={cx('row')}>
+                        <label>Thương hiệu <span style={{ color: 'red' }}>*</span></label>
+                        <input
+                            placeholder="VD: L'Oreal, Maybelline, Innisfree"
+                            value={brand}
+                            onChange={(e) => setBrand(e.target.value)}
+                        />
+                        {errors.brand && (
+                            <div className={cx('errorText')}>{errors.brand}</div>
+                        )}
+                    </div>
                     <div className={cx('grid2')}>
                         <div className={cx('row')}>
-                            <label>Tác giả</label>
+                            <label>Màu sắc</label>
                             <input
-                                placeholder="VD: Tô Năng"
-                                value={author}
-                                onChange={(e) => setAuthor(e.target.value)}
+                                placeholder="VD: #Nude, #Coral, #Rose"
+                                value={shadeColor}
+                                onChange={(e) => setShadeColor(e.target.value)}
                             />
-                            {errors.author && (
-                                <div className={cx('errorText')}>{errors.author}</div>
-                            )}
                         </div>
                         <div className={cx('row')}>
-                            <label>Nhà xuất bản</label>
+                            <label>Độ hoàn thiện</label>
                             <input
-                                placeholder="VD: Vẹn B"
-                                value={publisher}
-                                onChange={(e) => setPublisher(e.target.value)}
+                                placeholder="VD: Matte, Glossy, Satin"
+                                value={finish}
+                                onChange={(e) => setFinish(e.target.value)}
                             />
-                            {errors.publisher && (
-                                <div className={cx('errorText')}>{errors.publisher}</div>
-                            )}
                         </div>
+                    </div>
+                    <div className={cx('grid2')}>
+                        <div className={cx('row')}>
+                            <label>Loại da</label>
+                            <input
+                                placeholder="VD: Da khô, Da dầu, Da hỗn hợp"
+                                value={skinType}
+                                onChange={(e) => setSkinType(e.target.value)}
+                            />
+                        </div>
+                        <div className={cx('row')}>
+                            <label>Vấn đề da</label>
+                            <input
+                                placeholder="VD: Mụn, Lão hóa, Nhạy cảm"
+                                value={skinConcern}
+                                onChange={(e) => setSkinConcern(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <div className={cx('grid2')}>
+                        <div className={cx('row')}>
+                            <label>Dung tích</label>
+                            <input
+                                placeholder="VD: 30ml, 50g, 100ml"
+                                value={volume}
+                                onChange={(e) => setVolume(e.target.value)}
+                            />
+                        </div>
+                        <div className={cx('row')}>
+                            <label>Xuất xứ</label>
+                            <input
+                                placeholder="VD: Hàn Quốc, Pháp, Mỹ"
+                                value={origin}
+                                onChange={(e) => setOrigin(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <div className={cx('row')}>
+                        <label>Hạn sử dụng</label>
+                        <input
+                            type="date"
+                            value={expiryDate}
+                            onChange={(e) => setExpiryDate(e.target.value)}
+                        />
+                    </div>
+                    <div className={cx('row')}>
+                        <label>Thành phần</label>
+                        <textarea
+                            rows={3}
+                            placeholder="Liệt kê các thành phần chính (VD: Hyaluronic Acid, Vitamin C, Retinol...)"
+                            value={ingredients}
+                            onChange={(e) => setIngredients(e.target.value)}
+                        />
+                    </div>
+                    <div className={cx('row')}>
+                        <label>Hướng dẫn sử dụng</label>
+                        <textarea
+                            rows={3}
+                            placeholder="Hướng dẫn cách sử dụng sản phẩm"
+                            value={usageInstructions}
+                            onChange={(e) => setUsageInstructions(e.target.value)}
+                        />
+                    </div>
+                    <div className={cx('row')}>
+                        <label>Lưu ý an toàn</label>
+                        <textarea
+                            rows={2}
+                            placeholder="Các lưu ý về an toàn khi sử dụng sản phẩm"
+                            value={safetyNote}
+                            onChange={(e) => setSafetyNote(e.target.value)}
+                        />
                     </div>
                     <div className={cx('row')}>
                         <label>Giá niêm yết (VND)</label>
@@ -683,7 +781,7 @@ function UpdateProductPage() {
                     </div>
                     <div className={cx('grid3')}>
                         <div className={cx('row')}>
-                            <label>Danh mục sách</label>
+                            <label>Danh mục mỹ phẩm</label>
                             <select
                                 value={categoryId}
                                 onChange={(e) => setCategoryId(e.target.value)}
@@ -713,19 +811,6 @@ function UpdateProductPage() {
                                 />
                                 <span className={cx('suffix')}>%</span>
                             </div>
-                        </div>
-                        <div className={cx('row')}>
-                            <label>Ngày xuất bản</label>
-                            <input
-                                type="date"
-                                value={publicationDate}
-                                onChange={(e) => setPublicationDate(e.target.value)}
-                            />
-                            {errors.publicationDate && (
-                                <div className={cx('errorText')}>
-                                    {errors.publicationDate}
-                                </div>
-                            )}
                         </div>
                     </div>
                     <div className={cx('row')}>
@@ -1104,3 +1189,4 @@ function UpdateProductPage() {
 }
 
 export default UpdateProductPage;
+

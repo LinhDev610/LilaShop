@@ -8,9 +8,10 @@ import iconShip from '../../../assets/icons/icon_ship.png';
 import iconPay from '../../../assets/icons/icon_pay.png';
 import iconRefund from '../../../assets/icons/icon_refund.png';
 import iconShoppingCart from '../../../assets/icons/icon_shopping_cart.png';
-import imgSach from '../../../assets/images/img_sach.png';
-import imgTaiChinh from '../../../assets/images/img_taichinh.png';
-import imgSachGiaDinh from '../../../assets/images/img_sachgiadinh.png';
+// Fallback images for products - TODO: Replace with cosmetic product images
+import imgSach from '../../../assets/images/img_qc.png';
+import imgTaiChinh from '../../../assets/images/img_qc1.png';
+import imgSachGiaDinh from '../../../assets/images/img_qc2.png';
 import imgQc from '../../../assets/images/img_qc.png';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useNotification } from '../Notification';
@@ -101,36 +102,40 @@ const ProductDetail = ({ productId }) => {
     }, []);
 
     const mockProduct = {
-        id: '9786044027456',
-        name: 'Tủ Sách Giáo Dục Shichida - Siêu Não Phải - Nuôi Dạy Con Trở Thành Thiên Tài Theo Phương Pháp Giáo Dục Shichida',
-        subtitle: 'Nuôi dạy con trở thành thiên tài theo phương pháp giáo dục Shichida',
-        author: 'Makoto Shichida',
-        publisher: 'Dân Trí',
-        coverType: 'Bìa Mềm',
-        price: 132000,
-        originalPrice: 165000,
-        discount: 20,
-        averageRating: 5,
-        reviewCount: 10,
-        quantitySold: 16,
-        translator: 'Yuka Tú Phạm, Brainworks Studio',
-        publishYear: 2024,
-        weight: 250,
-        dimensions: '20.5 x 14 x 1.2 cm',
-        pages: 232,
-        format: 'Bìa Mềm',
-        bestSeller: 'Top 100 sản phẩm Kỹ năng sống bán chạy của tháng',
+        id: 'COS001',
+        name: 'Kem dưỡng ẩm cho da khô - Hyaluronic Acid',
+        subtitle: 'Cấp ẩm sâu, làm mềm da, phù hợp cho da khô',
+        brand: 'L\'Oreal',
+        shadeColor: '#Nude',
+        finish: 'Matte',
+        skinType: 'Da khô',
+        skinConcern: 'Thiếu ẩm',
+        volume: '50ml',
+        origin: 'Hàn Quốc',
+        expiryDate: '2026-12-31',
+        ingredients: 'Hyaluronic Acid, Glycerin, Ceramides',
+        usageInstructions: 'Thoa đều lên mặt và cổ mỗi sáng và tối sau khi làm sạch da',
+        safetyNote: 'Tránh tiếp xúc với mắt. Ngừng sử dụng nếu có kích ứng',
+        price: 350000,
+        originalPrice: 450000,
+        discount: 22,
+        averageRating: 4.5,
+        reviewCount: 128,
+        quantitySold: 256,
+        weight: 50,
+        dimensions: '5 x 5 x 10 cm',
+        bestSeller: 'Top 100 sản phẩm chăm sóc da bán chạy của tháng',
         description:
-            'Siêu Não Phải là cuốn sách minh chứng tính hiệu quả của phương pháp giáo dục siêu não phải mà các lớp học theo phương pháp Shichida áp dụng đang được triển khai tại 18 quốc gia và khu vực trên toàn thế giới.',
+            'Kem dưỡng ẩm chuyên sâu với Hyaluronic Acid giúp cấp ẩm tức thì và duy trì độ ẩm suốt ngày dài.',
         longDescription:
-            'Nếu phát huy được những khả năng còn tiềm ẩn ở bán cầu não phải bấy lâu, thì con sẽ trở thành những đứa trẻ sở hữu tư duy sáng tạo và nguồn cảm hứng dồi dào. Và chính cha mẹ sẽ là người khai phá tài năng của trẻ.',
+            'Công thức độc đáo với Hyaluronic Acid phân tử nhỏ thấm sâu vào da, kết hợp với Glycerin và Ceramides tạo lớp màng bảo vệ, giúp da mềm mại và căng mịn.',
         images: [
             imgSach,
             imgTaiChinh,
             imgSachGiaDinh,
             imgQc,
         ],
-        category: 'Sách Giáo Dục',
+        category: 'Chăm sóc da',
         stock: 50,
         shippingAddress: 'Phường Bến Nghé, Quận 1, Hồ Chí Minh',
         deliveryMethod: 'Giao hàng tiêu chuẩn',
@@ -168,7 +173,7 @@ const ProductDetail = ({ productId }) => {
     );
     const heroFallback = product?.defaultMediaUrl
         ? normalizeMediaUrl(product.defaultMediaUrl, API_BASE_URL)
-        : productImages[0] || require('../../../assets/images/img_sach.png');
+        : productImages[0] || require('../../../assets/images/img_qc.png');
 
     useEffect(() => {
         setSelectedImage(heroFallback);
@@ -233,13 +238,17 @@ const ProductDetail = ({ productId }) => {
             label: 'Mã hàng',
             value: displayProduct.id || displayProduct.productCode || '-',
         },
-        { label: 'Tác giả', value: displayProduct.author || '-' },
-        { label: 'NXB', value: displayProduct.publisher || '-' },
+        { label: 'Thương hiệu', value: displayProduct.brand || '-' },
+        { label: 'Màu sắc', value: displayProduct.shadeColor || '-' },
+        { label: 'Độ hoàn thiện', value: displayProduct.finish || '-' },
+        { label: 'Loại da', value: displayProduct.skinType || '-' },
+        { label: 'Dung tích', value: displayProduct.volume || '-' },
+        { label: 'Xuất xứ', value: displayProduct.origin || '-' },
         {
-            label: 'Năm XB',
-            value: displayProduct.publicationDate
-                ? new Date(displayProduct.publicationDate).getFullYear()
-                : displayProduct.publishYear || '-',
+            label: 'Hạn sử dụng',
+            value: displayProduct.expiryDate
+                ? new Date(displayProduct.expiryDate).toLocaleDateString('vi-VN')
+                : '-',
         },
         { label: 'Trọng lượng (gr)', value: displayProduct.weight || '-' },
         {
@@ -622,7 +631,7 @@ const ProductDetail = ({ productId }) => {
                                 src={selectedImage || heroFallback}
                                 alt={displayProduct.name}
                                 onError={(e) => {
-                                    e.target.src = require('../../../assets/images/img_sach.png');
+                                    e.target.src = require('../../../assets/images/img_qc.png');
                                 }}
                             />
                         </div>
@@ -647,7 +656,7 @@ const ProductDetail = ({ productId }) => {
                                                 setLightboxOpen(true);
                                             }}
                                             onError={(e) => {
-                                                e.target.src = require('../../../assets/images/img_sach.png');
+                                                e.target.src = require('../../../assets/images/img_qc.png');
                                             }}
                                         />
                                     );
@@ -714,12 +723,18 @@ const ProductDetail = ({ productId }) => {
 
                             <div className={styles.productMeta}>
                                 <div>
-                                    <strong>Tác giả:</strong> {displayProduct.author || '-'}
+                                    <strong>Thương hiệu:</strong> {displayProduct.brand || '-'}
                                 </div>
-                                <div>
-                                    <strong>Nhà xuất bản:</strong>{' '}
-                                    {displayProduct.publisher || '-'}
-                                </div>
+                                {displayProduct.skinType && (
+                                    <div>
+                                        <strong>Loại da:</strong> {displayProduct.skinType}
+                                    </div>
+                                )}
+                                {displayProduct.volume && (
+                                    <div>
+                                        <strong>Dung tích:</strong> {displayProduct.volume}
+                                    </div>
+                                )}
                                 <div>
                                     <strong>Tồn kho:</strong>{' '}
                                     {availableStock > 0
@@ -880,6 +895,27 @@ const ProductDetail = ({ productId }) => {
                                 <p>{displayProduct.description || '-'}</p>
                                 {displayProduct.longDescription && (
                                     <p>{displayProduct.longDescription}</p>
+                                )}
+                                
+                                {displayProduct.ingredients && (
+                                    <div style={{ marginTop: '16px' }}>
+                                        <strong>Thành phần:</strong>
+                                        <p style={{ marginTop: '8px' }}>{displayProduct.ingredients}</p>
+                                    </div>
+                                )}
+                                
+                                {displayProduct.usageInstructions && (
+                                    <div style={{ marginTop: '16px' }}>
+                                        <strong>Hướng dẫn sử dụng:</strong>
+                                        <p style={{ marginTop: '8px' }}>{displayProduct.usageInstructions}</p>
+                                    </div>
+                                )}
+                                
+                                {displayProduct.safetyNote && (
+                                    <div style={{ marginTop: '16px' }}>
+                                        <strong>Lưu ý an toàn:</strong>
+                                        <p style={{ marginTop: '8px', color: '#d32f2f' }}>{displayProduct.safetyNote}</p>
+                                    </div>
                                 )}
                             </div>
 

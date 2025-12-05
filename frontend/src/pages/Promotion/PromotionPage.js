@@ -6,14 +6,10 @@ import categoryStyles from '../Category/CategoryPage.module.scss';
 import ProductList from '../../components/Common/ProductList/ProductList';
 import { getActiveProducts } from '../../services';
 import iconFire from '../../assets/icons/icon_fire.png';
-import iconGift from '../../assets/icons/icon_gift.png';
-import iconBook from '../../assets/icons/icon_book.png';
 
 const cxHome = classNames.bind(homeStyles);
 const cxPromo = classNames.bind(promoStyles);
 const cxCategory = classNames.bind(categoryStyles);
-
-const ITEMS_PER_PAGE = 15;
 
 export default function PromotionPage() {
     const [allProducts, setAllProducts] = useState([]);

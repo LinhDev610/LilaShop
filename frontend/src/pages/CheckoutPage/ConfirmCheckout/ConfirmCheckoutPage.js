@@ -2,7 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './ConfirmCheckoutPage.module.scss';
-import defaultProductImage from '../../../assets/images/img_sach.png';
+// Fallback image for products - TODO: Replace with cosmetic product placeholder image
+import defaultProductImage from '../../../assets/images/img_qc.png';
 import { getApiBaseUrl, getStoredToken } from '../../../services/utils';
 import { removeCartItem } from '../../../services';
 import { useAuth } from '../../../contexts/AuthContext';

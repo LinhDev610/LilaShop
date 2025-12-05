@@ -1,6 +1,6 @@
 import Home from '../pages/Home';
 import PromotionPage from '../pages/Promotion';
-import NewBookPage from '../pages/NewBook';
+import NewProductPage from '../pages/NewProduct';
 import Contact from '../pages/Contact';
 import CustomerService from '../pages/CustomerService';
 import ProductDetailPage from '../pages/ProductDetail';
@@ -8,6 +8,8 @@ import Login from '../components/Auth/Login';
 import Register from '../components/Auth/Register';
 import ForgotPassword from '../components/Auth/ForgotPassword';
 import VerifyCode from '../components/Auth/VerifyCode';
+
+import { CustomerAccountLayout, AdminLayout, StaffLayout, CustomerSupportLayout } from '../layouts';
 
 import Account from '../pages/CustomerAccount';
 import CustomerProfilePage from '../pages/CustomerAccount/CustomerProfile';
@@ -21,10 +23,6 @@ import CartPage from '../pages/CartPage';
 import CheckoutDetailPage from '../pages/CheckoutPage/CheckoutDetails';
 import ConfirmCheckoutPage from '../pages/CheckoutPage/ConfirmCheckout';
 import OrderSuccessPage from '../pages/CheckoutPage/OrderSuccess';
-import CustomerAccountLayout from '../layouts/CustomerAccountLayout';
-import AdminLayout from '../layouts/AdminLayout';
-import StaffLayout from '../layouts/StaffLayout';
-import CustomerSupportLayout from '../layouts/CustomerSupportLayout';
 import SearchResultsPage from '../pages/SearchResults';
 import ManageStaffAccountsPage from '../pages/Admin/ManageStaffAccounts';
 import ManageOrdersPage from '../pages/Admin/ManageOrders';
@@ -94,7 +92,7 @@ const publicRoutes = [
     { path: '/search', component: SearchResultsPage },
     { path: '/category/:id', component: CategoryPage },
     { path: '/promotion', component: PromotionPage },
-    { path: '/newbook', component: NewBookPage },
+    { path: '/new-product', component: NewProductPage },
     { path: '/contact', component: Contact },
     { path: '/support', component: CustomerService },
     { path: '/support/user', component: SupportUserPage },

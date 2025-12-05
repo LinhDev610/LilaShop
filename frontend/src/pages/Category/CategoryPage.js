@@ -9,8 +9,6 @@ import styles from './CategoryPage.module.scss';
 import { getCategoryById, getProductsByCategory } from '../../services';
 import ProductList from '../../components/Common/ProductList/ProductList';
 import iconFire from '../../assets/icons/icon_fire.png';
-import iconGift from '../../assets/icons/icon_gift.png';
-import iconBook from '../../assets/icons/icon_book.png';
 
 const cxHome = classNames.bind(homeStyles);
 const cxPromo = classNames.bind(promoStyles);

@@ -12,13 +12,15 @@ import { normalizeMediaUrl } from '../../services/productUtils';
 // Import images
 import heroImage from '../../assets/images/img_qc.png';
 import Banner1 from '../../components/Common/Banner/Banner1';
-import promoImage2 from '../../assets/images/img_taichinh.png';
-import promoImage3 from '../../assets/images/img_sachgiadinh.png';
+// Promotional images - TODO: Replace with cosmetic product images
+import promoImage2 from '../../assets/images/img_qc1.png';
+import promoImage3 from '../../assets/images/img_qc2.png';
 import bannerImage1 from '../../assets/images/img_qc1.png';
 import bannerImage2 from '../../assets/images/img_qc2.png';
 import bannerImage3 from '../../assets/images/img_qc.png';
 import Banner2 from '../../components/Common/Banner/Banner2';
-import imgsach_test from '../../assets/images/img_sach.png';
+// Fallback image for products - TODO: Replace with cosmetic product placeholder image
+import imgsach_test from '../../assets/images/img_qc.png';
 import bgChristmas from '../../assets/images/img_christmas.png';
 // service icons
 import iconGiaoHang from '../../assets/icons/icon_giaohangtannoi.png';
@@ -266,13 +268,13 @@ function Home() {
         10,
     );
 
-    // Sách yêu thích: chỉ lấy những sách có đánh giá trung bình ~ 5*
+    // Sản phẩm yêu thích: chỉ lấy những sản phẩm có đánh giá trung bình ~ 5*
     const favoriteProducts = sortAndSlice(
         allProducts.filter((p) => (p.averageRating ?? 0) >= 4.9),
         (p) => p.quantitySold || 0,
     );
     const bestSellerProducts = sortAndSlice(allProducts, (p) => p.quantitySold || 0);
-    // Sách mới: 10 cuốn mới nhất dựa trên updatedAt / createdAt
+    // Sản phẩm mới: 10 sản phẩm mới nhất dựa trên updatedAt / createdAt
     const newestProducts = sortAndSlice(
         allProducts,
         (p) => (p.updatedAt ? new Date(p.updatedAt).getTime() : 0),
@@ -288,9 +290,9 @@ function Home() {
                     <Banner1
                         heroImages={activeBannerImages.length ? activeBannerImages : [heroImage]}
                         promos={[
-                            { image: imgsach_test, alt: 'Sách kĩ năng sống' },
-                            { image: promoImage2, alt: 'Sách tài chính' },
-                            { image: promoImage3, alt: 'Sách gia đình' },
+                            { image: imgsach_test, alt: 'Mỹ phẩm chăm sóc da' },
+                            { image: promoImage2, alt: 'Mỹ phẩm trang điểm' },
+                            { image: promoImage3, alt: 'Mỹ phẩm chăm sóc tóc' },
                         ]}
                     />
 
@@ -341,11 +343,11 @@ function Home() {
                     {/* Trending Section */}
                     <section className={cx('trending-section')}>
                         <div className={cx('trending-header')}>
-                            <h3 className={cx('trending-title')}>SÁCH YÊU THÍCH</h3>
+                            <h3 className={cx('trending-title')}>MỸ PHẨM YÊU THÍCH</h3>
                         </div>
                         <ProductList
                             products={favoriteProducts}
-                            title="SÁCH YÊU THÍCH"
+                            title="MỸ PHẨM YÊU THÍCH"
                             showNavigation={true}
                             showHeader={false}
                             minimal={true}
@@ -357,11 +359,11 @@ function Home() {
                     {/* Trending Section */}
                     <section className={cx('trending-section')}>
                         <div className={cx('trending-header')}>
-                            <h3 className={cx('trending-title')}>SÁCH BÁN CHẠY</h3>
+                            <h3 className={cx('trending-title')}>MỸ PHẨM BÁN CHẠY</h3>
                         </div>
                         <ProductList
                             products={bestSellerProducts}
-                            title="SÁCH BÁN CHẠY"
+                            title="MỸ PHẨM BÁN CHẠY"
                             showNavigation={true}
                             showHeader={false}
                             minimal={true}
@@ -371,11 +373,11 @@ function Home() {
 
                     <section className={cx('trending-section')}>
                         <div className={cx('trending-header')}>
-                            <h3 className={cx('trending-title')}>SÁCH MỚI</h3>
+                            <h3 className={cx('trending-title')}>MỸ PHẨM MỚI</h3>
                         </div>
                         <ProductList
                             products={newestProducts}
-                            title="SÁCH MỚI"
+                            title="MỸ PHẨM MỚI"
                             showNavigation={true}
                             showHeader={false}
                             minimal={true}

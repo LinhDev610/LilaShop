@@ -44,8 +44,8 @@ const MOCK_ORDER_DETAIL = {
     orderDate: '2025-10-10T10:00:00',
     ghnStatus: 'PENDING',
     items: [
-        { id: '1', name: 'Sách Data Mining', quantity: 1, unitPrice: 750000, totalPrice: 750000 },
-        { id: '2', name: 'Giáo trình Cấu trúc dữ liệu', quantity: 1, unitPrice: 500000, totalPrice: 500000 },
+        { id: '1', name: 'Kem dưỡng ẩm Hyaluronic Acid', quantity: 1, unitPrice: 750000, totalPrice: 750000 },
+        { id: '2', name: 'Serum Vitamin C', quantity: 1, unitPrice: 500000, totalPrice: 500000 },
     ],
     history: [
         {

@@ -51,8 +51,17 @@ export const mapProduct = (product, apiBaseUrl) => {
             createdAt: product.createdAt || product.updatedAt,
             imageUrl: imageUrlNormalized,
             description: product.description,
-            author: product.author,
-            publisher: product.publisher,
+            brand: product.brand,
+            shadeColor: product.shadeColor,
+            finish: product.finish,
+            skinType: product.skinType,
+            skinConcern: product.skinConcern,
+            volume: product.volume,
+            origin: product.origin,
+            expiryDate: product.expiryDate,
+            ingredients: product.ingredients,
+            usageInstructions: product.usageInstructions,
+            safetyNote: product.safetyNote,
             stockQuantity:
                 typeof product.stockQuantity === 'number'
                     ? product.stockQuantity

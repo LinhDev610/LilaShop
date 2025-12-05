@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './ProductCard.module.scss';
-import defaultProductImage from '../../../assets/images/img_sach.png';
+// Fallback image for products - TODO: Replace with cosmetic product placeholder image
+import defaultProductImage from '../../../assets/images/img_qc.png';
 
 const cx = classNames.bind(styles);
 

@@ -15,7 +15,7 @@ export default function BannerBookListPage() {
     const { error: notifyError } = useNotification();
 
     const [banner, setBanner] = useState(null);
-    const [books, setBooks] = useState([]);
+    const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -46,7 +46,7 @@ export default function BannerBookListPage() {
 
                 const ids = Array.isArray(bannerDetail?.productIds) ? bannerDetail.productIds : [];
                 if (ids.length === 0) {
-                    setBooks([]);
+                    setProducts([]);
                     return;
                 }
 
@@ -60,18 +60,18 @@ export default function BannerBookListPage() {
                 });
                 const productsJson = await productsResp.json().catch(() => ({}));
                 if (!productsResp.ok) {
-                    throw new Error(productsJson?.message || 'Không thể tải danh sách sách');
+                    throw new Error(productsJson?.message || 'Không thể tải danh sách sản phẩm');
                 }
                 const allProducts = productsJson?.result || productsJson?.content || [];
                 const idSet = new Set(ids.map((s) => String(s)));
                 const filtered = (Array.isArray(allProducts) ? allProducts : []).filter((p) =>
                     idSet.has(String(p.id)),
                 );
-                setBooks(filtered);
+                setProducts(filtered);
             } catch (e) {
-                console.error('Load banner books error:', e);
+                console.error('Load banner products error:', e);
                 notifyError(e?.message || 'Đã xảy ra lỗi');
-                setBooks([]);
+                setProducts([]);
             } finally {
                 setLoading(false);
             }
@@ -125,18 +125,18 @@ export default function BannerBookListPage() {
 
             <div className={cx('content')}>
                 <div className={cx('card')}>
-                    <h2 className={cx('card-title')}>Danh sách sách thuộc banner</h2>
+                    <h2 className={cx('card-title')}>Danh sách sản phẩm thuộc banner</h2>
 
                     {loading ? (
                         <div className={cx('loading')}>Đang tải danh sách...</div>
-                    ) : books.length === 0 ? (
-                        <div className={cx('empty')}>Không có sách nào</div>
+                    ) : products.length === 0 ? (
+                        <div className={cx('empty')}>Không có sản phẩm nào</div>
                     ) : (
                         <ol className={cx('book-list')}>
-                            {books.map((b, idx) => (
-                                <li key={String(b.id || idx)} className={cx('book-item')}>
+                            {products.map((p, idx) => (
+                                <li key={String(p.id || idx)} className={cx('book-item')}>
                                     <span className={cx('index')}>{idx + 1}.</span>
-                                    <span className={cx('name')}>{b.name || b.title || 'Sách'}</span>
+                                    <span className={cx('name')}>{p.name || p.title || 'Sản phẩm'}</span>
                                 </li>
                             ))}
                         </ol>

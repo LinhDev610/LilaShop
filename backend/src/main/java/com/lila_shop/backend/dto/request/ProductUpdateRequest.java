@@ -25,11 +25,37 @@ public class ProductUpdateRequest {
 
     String size;
 
-    @Size(max = 255, message = "Tên tác giả không được vượt quá 255 ký tự")
-    String author;
+    @Size(max = 255, message = "Tên thương hiệu không được vượt quá 255 ký tự")
+    String brand;
 
-    @Size(max = 255, message = "Tên nhà xuất bản không được vượt quá 255 ký tự")
-    String publisher;
+    @Size(max = 100, message = "Màu sắc không được vượt quá 100 ký tự")
+    String shadeColor;
+
+    @Size(max = 100, message = "Độ hoàn thiện không được vượt quá 100 ký tự")
+    String finish;
+
+    @Size(max = 100, message = "Loại da không được vượt quá 100 ký tự")
+    String skinType;
+
+    @Size(max = 200, message = "Vấn đề da không được vượt quá 200 ký tự")
+    String skinConcern;
+
+    @Size(max = 100, message = "Dung tích không được vượt quá 100 ký tự")
+    String volume;
+
+    @Size(max = 100, message = "Xuất xứ không được vượt quá 100 ký tự")
+    String origin;
+
+    LocalDate expiryDate;
+
+    @Size(max = 2000, message = "Thành phần không được vượt quá 2000 ký tự")
+    String ingredients;
+
+    @Size(max = 1000, message = "Hướng dẫn sử dụng không được vượt quá 1000 ký tự")
+    String usageInstructions;
+
+    @Size(max = 500, message = "Lưu ý an toàn không được vượt quá 500 ký tự")
+    String safetyNote;
 
     @DecimalMin(value = "0.0", message = "Trọng lượng phải lớn hơn hoặc bằng 0")
     Double weight;
@@ -57,8 +83,6 @@ public class ProductUpdateRequest {
 
     @DecimalMin(value = "0.0", message = "Giá trị giảm giá phải lớn hơn hoặc bằng 0")
     Double discountValue;
-
-    LocalDate publicationDate;
 
     String categoryId;
 

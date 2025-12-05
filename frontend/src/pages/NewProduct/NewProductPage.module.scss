@@ -1,7 +1,7 @@
-/* Trang Sách Mới đang dùng lại toàn bộ style của Home.module.scss.
+/* Mỹ phẩm Mới đang dùng lại toàn bộ style của Home.module.scss.
    File này để dành cho tuỳ biến riêng cho sách mới (nếu cần sau này). */
 
-.newbook-header {
+.newproduct-header {
     display: flex;
     align-items: center;
     gap: 14px;
@@ -14,13 +14,13 @@
     margin-bottom: 8px;
 }
 
-.newbook-icon {
+.newproduct-icon {
     width: 32px; /* bigger icon */
     height: 32px;
     object-fit: contain;
 }
 
-.newbook-title {
+.newproduct-title {
     margin: 0;
     color: #fff;
     font-size: 1.4rem; /* larger text */
@@ -29,7 +29,7 @@
 }
 
 /* Container bao toàn bộ section sản phẩm để bo góc và nổi khối */
-.newbook-container {
+.newproduct-container {
     background: #fff;
     border-radius: 14px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);

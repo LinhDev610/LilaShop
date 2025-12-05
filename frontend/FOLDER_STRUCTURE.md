@@ -1,8 +1,8 @@
-# LUMINA BOOK - WEBSITE BÁN SÁCH
+# LILASHOP - WEBSITE BÁN MỸ PHẨM
 
 ## Mục đích
 
-Cấu trúc folder cho website bán sách LilaShop, sử dụng React với CSS Modules và classnames/bind pattern.
+Cấu trúc folder cho website bán mỹ phẩm LilaShop, sử dụng React với CSS Modules và classnames/bind pattern.
 
 ## Cấu trúc tổng quan
 
@@ -26,7 +26,7 @@ src/
 │   └── Profile/         # Hồ sơ cá nhân
 ├── components/          # Component tái sử dụng
 │   ├── Auth/            # Xác thực (Login, Register, Forgot)
-│   ├── Product/         # Sản phẩm (Card, List, Detail)
+│   ├── Product/         # Mỹ phẩm (Card, List, Detail)
 │   └── Common/         # Component chung (Button, Input)
 ├── contexts/            # State management
 │   ├── AuthContext.js   # Quản lý đăng nhập
@@ -80,7 +80,7 @@ src/
 -   `Footer.js` - Component footer
 -   `Footer.module.scss` - Styles sử dụng CSS Modules
 -   `index.js` - Export component
-    **Tính năng**: Thông tin liên hệ, danh mục sách, hỗ trợ khách hàng
+    **Tính năng**: Thông tin liên hệ, danh mục mỹ phẩm, hỗ trợ khách hàng
 
 ### **pages/Home/**
 

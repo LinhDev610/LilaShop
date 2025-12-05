@@ -306,7 +306,7 @@ export default function UpdatePromotionPage() {
             validationErrors.expiryDate = 'Ngày kết thúc phải sau ngày bắt đầu';
         }
         if (formState.applyScope === 'CATEGORY' && (!formState.categoryIds || formState.categoryIds.length === 0)) {
-            validationErrors.categoryIds = 'Vui lòng chọn loại sách';
+            validationErrors.categoryIds = 'Vui lòng chọn danh mục mỹ phẩm';
         }
         if (formState.applyScope === 'PRODUCT' && formState.productIds.length === 0) {
             validationErrors.productIds = 'Vui lòng chọn ít nhất một sản phẩm';
@@ -416,7 +416,7 @@ export default function UpdatePromotionPage() {
                         }
                     }}
                 >
-                    <option value="">-- Chọn loại sách --</option>
+                    <option value="">-- Chọn danh mục mỹ phẩm --</option>
                     {categoryOptions.map((option) => (
                         <option key={option.value} value={option.value}>
                             {option.label}
@@ -620,7 +620,7 @@ export default function UpdatePromotionPage() {
                             </div>
                         </div>
 
-                        {/* 5. Radio buttons: Theo loại sách / Theo sách cụ thể */}
+                        {/* 5. Radio buttons: Theo danh mục mỹ phẩm / Theo sản phẩm cụ thể */}
                         <div className={cx('form-group')}>
                             <div className={cx('radio-group')}>
                                 <label className={cx('radio-label')}>
@@ -632,7 +632,7 @@ export default function UpdatePromotionPage() {
                                         onChange={() => handleChange('applyScope', 'CATEGORY')}
                                         className={cx('radio-input')}
                                     />
-                                    <span className={cx('radio-text')}>Theo loại sách</span>
+                                    <span className={cx('radio-text')}>Theo danh mục mỹ phẩm</span>
                                 </label>
                                 <label className={cx('radio-label')}>
                                     <input
@@ -643,12 +643,12 @@ export default function UpdatePromotionPage() {
                                         onChange={() => handleChange('applyScope', 'PRODUCT')}
                                         className={cx('radio-input')}
                                     />
-                                    <span className={cx('radio-text')}>Theo sách cụ thể</span>
+                                    <span className={cx('radio-text')}>Theo sản phẩm cụ thể</span>
                                 </label>
                             </div>
                         </div>
 
-                        {/* 6. Hạn mức và Loại sách áp dụng (2 cột) - chỉ hiện khi chọn "Theo loại sách" */}
+                        {/* 6. Hạn mức và Danh mục mỹ phẩm áp dụng (2 cột) - chỉ hiện khi chọn "Theo danh mục mỹ phẩm" */}
                         {formState.applyScope === 'CATEGORY' && (
                             <div className={cx('form-row')}>
                                 {formState.discountValueType === 'PERCENTAGE' && (
@@ -664,7 +664,7 @@ export default function UpdatePromotionPage() {
                                     </div>
                                 )}
                                 <div className={cx('form-group')}>
-                                    <label className={cx('form-label')}>Loại sách áp dụng</label>
+                                    <label className={cx('form-label')}>Danh mục mỹ phẩm áp dụng</label>
                                     {isLoading ? (
                                         <p className={cx('loading-text')}>Đang tải...</p>
                                     ) : (
@@ -679,7 +679,7 @@ export default function UpdatePromotionPage() {
                             </div>
                         )}
 
-                        {/* Hiển thị phạm vi áp dụng khi chọn "Theo sách cụ thể" */}
+                        {/* Hiển thị phạm vi áp dụng khi chọn "Theo sản phẩm cụ thể" */}
                         {formState.applyScope === 'PRODUCT' && (
                             <div className={cx('form-row')}>
                                 {formState.discountValueType === 'PERCENTAGE' && (

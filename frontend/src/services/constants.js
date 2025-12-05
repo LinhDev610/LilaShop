@@ -3,7 +3,7 @@
 
 // =========== API Configuration ===========
 // API Base URL fallback - được cấu hình trong backend/application.yaml: app.frontend.base-url
-export const API_BASE_URL_FALLBACK = 'http://localhost:8080/lumina_book';
+export const API_BASE_URL_FALLBACK = 'http://localhost:8080/lila_shop';
 
 // =========== API Routes ===========
 export const API_ROUTES = {
@@ -153,16 +153,63 @@ export const GHN_DEFAULT_WEIGHT = 1200; // grams
 
 // Other constants
 export const GHN_REQUIRED_NOTE = 'CHOTHUHANG';
-export const GHN_CONTENT = 'Sách từ LuminaBook';
+export const GHN_CONTENT = 'Mỹ phẩm từ LilaShop';
 
 // =========== Product Constants ===========
 
 export const PRODUCT_CATEGORIES = {
-    NOVEL: 'novel',
-    BUSINESS: 'business',
-    TECHNOLOGY: 'technology',
-    EDUCATION: 'education',
-    CHILDREN: 'children',
+    SKINCARE: 'skincare',
+    MAKEUP: 'makeup',
+    HAIRCARE: 'haircare',
+    FRAGRANCE: 'fragrance',
+    BODYCARE: 'bodycare',
+};
+
+// =========== Category Field Configuration ===========
+// Cấu hình fields theo danh mục - Định nghĩa các trường sẽ hiển thị cho từng loại sản phẩm
+// Logic: Dựa vào tên category để xác định loại sản phẩm
+export const CATEGORY_FIELD_CONFIG = {
+    // Chăm sóc da - hiển thị đầy đủ thông tin mỹ phẩm
+    skincare: {
+        fields: [
+            'shadeColor',
+            'finish',
+            'skinType',
+            'skinConcern',
+            'volume',
+            'origin',
+            'expiryDate',
+            'ingredients',
+            'usageInstructions',
+            'safetyNote',
+        ],
+        label: 'Chăm sóc da',
+        description: 'Hiển thị đầy đủ thông tin: màu sắc, độ hoàn thiện, loại da, vấn đề da, thành phần, hướng dẫn sử dụng và lưu ý an toàn',
+    },
+    // Trang điểm - tập trung vào màu sắc và độ hoàn thiện
+    makeup: {
+        fields: ['shadeColor', 'finish', 'volume', 'origin', 'expiryDate'],
+        label: 'Trang điểm',
+        description: 'Tập trung vào màu sắc, độ hoàn thiện, dung tích, xuất xứ và hạn sử dụng',
+    },
+    // Chăm sóc tóc - tập trung vào thành phần và hướng dẫn
+    haircare: {
+        fields: ['volume', 'origin', 'expiryDate', 'ingredients', 'usageInstructions'],
+        label: 'Chăm sóc tóc',
+        description: 'Tập trung vào thành phần, hướng dẫn sử dụng, dung tích, xuất xứ và hạn sử dụng',
+    },
+    // Nước hoa - đơn giản, chỉ cần dung tích và hạn sử dụng
+    fragrance: {
+        fields: ['volume', 'origin', 'expiryDate'],
+        label: 'Nước hoa',
+        description: 'Chỉ cần thông tin cơ bản: dung tích, xuất xứ và hạn sử dụng',
+    },
+    // Chăm sóc cơ thể - tương tự chăm sóc da nhưng đơn giản hơn
+    bodycare: {
+        fields: ['volume', 'origin', 'expiryDate', 'ingredients', 'usageInstructions', 'safetyNote'],
+        label: 'Chăm sóc cơ thể',
+        description: 'Bao gồm thành phần, hướng dẫn sử dụng, lưu ý an toàn, dung tích, xuất xứ và hạn sử dụng',
+    },
 };
 
 export const STATUS_MAP = {
@@ -263,8 +310,8 @@ export const DISCOUNT_VALUE_TYPES = [
 
 export const APPLY_SCOPE_OPTIONS = [
     { value: 'ORDER', label: 'Toàn bộ đơn hàng' },
-    { value: 'CATEGORY', label: 'Theo danh mục sách' },
-    { value: 'PRODUCT', label: 'Theo sách cụ thể' },
+    { value: 'CATEGORY', label: 'Theo danh mục mỹ phẩm' },
+    { value: 'PRODUCT', label: 'Theo sản phẩm cụ thể' },
 ];
 
 // =========== Initial Form State ===========
@@ -274,8 +321,17 @@ export const INITIAL_FORM_STATE_PRODUCT = {
     productId: '',
     name: '',
     description: '',
-    author: '',
-    publisher: '',
+    brand: '',
+    shadeColor: '',
+    finish: '',
+    skinType: '',
+    skinConcern: '',
+    volume: '',
+    origin: '',
+    expiryDate: '',
+    ingredients: '',
+    usageInstructions: '',
+    safetyNote: '',
     weight: 0.0,
     length: 1,
     width: 1,
@@ -285,7 +341,6 @@ export const INITIAL_FORM_STATE_PRODUCT = {
     discountValue: 0.0,
     purchasePrice: 0.0,
     categoryId: '',
-    publicationDate: '',
     stockQuantity: '',
     mediaFiles: [],
     defaultMediaUrl: '',

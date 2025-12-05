@@ -5,7 +5,7 @@ import { getActiveCategories } from '../../../services';
 
 import classNames from 'classnames/bind';
 
-import styles from './Navbar.module.scss';
+import styles from './NavBar.module.scss';
 
 const cx = classNames.bind(styles);
 
@@ -26,7 +26,7 @@ function NavBar() {
         pathname.includes('/customer-account') || pathname.includes('/account');
     const isHome = pathname === routes.home;
     const isPromotion = pathname.startsWith(routes.promotion);
-    const isNewBook = pathname.startsWith(routes.newbook);
+    const isNewProduct = pathname.startsWith(routes.newproduct);
     const isCustomerSupport = pathname.startsWith(routes.customerSupport);
 
     const handleAllCategoriesClick = () => {
@@ -34,7 +34,6 @@ function NavBar() {
     };
 
     const handleMobileMenuClick = () => {
-        // console.log('Mobile menu clicked, current state:', isMobileMenuOpen);
         setIsMobileMenuOpen(!isMobileMenuOpen);
         setIsDropdownOpen(false);
     };
@@ -180,8 +179,8 @@ function NavBar() {
             <Link to={routes.promotion} className={cx({ active: isPromotion })}>
                 KHUYẾN MÃI
             </Link>
-            <Link to={routes.newbook} className={cx({ active: isNewBook })}>
-                SÁCH MỚI
+            <Link to={routes.newproduct} className={cx({ active: isNewProduct })}>
+                SẢN PHẨM MỚI
             </Link>
             <Link
                 to={routes.customerSupport}

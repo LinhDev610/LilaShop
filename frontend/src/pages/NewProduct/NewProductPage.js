@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames/bind';
 import homeStyles from '../Home/Home.module.scss';
-import newBookStyles from './NewBook.module.scss';
+import newProductStyles from './NewProductPage.module.scss';
 import categoryStyles from '../Category/CategoryPage.module.scss';
 import ProductList from '../../components/Common/ProductList/ProductList';
 import { getActiveProducts } from '../../services';
 import iconFire from '../../assets/icons/icon_fire.png';
 
 const cxHome = classNames.bind(homeStyles);
-const cxNewBook = classNames.bind(newBookStyles);
+const cxNewProduct = classNames.bind(newProductStyles);
 const cxCategory = classNames.bind(categoryStyles);
 
-export default function NewBookPage() {
+export default function NewProductPage() {
     const [allProducts, setAllProducts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -20,10 +20,10 @@ export default function NewBookPage() {
     // Lọc sách mới phát hành (trong 30 ngày gần đây)
     const newBooks = useMemo(() => {
         if (!allProducts.length) return [];
-        
+
         const now = new Date();
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // 30 ngày trước
-        
+
         return allProducts.filter((product) => {
             const createdAt = product.createdAt || product.created_at;
             if (createdAt) {
@@ -37,9 +37,9 @@ export default function NewBookPage() {
     // Sắp xếp sản phẩm dựa trên sortBy
     const sortedProducts = useMemo(() => {
         if (!newBooks.length) return [];
-        
+
         const sorted = [...newBooks];
-        
+
         switch (sortBy) {
             case 'price-high':
                 sorted.sort((a, b) => {
@@ -78,7 +78,7 @@ export default function NewBookPage() {
                 });
                 break;
         }
-        
+
         return sorted;
     }, [newBooks, sortBy]);
 
@@ -89,9 +89,9 @@ export default function NewBookPage() {
             try {
                 setLoading(true);
                 setError('');
-                
+
                 const products = await getActiveProducts();
-                
+
                 if (!ignore) {
                     setAllProducts(Array.isArray(products) ? products : []);
                 }
@@ -123,10 +123,10 @@ export default function NewBookPage() {
         if (!productList || productList.length === 0) return null;
         const { minimal = true, isGrid = false, gridColumns = 4 } = options;
         return (
-            <section className={cxHome('trending-section', cxNewBook('newbook-container'))}>
-                <div className={cxNewBook('newbook-header', cxNewBook(colorClass || ''))}>
-                    <img src={icon} alt={title} className={cxNewBook('newbook-icon')} />
-                    <h3 className={cxNewBook('newbook-title')}>{title}</h3>
+            <section className={cxHome('trending-section', cxNewProduct('newproduct-container'))}>
+                <div className={cxNewProduct('newproduct-header', cxNewProduct(colorClass || ''))}>
+                    <img src={icon} alt={title} className={cxNewProduct('newproduct-icon')} />
+                    <h3 className={cxNewProduct('newproduct-title')}>{title}</h3>
                 </div>
                 <ProductList
                     products={productList}

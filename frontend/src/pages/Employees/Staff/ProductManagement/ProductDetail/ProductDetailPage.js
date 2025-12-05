@@ -328,20 +328,62 @@ function ProductDetailPage() {
                                     </div>
                                 )}
                                 <div className={cx('info-row')}>
-                                    <span className={cx('info-label')}>Tác giả:</span>
+                                    <span className={cx('info-label')}>Thương hiệu:</span>
                                     <span className={cx('info-value')}>
-                                        {product.author || '-'}
+                                        {product.brand || '-'}
                                     </span>
                                 </div>
-                                <div className={cx('info-row')}>
-                                    <span className={cx('info-label')}>Nhà xuất bản:</span>
-                                    <span className={cx('info-value')}>
-                                        {product.publisher || '-'}
-                                    </span>
-                                </div>
+                                {product.shadeColor && (
+                                    <div className={cx('info-row')}>
+                                        <span className={cx('info-label')}>Màu sắc:</span>
+                                        <span className={cx('info-value')}>
+                                            {product.shadeColor}
+                                        </span>
+                                    </div>
+                                )}
+                                {product.finish && (
+                                    <div className={cx('info-row')}>
+                                        <span className={cx('info-label')}>Độ hoàn thiện:</span>
+                                        <span className={cx('info-value')}>
+                                            {product.finish}
+                                        </span>
+                                    </div>
+                                )}
+                                {product.skinType && (
+                                    <div className={cx('info-row')}>
+                                        <span className={cx('info-label')}>Loại da:</span>
+                                        <span className={cx('info-value')}>
+                                            {product.skinType}
+                                        </span>
+                                    </div>
+                                )}
+                                {product.skinConcern && (
+                                    <div className={cx('info-row')}>
+                                        <span className={cx('info-label')}>Vấn đề da:</span>
+                                        <span className={cx('info-value')}>
+                                            {product.skinConcern}
+                                        </span>
+                                    </div>
+                                )}
+                                {product.volume && (
+                                    <div className={cx('info-row')}>
+                                        <span className={cx('info-label')}>Dung tích:</span>
+                                        <span className={cx('info-value')}>
+                                            {product.volume}
+                                        </span>
+                                    </div>
+                                )}
+                                {product.origin && (
+                                    <div className={cx('info-row')}>
+                                        <span className={cx('info-label')}>Xuất xứ:</span>
+                                        <span className={cx('info-value')}>
+                                            {product.origin}
+                                        </span>
+                                    </div>
+                                )}
                                 {product.size && (
                                     <div className={cx('info-row')}>
-                                        <span className={cx('info-label')}>Kích thước sách:</span>
+                                        <span className={cx('info-label')}>Kích thước:</span>
                                         <span className={cx('info-value')}>
                                             {product.size}
                                         </span>
@@ -379,15 +421,39 @@ function ProductDetailPage() {
                                         </span>
                                     </div>
                                 )}
-                                {product.publicationDate && (
+                                {product.expiryDate && (
                                     <div className={cx('info-row')}>
                                         <span className={cx('info-label')}>
-                                            Ngày xuất bản:
+                                            Hạn sử dụng:
                                         </span>
                                         <span className={cx('info-value')}>
                                             {new Date(
-                                                product.publicationDate,
+                                                product.expiryDate,
                                             ).toLocaleDateString('vi-VN')}
+                                        </span>
+                                    </div>
+                                )}
+                                {product.ingredients && (
+                                    <div className={cx('info-row')}>
+                                        <span className={cx('info-label')}>Thành phần:</span>
+                                        <span className={cx('info-value')}>
+                                            {product.ingredients}
+                                        </span>
+                                    </div>
+                                )}
+                                {product.usageInstructions && (
+                                    <div className={cx('info-row')}>
+                                        <span className={cx('info-label')}>Hướng dẫn sử dụng:</span>
+                                        <span className={cx('info-value')}>
+                                            {product.usageInstructions}
+                                        </span>
+                                    </div>
+                                )}
+                                {product.safetyNote && (
+                                    <div className={cx('info-row')}>
+                                        <span className={cx('info-label')}>Lưu ý an toàn:</span>
+                                        <span className={cx('info-value')}>
+                                            {product.safetyNote}
                                         </span>
                                     </div>
                                 )}

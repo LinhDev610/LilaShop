@@ -24,6 +24,6 @@ public final class GhnConstants {
 
     // Other constants
     public static final String REQUIRED_NOTE = "CHOTHUHANG";
-    public static final String CONTENT = "Sách từ LilaShop";
+    public static final String CONTENT = "Mỹ phẩm từ LilaShop";
 }
 

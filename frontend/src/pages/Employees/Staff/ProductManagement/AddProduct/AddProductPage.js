@@ -12,10 +12,71 @@ import {
     uploadProductMedia,
     getMyProducts,
     INITIAL_FORM_STATE_PRODUCT,
+    CATEGORY_FIELD_CONFIG,
 } from '../../../../../services';
 
 const cx = classNames.bind(styles);
 const MAX_TOTAL_MEDIA_SIZE = 50 * 1024 * 1024; // 50MB tổng dung lượng ảnh/video
+
+/**
+ * Lấy danh sách fields cần hiển thị dựa trên category đã chọn
+ * @param {string} categoryId - ID của category
+ * @param {Array} categories - Danh sách tất cả categories
+ * @returns {Object} Config object với fields và label
+ */
+const getFieldsForCategory = (categoryId, categories) => {
+    if (!categoryId) {
+        return { fields: [], label: '' }; // Chưa chọn category
+    }
+
+    if (!categories.length) {
+        return { fields: [], label: '' };
+    }
+
+    // Tìm category object từ danh sách
+    const selectedCategory = categories.find(
+        (c) => (c.id || c.categoryId) === categoryId,
+    );
+    if (!selectedCategory) {
+        return { fields: [], label: '' };
+    }
+
+    const categoryName = (selectedCategory.name || '').toLowerCase();
+
+    // Kiểm tra các loại category khác dựa vào keyword trong tên
+    if (categoryName.includes('chăm sóc da') || categoryName.includes('skincare')) {
+        return CATEGORY_FIELD_CONFIG.skincare;
+    }
+    if (categoryName.includes('trang điểm') || categoryName.includes('makeup')) {
+        return CATEGORY_FIELD_CONFIG.makeup;
+    }
+    if (categoryName.includes('chăm sóc tóc') || categoryName.includes('haircare')) {
+        return CATEGORY_FIELD_CONFIG.haircare;
+    }
+    if (categoryName.includes('nước hoa') || categoryName.includes('fragrance')) {
+        return CATEGORY_FIELD_CONFIG.fragrance;
+    }
+    if (categoryName.includes('chăm sóc cơ thể') || categoryName.includes('bodycare')) {
+        return CATEGORY_FIELD_CONFIG.bodycare;
+    }
+
+    // Mặc định: không hiển thị fields đặc biệt (chỉ hiển thị fields cơ bản)
+    return { fields: [], label: '' };
+};
+
+/**
+ * Kiểm tra xem một field có nên hiển thị không
+ * @param {string} fieldName - Tên field cần kiểm tra
+ * @param {string} categoryId - ID category đã chọn
+ * @param {Array} categories - Danh sách categories
+ * @returns {boolean}
+ */
+const shouldShowField = (fieldName, categoryId, categories) => {
+    const config = getFieldsForCategory(categoryId, categories);
+
+    // Kiểm tra field có trong danh sách không
+    return config.fields.includes(fieldName);
+};
 
 export default function AddProductPage() {
     const navigate = useNavigate();
@@ -29,8 +90,23 @@ export default function AddProductPage() {
     const [description, setDescription] = useState(
         INITIAL_FORM_STATE_PRODUCT.description,
     );
-    const [author, setAuthor] = useState(INITIAL_FORM_STATE_PRODUCT.author);
-    const [publisher, setPublisher] = useState(INITIAL_FORM_STATE_PRODUCT.publisher);
+    const [brand, setBrand] = useState(INITIAL_FORM_STATE_PRODUCT.brand);
+    const [shadeColor, setShadeColor] = useState(INITIAL_FORM_STATE_PRODUCT.shadeColor);
+    const [finish, setFinish] = useState(INITIAL_FORM_STATE_PRODUCT.finish);
+    const [skinType, setSkinType] = useState(INITIAL_FORM_STATE_PRODUCT.skinType);
+    const [skinConcern, setSkinConcern] = useState(
+        INITIAL_FORM_STATE_PRODUCT.skinConcern,
+    );
+    const [volume, setVolume] = useState(INITIAL_FORM_STATE_PRODUCT.volume);
+    const [origin, setOrigin] = useState(INITIAL_FORM_STATE_PRODUCT.origin);
+    const [expiryDate, setExpiryDate] = useState(INITIAL_FORM_STATE_PRODUCT.expiryDate);
+    const [ingredients, setIngredients] = useState(
+        INITIAL_FORM_STATE_PRODUCT.ingredients,
+    );
+    const [usageInstructions, setUsageInstructions] = useState(
+        INITIAL_FORM_STATE_PRODUCT.usageInstructions,
+    );
+    const [safetyNote, setSafetyNote] = useState(INITIAL_FORM_STATE_PRODUCT.safetyNote);
     const [weight, setWeight] = useState(INITIAL_FORM_STATE_PRODUCT.weight);
     const [length, setLength] = useState(INITIAL_FORM_STATE_PRODUCT.length);
     const [width, setWidth] = useState(INITIAL_FORM_STATE_PRODUCT.width);
@@ -44,9 +120,6 @@ export default function AddProductPage() {
         INITIAL_FORM_STATE_PRODUCT.purchasePrice,
     );
     const [categoryId, setCategoryId] = useState(INITIAL_FORM_STATE_PRODUCT.categoryId);
-    const [publicationDate, setPublicationDate] = useState(
-        INITIAL_FORM_STATE_PRODUCT.publicationDate,
-    );
     const [stockQuantity, setStockQuantity] = useState(
         INITIAL_FORM_STATE_PRODUCT.stockQuantity,
     );
@@ -55,10 +128,77 @@ export default function AddProductPage() {
     const [categories, setCategories] = useState([]);
     const [existingProductsMap, setExistingProductsMap] = useState({});
 
+    // State cho tìm kiếm danh mục
+    const [categorySearchTerm, setCategorySearchTerm] = useState('');
+    const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+    const categoryDropdownRef = useRef(null);
+
     const normalizedProductId = useMemo(
         () => (productId || '').trim().toUpperCase(),
         [productId],
     );
+
+    // Filter categories: chỉ hiển thị danh mục con và danh mục gốc không có con
+    const displayCategories = useMemo(() => {
+        if (!categories.length) return [];
+
+        return categories.filter((category) => {
+            // Kiểm tra có parent không
+            const hasParent = Boolean(
+                category.parentId ||
+                    category.parentCategory?.id ||
+                    category.parentCategory,
+            );
+
+            // Kiểm tra có subCategories không
+            const subCategories = category.subCategories;
+            const hasSubCategories = Boolean(
+                subCategories && Array.isArray(subCategories) && subCategories.length > 0,
+            );
+
+            // Chỉ hiển thị:
+            // 1. Danh mục con (có parentId) - luôn hiển thị
+            // 2. Danh mục gốc không có con (không có parentId VÀ không có subCategories)
+            if (hasParent) {
+                return true;
+            }
+
+            return !hasSubCategories;
+        });
+    }, [categories]);
+
+    // Filter categories dựa trên search term (sử dụng displayCategories đã filter)
+    const filteredCategories = useMemo(() => {
+        if (!categorySearchTerm.trim()) {
+            return displayCategories;
+        }
+        const searchLower = categorySearchTerm.toLowerCase().trim();
+        return displayCategories.filter((c) => {
+            const name = (c.name || '').toLowerCase();
+            return name.includes(searchLower);
+        });
+    }, [displayCategories, categorySearchTerm]);
+
+    // Đóng dropdown khi click outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                categoryDropdownRef.current &&
+                !categoryDropdownRef.current.contains(event.target)
+            ) {
+                setIsCategoryDropdownOpen(false);
+                setCategorySearchTerm(''); // Reset search khi đóng
+            }
+        };
+
+        if (isCategoryDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isCategoryDropdownOpen]);
 
     // ========== Helper Functions ==========
     const getStoredToken = useCallback((key) => getStoredTokenUtil(key), []);
@@ -127,7 +267,7 @@ export default function AddProductPage() {
                 localStorage.setItem('refreshToken', responseData.token);
                 return responseData.token;
             }
-        } catch (_) { }
+        } catch (_) {}
         return null;
     }, [getStoredToken]);
 
@@ -197,13 +337,22 @@ export default function AddProductPage() {
     const resetForm = useCallback(() => {
         try {
             formRef.current?.reset();
-        } catch (_) { }
+        } catch (_) {}
         // Reset tất cả fields về giá trị ban đầu từ constants
         setProductId(INITIAL_FORM_STATE_PRODUCT.productId);
         setName(INITIAL_FORM_STATE_PRODUCT.name);
         setDescription(INITIAL_FORM_STATE_PRODUCT.description);
-        setAuthor(INITIAL_FORM_STATE_PRODUCT.author);
-        setPublisher(INITIAL_FORM_STATE_PRODUCT.publisher);
+        setBrand(INITIAL_FORM_STATE_PRODUCT.brand);
+        setShadeColor(INITIAL_FORM_STATE_PRODUCT.shadeColor);
+        setFinish(INITIAL_FORM_STATE_PRODUCT.finish);
+        setSkinType(INITIAL_FORM_STATE_PRODUCT.skinType);
+        setSkinConcern(INITIAL_FORM_STATE_PRODUCT.skinConcern);
+        setVolume(INITIAL_FORM_STATE_PRODUCT.volume);
+        setOrigin(INITIAL_FORM_STATE_PRODUCT.origin);
+        setExpiryDate(INITIAL_FORM_STATE_PRODUCT.expiryDate);
+        setIngredients(INITIAL_FORM_STATE_PRODUCT.ingredients);
+        setUsageInstructions(INITIAL_FORM_STATE_PRODUCT.usageInstructions);
+        setSafetyNote(INITIAL_FORM_STATE_PRODUCT.safetyNote);
         setWeight(INITIAL_FORM_STATE_PRODUCT.weight);
         setLength(INITIAL_FORM_STATE_PRODUCT.length);
         setWidth(INITIAL_FORM_STATE_PRODUCT.width);
@@ -213,7 +362,6 @@ export default function AddProductPage() {
         setDiscountValue(INITIAL_FORM_STATE_PRODUCT.discountValue);
         setPurchasePrice(INITIAL_FORM_STATE_PRODUCT.purchasePrice);
         setCategoryId(INITIAL_FORM_STATE_PRODUCT.categoryId);
-        setPublicationDate(INITIAL_FORM_STATE_PRODUCT.publicationDate);
         setStockQuantity(INITIAL_FORM_STATE_PRODUCT.stockQuantity);
         setMediaFiles(INITIAL_FORM_STATE_PRODUCT.mediaFiles);
         setErrors(INITIAL_FORM_STATE_PRODUCT.errors);
@@ -270,10 +418,11 @@ export default function AddProductPage() {
             newErrors.id = 'Mã sản phẩm chỉ chứa chữ và số (A-Z, 0-9).';
         }
         if (!name.trim()) newErrors.name = 'Vui lòng nhập tên sản phẩm.';
-        if (!author.trim()) newErrors.author = 'Vui lòng nhập tên tác giả.';
-        if (!publisher.trim()) newErrors.publisher = 'Vui lòng nhập nhà xuất bản.';
-        if (!categoryId) newErrors.categoryId = 'Vui lòng chọn danh mục.';
-        if (!publicationDate) newErrors.publicationDate = 'Vui lòng chọn ngày xuất bản.';
+        if (!brand.trim()) newErrors.brand = 'Vui lòng nhập thương hiệu.';
+        // Validation category
+        if (!categoryId) {
+            newErrors.categoryId = 'Vui lòng chọn danh mục từ danh sách.';
+        }
 
         // Validate price - must be a valid number and >= 0
         const priceNum = Number(price);
@@ -297,7 +446,8 @@ export default function AddProductPage() {
 
         // Validate mediaFiles - must have at least 1 image/video
         if (!mediaFiles || mediaFiles.length === 0) {
-            newErrors.mediaFiles = 'Vui lòng chọn ít nhất một ảnh hoặc video cho sản phẩm.';
+            newErrors.mediaFiles =
+                'Vui lòng chọn ít nhất một ảnh hoặc video cho sản phẩm.';
         }
 
         // Validate dimensions - only if provided, must be >= 1
@@ -425,8 +575,17 @@ export default function AddProductPage() {
             id: (productId || '').trim(),
             name: (name || '').trim(),
             description: (description || '').trim() || null,
-            author: (author || '').trim(),
-            publisher: (publisher || '').trim(),
+            brand: (brand || '').trim(),
+            shadeColor: (shadeColor || '').trim() || null,
+            finish: (finish || '').trim() || null,
+            skinType: (skinType || '').trim() || null,
+            skinConcern: (skinConcern || '').trim() || null,
+            volume: (volume || '').trim() || null,
+            origin: (origin || '').trim() || null,
+            expiryDate: expiryDate || null,
+            ingredients: (ingredients || '').trim() || null,
+            usageInstructions: (usageInstructions || '').trim() || null,
+            safetyNote: (safetyNote || '').trim() || null,
             weight: weight && Number(weight) > 0 ? Number(weight) : null,
             length: length && Number(length) >= 1 ? Number(length) : null,
             width: width && Number(width) >= 1 ? Number(width) : null,
@@ -438,12 +597,11 @@ export default function AddProductPage() {
                 discountValue && Number(discountValue) > 0 ? Number(discountValue) : null,
             purchasePrice:
                 purchasePrice !== undefined &&
-                    purchasePrice !== null &&
-                    purchasePrice !== ''
+                purchasePrice !== null &&
+                purchasePrice !== ''
                     ? Number(purchasePrice)
                     : null,
             categoryId: (categoryId || '').trim(),
-            publicationDate: publicationDate || new Date().toISOString().slice(0, 10),
             imageUrls: imageUrls.length ? imageUrls : undefined,
             videoUrls: videoUrls.length ? videoUrls : undefined,
             defaultMediaUrl: defaultUrl || undefined,
@@ -453,8 +611,17 @@ export default function AddProductPage() {
             productId,
             name,
             description,
-            author,
-            publisher,
+            brand,
+            shadeColor,
+            finish,
+            skinType,
+            skinConcern,
+            volume,
+            origin,
+            expiryDate,
+            ingredients,
+            usageInstructions,
+            safetyNote,
             weight,
             length,
             width,
@@ -464,7 +631,6 @@ export default function AddProductPage() {
             discountValue,
             purchasePrice,
             categoryId,
-            publicationDate,
             stockQuantity,
             finalPrice,
         ],
@@ -613,33 +779,188 @@ export default function AddProductPage() {
                                     value={productId}
                                     onChange={(e) => handleProductIdInput(e.target.value)}
                                 />
-                                {errors.id && <div className={cx('errorText')}>{errors.id}</div>}
+                                {errors.id && (
+                                    <div className={cx('errorText')}>{errors.id}</div>
+                                )}
                             </div>
                             <div className={cx('row')}>
-                                <label>Danh mục sách</label>
-                                <select
-                                    value={categoryId}
-                                    onChange={(e) => setCategoryId(e.target.value)}
+                                <label>Danh mục sản phẩm</label>
+                                <div
+                                    className={cx('categoryDropdown')}
+                                    ref={categoryDropdownRef}
                                 >
-                                    <option value="">--Chọn danh mục--</option>
-                                    {categories.map((c) => (
-                                        <option
-                                            key={c.id || c.categoryId}
-                                            value={c.id || c.categoryId}
+                                    {/* Input hiển thị category đã chọn hoặc placeholder */}
+                                    <div
+                                        className={cx('categorySelect', {
+                                            open: isCategoryDropdownOpen,
+                                            error: errors.categoryId,
+                                        })}
+                                        onClick={() =>
+                                            setIsCategoryDropdownOpen(
+                                                !isCategoryDropdownOpen,
+                                            )
+                                        }
+                                    >
+                                        <span
+                                            className={cx('categorySelectValue', {
+                                                placeholder: !categoryId,
+                                            })}
                                         >
-                                            {c.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                            {categoryId
+                                                ? (
+                                                      displayCategories.find(
+                                                          (c) =>
+                                                              (c.id || c.categoryId) ===
+                                                              categoryId,
+                                                      ) ||
+                                                      categories.find(
+                                                          (c) =>
+                                                              (c.id || c.categoryId) ===
+                                                              categoryId,
+                                                      )
+                                                  )?.name || '--Chọn danh mục--'
+                                                : '--Chọn danh mục--'}
+                                        </span>
+                                        <span className={cx('categorySelectArrow')}>
+                                            {isCategoryDropdownOpen ? '▲' : '▼'}
+                                        </span>
+                                    </div>
+
+                                    {/* Dropdown với tìm kiếm */}
+                                    {isCategoryDropdownOpen && (
+                                        <div className={cx('categoryDropdownMenu')}>
+                                            {/* Input tìm kiếm */}
+                                            <div className={cx('categorySearch')}>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Tìm kiếm danh mục..."
+                                                    value={categorySearchTerm}
+                                                    onChange={(e) =>
+                                                        setCategorySearchTerm(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    autoFocus
+                                                />
+                                                {categorySearchTerm && (
+                                                    <button
+                                                        type="button"
+                                                        className={cx(
+                                                            'categorySearchClear',
+                                                        )}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setCategorySearchTerm('');
+                                                        }}
+                                                        title="Xóa tìm kiếm"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {/* Danh sách categories */}
+                                            <div className={cx('categoryList')}>
+                                                {filteredCategories.length === 0 ? (
+                                                    <div className={cx('categoryEmpty')}>
+                                                        <div
+                                                            style={{
+                                                                fontSize: '32px',
+                                                                marginBottom: '8px',
+                                                            }}
+                                                        >
+                                                            🔍
+                                                        </div>
+                                                        <div>
+                                                            Không tìm thấy danh mục nào
+                                                        </div>
+                                                        {categorySearchTerm && (
+                                                            <div
+                                                                style={{
+                                                                    fontSize: '12px',
+                                                                    marginTop: '4px',
+                                                                    color: '#94a3b8',
+                                                                }}
+                                                            >
+                                                                Thử tìm kiếm với từ khóa
+                                                                khác
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        {filteredCategories.map((c) => {
+                                                            const catId =
+                                                                c.id || c.categoryId;
+                                                            const isSelected =
+                                                                categoryId === catId;
+                                                            return (
+                                                                <div
+                                                                    key={catId}
+                                                                    className={cx(
+                                                                        'categoryItem',
+                                                                        {
+                                                                            selected:
+                                                                                isSelected,
+                                                                        },
+                                                                    )}
+                                                                    onClick={() => {
+                                                                        setCategoryId(
+                                                                            catId,
+                                                                        );
+                                                                        setIsCategoryDropdownOpen(
+                                                                            false,
+                                                                        );
+                                                                        setCategorySearchTerm(
+                                                                            '',
+                                                                        );
+                                                                        // Xóa lỗi category khi chọn
+                                                                        setErrors(
+                                                                            (prev) => {
+                                                                                if (
+                                                                                    !prev?.categoryId
+                                                                                )
+                                                                                    return prev;
+                                                                                const next =
+                                                                                    {
+                                                                                        ...prev,
+                                                                                    };
+                                                                                delete next.categoryId;
+                                                                                return next;
+                                                                            },
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    {c.name}
+                                                                    {isSelected && (
+                                                                        <span
+                                                                            className={cx(
+                                                                                'categoryCheck',
+                                                                            )}
+                                                                        >
+                                                                            ✓
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                                 {errors.categoryId && (
-                                    <div className={cx('errorText')}>{errors.categoryId}</div>
+                                    <div className={cx('errorText')}>
+                                        {errors.categoryId}
+                                    </div>
                                 )}
                             </div>
                         </div>
                         <div className={cx('row')}>
                             <label>Tên sản phẩm</label>
                             <input
-                                placeholder="VD: Sách lập trình C++"
+                                placeholder="VD: Kem dưỡng ẩm cho da khô"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                             />
@@ -647,43 +968,159 @@ export default function AddProductPage() {
                                 <div className={cx('errorText')}>{errors.name}</div>
                             )}
                         </div>
-                        <div className={cx('grid2')}>
-                            <div className={cx('row')}>
-                                <label>Tác giả</label>
-                                <input
-                                    placeholder="VD: Tô Năng"
-                                    value={author}
-                                    onChange={(e) => setAuthor(e.target.value)}
-                                />
-                                {errors.author && (
-                                    <div className={cx('errorText')}>{errors.author}</div>
-                                )}
-                            </div>
-                            <div className={cx('row')}>
-                                <label>Nhà xuất bản</label>
-                                <input
-                                    placeholder="VD: Vẹn B"
-                                    value={publisher}
-                                    onChange={(e) => setPublisher(e.target.value)}
-                                />
-                                {errors.publisher && (
-                                    <div className={cx('errorText')}>{errors.publisher}</div>
-                                )}
-                            </div>
-                        </div>
                         <div className={cx('row')}>
-                            <label>Ngày xuất bản</label>
+                            <label>
+                                Thương hiệu <span style={{ color: 'red' }}>*</span>
+                            </label>
                             <input
-                                type="date"
-                                value={publicationDate}
-                                onChange={(e) => setPublicationDate(e.target.value)}
+                                placeholder="VD: L'Oreal, Maybelline, Innisfree"
+                                value={brand}
+                                onChange={(e) => setBrand(e.target.value)}
                             />
-                            {errors.publicationDate && (
-                                <div className={cx('errorText')}>
-                                    {errors.publicationDate}
-                                </div>
+                            {errors.brand && (
+                                <div className={cx('errorText')}>{errors.brand}</div>
                             )}
                         </div>
+                        {/* ========== CÁC TRƯỜNG ĐẶC BIỆT ========== */}
+                        {/* Các trường này chỉ hiển thị khi chọn category phù hợp */}
+                        {/* Ví dụ: "Màu sắc" và "Độ hoàn thiện" chỉ hiển thị cho Makeup và Skincare */}
+
+                        {shouldShowField('shadeColor', categoryId, categories) ||
+                        shouldShowField('finish', categoryId, categories) ? (
+                            <div className={cx('grid2')}>
+                                {shouldShowField(
+                                    'shadeColor',
+                                    categoryId,
+                                    categories,
+                                ) && (
+                                    <div className={cx('row')}>
+                                        <label>Màu sắc</label>
+                                        <input
+                                            placeholder="VD: #Nude, #Coral, #Rose"
+                                            value={shadeColor}
+                                            onChange={(e) =>
+                                                setShadeColor(e.target.value)
+                                            }
+                                        />
+                                    </div>
+                                )}
+                                {shouldShowField('finish', categoryId, categories) && (
+                                    <div className={cx('row')}>
+                                        <label>Độ hoàn thiện</label>
+                                        <input
+                                            placeholder="VD: Matte, Glossy, Satin"
+                                            value={finish}
+                                            onChange={(e) => setFinish(e.target.value)}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        ) : null}
+
+                        {shouldShowField('skinType', categoryId, categories) ||
+                        shouldShowField('skinConcern', categoryId, categories) ? (
+                            <div className={cx('grid2')}>
+                                {shouldShowField('skinType', categoryId, categories) && (
+                                    <div className={cx('row')}>
+                                        <label>Loại da</label>
+                                        <input
+                                            placeholder="VD: Da khô, Da dầu, Da hỗn hợp"
+                                            value={skinType}
+                                            onChange={(e) => setSkinType(e.target.value)}
+                                        />
+                                    </div>
+                                )}
+                                {shouldShowField(
+                                    'skinConcern',
+                                    categoryId,
+                                    categories,
+                                ) && (
+                                    <div className={cx('row')}>
+                                        <label>Vấn đề da</label>
+                                        <input
+                                            placeholder="VD: Mụn, Lão hóa, Nhạy cảm"
+                                            value={skinConcern}
+                                            onChange={(e) =>
+                                                setSkinConcern(e.target.value)
+                                            }
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        ) : null}
+
+                        {shouldShowField('volume', categoryId, categories) ||
+                        shouldShowField('origin', categoryId, categories) ? (
+                            <div className={cx('grid2')}>
+                                {shouldShowField('volume', categoryId, categories) && (
+                                    <div className={cx('row')}>
+                                        <label>Dung tích</label>
+                                        <input
+                                            placeholder="VD: 30ml, 50g, 100ml"
+                                            value={volume}
+                                            onChange={(e) => setVolume(e.target.value)}
+                                        />
+                                    </div>
+                                )}
+                                {shouldShowField('origin', categoryId, categories) && (
+                                    <div className={cx('row')}>
+                                        <label>Xuất xứ</label>
+                                        <input
+                                            placeholder="VD: Hàn Quốc, Pháp, Mỹ"
+                                            value={origin}
+                                            onChange={(e) => setOrigin(e.target.value)}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        ) : null}
+
+                        {shouldShowField('expiryDate', categoryId, categories) && (
+                            <div className={cx('row')}>
+                                <label>Hạn sử dụng</label>
+                                <input
+                                    type="date"
+                                    value={expiryDate}
+                                    onChange={(e) => setExpiryDate(e.target.value)}
+                                />
+                            </div>
+                        )}
+
+                        {shouldShowField('ingredients', categoryId, categories) && (
+                            <div className={cx('row')}>
+                                <label>Thành phần</label>
+                                <textarea
+                                    rows={3}
+                                    placeholder="Liệt kê các thành phần chính (VD: Hyaluronic Acid, Vitamin C, Retinol...)"
+                                    value={ingredients}
+                                    onChange={(e) => setIngredients(e.target.value)}
+                                />
+                            </div>
+                        )}
+
+                        {shouldShowField('usageInstructions', categoryId, categories) && (
+                            <div className={cx('row')}>
+                                <label>Hướng dẫn sử dụng</label>
+                                <textarea
+                                    rows={3}
+                                    placeholder="Hướng dẫn cách sử dụng sản phẩm"
+                                    value={usageInstructions}
+                                    onChange={(e) => setUsageInstructions(e.target.value)}
+                                />
+                            </div>
+                        )}
+
+                        {shouldShowField('safetyNote', categoryId, categories) && (
+                            <div className={cx('row')}>
+                                <label>Lưu ý an toàn</label>
+                                <textarea
+                                    rows={2}
+                                    placeholder="Các lưu ý về an toàn khi sử dụng sản phẩm"
+                                    value={safetyNote}
+                                    onChange={(e) => setSafetyNote(e.target.value)}
+                                />
+                            </div>
+                        )}
                         <div className={cx('row')}>
                             <label>Mô tả sản phẩm</label>
                             <textarea
@@ -711,7 +1148,9 @@ export default function AddProductPage() {
                                     value={price}
                                     onChange={(e) => {
                                         setPrice(
-                                            Number(e.target.value.replace(/[^0-9]/g, '')) || 0,
+                                            Number(
+                                                e.target.value.replace(/[^0-9]/g, ''),
+                                            ) || 0,
                                         );
                                         // Xóa lỗi purchasePrice khi thay đổi giá niêm yết
                                         setErrors((prev) => {
@@ -738,7 +1177,9 @@ export default function AddProductPage() {
                                     <span className={cx('suffix')}>%</span>
                                 </div>
                                 {errors.taxPercent && (
-                                    <div className={cx('errorText')}>{errors.taxPercent}</div>
+                                    <div className={cx('errorText')}>
+                                        {errors.taxPercent}
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -762,12 +1203,18 @@ export default function AddProductPage() {
                                     }}
                                 />
                                 {errors.purchasePrice && (
-                                    <div className={cx('errorText')}>{errors.purchasePrice}</div>
+                                    <div className={cx('errorText')}>
+                                        {errors.purchasePrice}
+                                    </div>
                                 )}
                             </div>
                             <div className={cx('row')}>
                                 <label>Giá cuối cùng (đã gồm thuế)</label>
-                                <input placeholder="Tự động tính" value={finalPrice} readOnly />
+                                <input
+                                    placeholder="Tự động tính"
+                                    value={finalPrice}
+                                    readOnly
+                                />
                             </div>
                         </div>
                     </div>
@@ -811,7 +1258,9 @@ export default function AddProductPage() {
 
                     <div className={cx('section')}>
                         <div className={cx('sectionHeader')}>
-                            <div className={cx('sectionTitle')}>Kích thước & trọng lượng</div>
+                            <div className={cx('sectionTitle')}>
+                                Kích thước & trọng lượng
+                            </div>
                             <div className={cx('sectionHint')}>
                                 Giúp hệ thống tự tính phí vận chuyển
                             </div>
@@ -863,22 +1312,30 @@ export default function AddProductPage() {
                             <div className={cx('grid4')}>
                                 <div>
                                     {errors.length && (
-                                        <div className={cx('errorText')}>{errors.length}</div>
+                                        <div className={cx('errorText')}>
+                                            {errors.length}
+                                        </div>
                                     )}
                                 </div>
                                 <div>
                                     {errors.width && (
-                                        <div className={cx('errorText')}>{errors.width}</div>
+                                        <div className={cx('errorText')}>
+                                            {errors.width}
+                                        </div>
                                     )}
                                 </div>
                                 <div>
                                     {errors.height && (
-                                        <div className={cx('errorText')}>{errors.height}</div>
+                                        <div className={cx('errorText')}>
+                                            {errors.height}
+                                        </div>
                                     )}
                                 </div>
                                 <div>
                                     {errors.weight && (
-                                        <div className={cx('errorText')}>{errors.weight}</div>
+                                        <div className={cx('errorText')}>
+                                            {errors.weight}
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -950,7 +1407,9 @@ export default function AddProductPage() {
                                                             );
                                                             if (
                                                                 next.length > 0 &&
-                                                                !next.some((n) => n.isDefault)
+                                                                !next.some(
+                                                                    (n) => n.isDefault,
+                                                                )
                                                             ) {
                                                                 next[0].isDefault = true;
                                                             }
@@ -958,7 +1417,8 @@ export default function AddProductPage() {
                                                         });
                                                         // Xóa lỗi mediaFiles khi đã có file
                                                         setErrors((prev) => {
-                                                            if (!prev?.mediaFiles) return prev;
+                                                            if (!prev?.mediaFiles)
+                                                                return prev;
                                                             const next = { ...prev };
                                                             delete next.mediaFiles;
                                                             return next;

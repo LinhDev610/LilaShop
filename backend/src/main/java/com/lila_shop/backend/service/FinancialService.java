@@ -320,20 +320,20 @@ public class FinancialService {
                 .toList();
     }
 
-    // Tổng doanh thu = tổng giá trị các sách bán ra (OrderItem.finalPrice), không bao gồm shipping fee
+    // Tổng doanh thu = tổng giá trị các sản phẩm mỹ phẩm bán ra (OrderItem.finalPrice), không bao gồm shipping fee
     public RevenueSummary revenueSummary(LocalDate start, LocalDate end) {
         LocalDateTime[] range = toDateTimeRange(start, end);
         
         // Lọc các đơn hàng đã thanh toán thành công
         List<Order> paidOrders = getPaidOrdersInRange(range[0], range[1]);
 
-        // Tính tổng doanh thu = sum của tất cả OrderItem.finalPrice (chỉ giá sách, không có shipping fee)
+        // Tính tổng doanh thu = sum của tất cả OrderItem.finalPrice (chỉ giá sản phẩm, không có shipping fee)
         double totalRevenue = calculateTotalRevenue(paidOrders);
 
         // Tổng đơn hàng
         long totalOrders = paidOrders.size();
 
-        // Giá trị trung bình mỗi đơn hàng (chỉ tính giá sách, không có shipping fee)
+        // Giá trị trung bình mỗi đơn hàng (chỉ tính giá sản phẩm, không có shipping fee)
         double averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0.0;
 
         return RevenueSummary.builder()

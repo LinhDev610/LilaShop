@@ -1,5 +1,5 @@
 import classNames from 'classnames/bind';
-import styles from './CustmerSideBar.module.scss';
+import styles from './CustomerSideBar.module.scss';
 import { NavLink } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import useLocalStorage from '../../../../hooks/useLocalStorage';

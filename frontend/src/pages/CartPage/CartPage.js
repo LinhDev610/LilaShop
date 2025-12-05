@@ -14,7 +14,8 @@ import {
 } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../components/Common/Notification';
-import defaultProductImage from '../../assets/images/img_sach.png';
+// Fallback image for products - TODO: Replace with cosmetic product placeholder image
+import defaultProductImage from '../../assets/images/img_qc.png';
 
 const cx = classNames.bind(styles);
 

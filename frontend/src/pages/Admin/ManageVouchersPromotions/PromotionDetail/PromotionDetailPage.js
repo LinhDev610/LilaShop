@@ -381,7 +381,7 @@ function PromotionDetailPage() {
                         </div>
                     </div>
 
-                    {/* 5. Radio buttons: Theo loại sách / Theo sách cụ thể */}
+                    {/* 5. Radio buttons: Theo danh mục mỹ phẩm / Theo sản phẩm cụ thể */}
                     <div className={cx('form-group')}>
                         <div className={cx('radio-group')}>
                             <label className={cx('radio-label')}>
@@ -391,7 +391,7 @@ function PromotionDetailPage() {
                                     checked={promotion.applyScope === 'CATEGORY'}
                                     readOnly
                                 />
-                                <span>Theo loại sách</span>
+                                <span>Theo danh mục mỹ phẩm</span>
                             </label>
                             <label className={cx('radio-label')}>
                                 <input
@@ -400,12 +400,12 @@ function PromotionDetailPage() {
                                     checked={promotion.applyScope === 'PRODUCT'}
                                     readOnly
                                 />
-                                <span>Theo sách cụ thể</span>
+                                <span>Theo sản phẩm cụ thể</span>
                             </label>
                         </div>
                     </div>
 
-                    {/* 6. Hạn mức và Loại sách áp dụng (2 cột) - chỉ hiện khi chọn "Theo loại sách" */}
+                    {/* 6. Hạn mức và Danh mục mỹ phẩm áp dụng (2 cột) - chỉ hiện khi chọn "Theo danh mục mỹ phẩm" */}
                     {promotion.applyScope === 'CATEGORY' && (
                         <div className={cx('form-row')}>
                             {promotion.discountValueType === 'PERCENTAGE' && (
@@ -424,7 +424,7 @@ function PromotionDetailPage() {
                             <div className={cx('form-group', 'form-group-half')}>
                                 <label className={cx('form-label')}>Loại sách áp dụng</label>
                                 <select className={cx('form-select')} value={promotion.categoryIds?.[0] || ''} readOnly>
-                                    <option value="">-- Chọn loại sách --</option>
+                                    <option value="">-- Chọn danh mục mỹ phẩm --</option>
                                     {categories.map((category) => (
                                         <option key={category.id} value={category.id}>
                                             {category.name}
@@ -435,7 +435,7 @@ function PromotionDetailPage() {
                         </div>
                     )}
 
-                    {/* 7. Hạn mức và Sản phẩm áp dụng (2 cột) - chỉ hiện khi chọn "Theo sách cụ thể" */}
+                    {/* 7. Hạn mức và Sản phẩm áp dụng (2 cột) - chỉ hiện khi chọn "Theo sản phẩm cụ thể" */}
                     {promotion.applyScope === 'PRODUCT' && (
                         <div className={cx('form-row')}>
                             {promotion.discountValueType === 'PERCENTAGE' && (

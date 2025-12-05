@@ -21,7 +21,7 @@ export default function PaymentPolicyPage() {
                     <div className={cx('section')}>
                         <h2 className={cx('section-title')}>1. Phương thức thanh toán</h2>
                         <p className={cx('section-text')}>
-                            LuminaBook hỗ trợ các phương thức thanh toán sau:
+                            LilaShop hỗ trợ các phương thức thanh toán sau:
                         </p>
                         <div className={cx('payment-methods')}>
                             <div className={cx('method-item')}>

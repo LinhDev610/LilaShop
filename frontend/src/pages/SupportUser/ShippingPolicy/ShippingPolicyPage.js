@@ -21,7 +21,7 @@ export default function ShippingPolicyPage() {
                     <div className={cx('section')}>
                         <h2 className={cx('section-title')}>1. Phạm vi giao hàng</h2>
                         <p className={cx('section-text')}>
-                            LuminaBook giao hàng toàn quốc thông qua đối tác vận chuyển GHN (Giao Hàng Nhanh).
+                            LilaShop giao hàng toàn quốc thông qua đối tác vận chuyển GHN (Giao Hàng Nhanh).
                         </p>
                     </div>
 

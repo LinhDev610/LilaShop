@@ -1,4 +1,3 @@
-import config from '../../../../config/';
 import routes from '../../../../config/routes';
 import { clearVoucherFromCart, getCart, searchProducts } from '../../../../services';
 
@@ -6,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import classNames from 'classnames/bind';
 
+// Logo - TODO: Replace logo_luminabook.png with LilaShop logo
 import logoIcon from '../../../../assets/icons/logo_luminabook.png';
 import guestIcon from '../../../../assets/icons/icon_guest.png';
 import useLocalStorage from '../../../../hooks/useLocalStorage';
@@ -299,7 +299,7 @@ function DefaultHeader() {
                     <Link to="/" onClick={handleGoHome}>
                         <img
                             src={logoIcon}
-                            alt="LuminaBook"
+                            alt="LilaShop"
                             className={cx('logo-image')}
                         />
                     </Link>
@@ -308,7 +308,7 @@ function DefaultHeader() {
                     <form className={cx('search')} onSubmit={handleSearchSubmit}>
                         <input
                             type="text"
-                            placeholder="Tìm kiếm theo tên tác phẩm,…"
+                            placeholder="Tìm kiếm theo tên sản phẩm,…"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             onFocus={() => {

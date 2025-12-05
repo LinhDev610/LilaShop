@@ -11,7 +11,7 @@ const routes = {
     resetPassword: './reset-password',
     customerAccount: '/customer-account',
     promotion: '/promotion',
-    newbook: '/newbook',
+    newproduct: '/new-product',
     admin: '/admin',
     adminCustomerAccounts: '/admin/customer-accounts',
     adminProducts: '/admin/products',

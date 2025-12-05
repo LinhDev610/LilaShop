@@ -230,9 +230,9 @@ function ManageVouchersPromotionsPage() {
             case 'ORDER':
                 return 'Toàn bộ đơn hàng';
             case 'CATEGORY':
-                return 'Theo danh mục sách';
+                return 'Theo danh mục mỹ phẩm';
             case 'PRODUCT':
-                return 'Theo sách cụ thể';
+                return 'Theo sản phẩm cụ thể';
             default:
                 return applyScope || '-';
         }

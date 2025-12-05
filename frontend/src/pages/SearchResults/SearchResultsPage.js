@@ -63,7 +63,7 @@ export default function SearchResultsPage() {
                         Hiển thị kết quả cho <strong>"{keyword}"</strong>
                     </p>
                 ) : (
-                    <p>Nhập từ khóa để tìm kiếm sách theo tên.</p>
+                    <p>Nhập từ khóa để tìm kiếm mỹ phẩm theo tên.</p>
                 )}
             </div>
 

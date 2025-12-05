@@ -130,9 +130,9 @@ function VoucherDetailPage() {
         }
 
         if (voucher.applyScope === 'CATEGORY' && voucher.categoryNames && voucher.categoryNames.length > 0) {
-            conditions.push(`Áp dụng theo loại sách: ${voucher.categoryNames.join(', ')}`);
+            conditions.push(`Áp dụng theo danh mục mỹ phẩm: ${voucher.categoryNames.join(', ')}`);
         } else if (voucher.applyScope === 'PRODUCT' && productNames.length > 0) {
-            conditions.push(`Áp dụng theo sách: ${productNames.join(', ')}`);
+            conditions.push(`Áp dụng theo sản phẩm: ${productNames.join(', ')}`);
         } else if (voucher.applyScope === 'ORDER') {
             conditions.push('Áp dụng cho toàn bộ đơn hàng');
         }
@@ -276,7 +276,7 @@ function VoucherDetailPage() {
                         </div>
                     )}
 
-                    {/* 4. Radio buttons: Theo loại sách / Theo sách cụ thể / Toàn sàn / Tổng giá trị đơn hàng */}
+                    {/* 4. Radio buttons: Theo danh mục mỹ phẩm / Theo sản phẩm cụ thể / Toàn sàn / Tổng giá trị đơn hàng */}
                     <div className={cx('form-group')}>
                         <div className={cx('radio-group')}>
                             <label className={cx('radio-label')}>
@@ -286,7 +286,7 @@ function VoucherDetailPage() {
                                     checked={voucher.applyScope === 'CATEGORY' && !isOrderByMinValue}
                                     readOnly
                                 />
-                                <span>Theo loại sách</span>
+                                <span>Theo danh mục mỹ phẩm</span>
                             </label>
                             <label className={cx('radio-label')}>
                                 <input
@@ -295,7 +295,7 @@ function VoucherDetailPage() {
                                     checked={voucher.applyScope === 'PRODUCT' && !isOrderByMinValue}
                                     readOnly
                                 />
-                                <span>Theo sách cụ thể</span>
+                                <span>Theo sản phẩm cụ thể</span>
                             </label>
                             <label className={cx('radio-label')}>
                                 <input
@@ -318,12 +318,12 @@ function VoucherDetailPage() {
                         </div>
                     </div>
 
-                    {/* 5. Loại sách áp dụng - chỉ hiện khi chọn "Theo loại sách" */}
+                    {/* 5. Danh mục mỹ phẩm áp dụng - chỉ hiện khi chọn "Theo danh mục mỹ phẩm" */}
                     {voucher.applyScope === 'CATEGORY' && !isOrderByMinValue && (
                         <div className={cx('form-group')}>
                             <label className={cx('form-label')}>Loại sách áp dụng</label>
                             <select className={cx('form-select')} value={voucher.categoryIds?.[0] || ''} readOnly>
-                                <option value="">-- Chọn loại sách --</option>
+                                <option value="">-- Chọn danh mục mỹ phẩm --</option>
                                 {categories.map((category) => (
                                     <option key={category.id} value={category.id}>
                                         {category.name}
@@ -333,7 +333,7 @@ function VoucherDetailPage() {
                         </div>
                     )}
 
-                    {/* Tên sách cụ thể - chỉ hiện khi chọn "Theo sách cụ thể" */}
+                    {/* Tên sản phẩm cụ thể - chỉ hiện khi chọn "Theo sản phẩm cụ thể" */}
                     {voucher.applyScope === 'PRODUCT' && !isOrderByMinValue && (
                         <div className={cx('form-group')}>
                             <label className={cx('form-label')}>Tên sách cụ thể</label>

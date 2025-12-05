@@ -4,7 +4,8 @@ import classNames from 'classnames/bind';
 import styles from './CheckoutDetailPage.module.scss';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useNotification } from '../../../components/Common/Notification';
-import defaultProductImage from '../../../assets/images/img_sach.png';
+// Fallback image for products - TODO: Replace with cosmetic product placeholder image
+import defaultProductImage from '../../../assets/images/img_qc.png';
 import AddressListModal from '../../../components/Common/AddressModal/AddressListModal';
 import NewAddressModal from '../../../components/Common/AddressModal/NewAddressModal';
 import AddressDetailModal from '../../../components/Common/AddressModal/AddressDetailModal';

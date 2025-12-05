@@ -76,14 +76,14 @@ export default function ReturnPolicyPage() {
                         <div className={cx('subsection')}>
                             <h3 className={cx('subsection-title')}>Thời hạn yêu cầu</h3>
                             <p className={cx('section-text')}>
-                                Yêu cầu trả hàng phải được gửi trong vòng <strong>07 ngày</strong> kể từ ngày khách hàng nhận sách thành công.
+                                Yêu cầu trả hàng phải được gửi trong vòng <strong>07 ngày</strong> kể từ ngày khách hàng nhận sản phẩm thành công.
                             </p>
                         </div>
 
                         <div className={cx('subsection')}>
                             <h3 className={cx('subsection-title')}>Điều kiện sản phẩm</h3>
                             <p className={cx('section-text')}>
-                                Sách phải còn nguyên vẹn (không rách, không ướt, không có dấu vết đã sử dụng, không đánh dấu hay ghi chú).
+                                Sản phẩm phải còn nguyên vẹn (chưa mở niêm phong, không có dấu vết đã sử dụng, còn đầy đủ bao bì và phụ kiện).
                             </p>
                         </div>
 
@@ -108,7 +108,7 @@ export default function ReturnPolicyPage() {
                                 <h4 className={cx('cost-title')}>Chi phí được hoàn trả:</h4>
                                 <ul className={cx('list')}>
                                     <li>
-                                        <strong>Nếu sản phẩm có lỗi từ phía cửa hàng</strong> (sách bị rách, sai phiên bản, thiếu trang, lỗi in ấn), 
+                                        <strong>Nếu sản phẩm có lỗi từ phía cửa hàng</strong> (sản phẩm bị hỏng, sai loại, hết hạn sử dụng, thiếu phụ kiện), 
                                         chúng tôi sẽ hoàn lại <strong>100% giá trị sản phẩm và chi phí vận chuyển trả hàng</strong> cho quý khách.
                                     </li>
                                     <li>

@@ -31,8 +31,8 @@ export const normalizeVoucherImageUrl = (url, apiBaseUrl = null) => {
     if (url.startsWith('/')) {
         // Loại bỏ context path nếu có
         let cleanPath = url;
-        if (cleanPath.startsWith('/lumina_book')) {
-            cleanPath = cleanPath.substring('/lumina_book'.length);
+        if (cleanPath.startsWith('/lila_shop')) {
+            cleanPath = cleanPath.substring('/lila_shop'.length);
         }
 
         // Nếu đã có /voucher_media/ trong path, giữ nguyên
@@ -68,8 +68,8 @@ export const normalizePromotionImageUrl = (url, apiBaseUrl = null) => {
     if (url.startsWith('/')) {
         // Loại bỏ context path nếu có
         let cleanPath = url;
-        if (cleanPath.startsWith('/lumina_book')) {
-            cleanPath = cleanPath.substring('/lumina_book'.length);
+        if (cleanPath.startsWith('/lila_shop')) {
+            cleanPath = cleanPath.substring('/lila_shop'.length);
         }
 
         // Nếu đã có /promotion_media/ trong path, giữ nguyên

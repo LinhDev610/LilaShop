@@ -71,6 +71,9 @@ public class ProductService {
                     .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION));
         }
 
+        // Validate các trường mỹ phẩm
+        validateCosmeticFields(request.getBrand(), request.getExpiryDate());
+
         // Tạo product entity từ request
         Product product = productMapper.toProduct(request);
         product.setId(request.getId());
@@ -141,6 +144,11 @@ public class ProductService {
 
         if (!isAdmin && !product.getSubmittedBy().getId().equals(user.getId())) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // Validate các trường mỹ phẩm nếu có trong request
+        if (request.getBrand() != null || request.getExpiryDate() != null) {
+            validateCosmeticFields(request.getBrand(), request.getExpiryDate());
         }
 
         // Cập nhật thông tin sản phẩm
@@ -607,6 +615,30 @@ public class ProductService {
     }
 
     // ========== PRIVATE HELPER METHODS ==========
+    
+    /**
+     * Validate các trường mỹ phẩm
+     * @param brand Thương hiệu (required cho create, optional cho update)
+     * @param expiryDate Ngày hết hạn (optional)
+     */
+    private void validateCosmeticFields(String brand, LocalDate expiryDate) {
+        // Validate brand: không được để trống hoặc chỉ có khoảng trắng
+        if (brand != null && brand.trim().isEmpty()) {
+            log.warn("Invalid brand: brand cannot be empty or whitespace only");
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+        
+        // Validate expiryDate: Cho phép ngày trong quá khứ vì có thể nhập sản phẩm đã sản xuất
+        if (expiryDate != null) {
+            // Không được quá 10 năm trong tương lai
+            LocalDate maxFutureDate = LocalDate.now().plusYears(10);
+            if (expiryDate.isAfter(maxFutureDate)) {
+                log.warn("Invalid expiryDate: {} is more than 10 years in the future", expiryDate);
+                throw new AppException(ErrorCode.BAD_REQUEST);
+            }
+        }
+    }
+    
     private Double computeFinalPrice(Double unitPrice, Double taxNullable, Double discountNullable) {
         double tax = (taxNullable != null && taxNullable >= 0) ? taxNullable : 0.0;
         double discount = (discountNullable != null && discountNullable >= 0) ? discountNullable : 0.0;

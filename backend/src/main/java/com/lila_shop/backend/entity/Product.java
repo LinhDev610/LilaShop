@@ -32,11 +32,38 @@ public class Product {
     @Column(name = "size")
     String size;
 
-    @Column(name = "author")
-    String author;
+    @Column(name = "brand")
+    String brand;
 
-    @Column(name = "publisher")
-    String publisher;
+    @Column(name = "shade_color")
+    String shadeColor;
+
+    @Column(name = "finish")
+    String finish;
+
+    @Column(name = "skin_type")
+    String skinType;
+
+    @Column(name = "skin_concern")
+    String skinConcern;
+
+    @Column(name = "volume")
+    String volume;
+
+    @Column(name = "origin")
+    String origin;
+
+    @Column(name = "expiry_date")
+    LocalDate expiryDate;
+
+    @Column(name = "ingredients", columnDefinition = "TEXT")
+    String ingredients;
+
+    @Column(name = "usage_instructions", columnDefinition = "TEXT")
+    String usageInstructions;
+
+    @Column(name = "safety_note", columnDefinition = "TEXT")
+    String safetyNote;
 
     @Column(name = "weight")
     Double weight;
@@ -71,9 +98,6 @@ public class Product {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     ProductStatus status;
-
-    @Column(name = "publication_date")
-    LocalDate publicationDate;
 
     @Column(name = "created_at")
     LocalDateTime createdAt;

@@ -1,8 +1,8 @@
-# 📚 LUMINA BOOK - WEBSITE BÁN SÁCH
+# 💄 LILASHOP - WEBSITE BÁN MỸ PHẨM
 
 ## 🎯 Giới thiệu
 
-LilaShop là website bán sách trực tuyến được xây dựng bằng React với CSS Modules và classnames/bind pattern. Dự án sử dụng layout system linh hoạt và component-based architecture.
+LilaShop là website bán mỹ phẩm trực tuyến được xây dựng bằng React với CSS Modules và classnames/bind pattern. Dự án sử dụng layout system linh hoạt và component-based architecture.
 
 ## 🚀 Tính năng chính
 
@@ -160,7 +160,7 @@ yarn format         # Prettier
 
 -   **Issues**: [GitHub Issues](https://github.com/your-repo/issues)
 -   **Discussions**: [GitHub Discussions](https://github.com/your-repo/discussions)
--   **Email**: support@LilaShop.com
+-   **Email**: support@lilashop.com
 
 ## 📄 License
 

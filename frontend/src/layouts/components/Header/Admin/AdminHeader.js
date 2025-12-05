@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 
+// Logo - TODO: Replace logo_luminabook.png with LilaShop logo
 import logoIcon from '../../../../assets/icons/logo_luminabook.png';
 import guestIcon from '../../../../assets/icons/icon_guest.png';
 import useLocalStorage from '../../../../hooks/useLocalStorage';
@@ -40,7 +41,7 @@ function AdminHeader() {
             <header className={cx('header')}>
                 <div className={cx('logo')}>
                     <Link to="/">
-                        <img src={logoIcon} alt="LuminaBook" className={cx('logo-image')} />
+                        <img src={logoIcon} alt="LilaShop" className={cx('logo-image')} />
                     </Link>
                 </div>
                 <div className={cx('admin-info')}>

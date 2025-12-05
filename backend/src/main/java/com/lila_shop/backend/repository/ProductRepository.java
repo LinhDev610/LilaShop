@@ -21,29 +21,26 @@ public interface ProductRepository extends JpaRepository<Product, String> {
     // Tìm products theo name (case insensitive)
     List<Product> findByNameContainingIgnoreCase(String name);
 
-    // Tìm products theo author
-    List<Product> findByAuthorContainingIgnoreCase(String author);
-
-    // Tìm products theo publisher
-    List<Product> findByPublisherContainingIgnoreCase(String publisher);
+    // Tìm products theo brand
+    List<Product> findByBrandContainingIgnoreCase(String brand);
 
     // Tìm products theo price range
     @Query("SELECT p FROM Product p WHERE p.price BETWEEN :minPrice AND :maxPrice")
     List<Product> findByPriceRange(@Param("minPrice") double minPrice, @Param("maxPrice") double maxPrice);
 
-    // Tìm products theo keyword search (name, author, publisher, description)
+    // Tìm products theo keyword search (name, brand, description, ingredients)
     @Query("SELECT p FROM Product p WHERE " + "LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
-            + "LOWER(p.author) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
-            + "LOWER(p.publisher) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
-            + "LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+            + "LOWER(p.brand) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
+            + "LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
+            + "LOWER(p.ingredients) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<Product> findByKeyword(@Param("keyword") String keyword);
 
     // Tìm products submitted bởi staff cụ thể
     List<Product> findBySubmittedBy(User submittedBy);
 
-    // Tìm products theo publication date range
-    @Query("SELECT p FROM Product p WHERE p.publicationDate BETWEEN :startDate AND :endDate")
-    List<Product> findByPublicationDateRange(
+    // Tìm products theo expiry date range
+    @Query("SELECT p FROM Product p WHERE p.expiryDate BETWEEN :startDate AND :endDate")
+    List<Product> findByExpiryDateRange(
             @Param("startDate") java.time.LocalDate startDate, @Param("endDate") java.time.LocalDate endDate);
 
     // Tìm products có inventory

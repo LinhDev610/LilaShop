@@ -1,4 +1,4 @@
-# Identity Service - Cosmetics Website
+# Backend Service - LilaShop Cosmetics Website
 
 ## Yêu cầu hệ thống
 
@@ -13,33 +13,34 @@
 
 ### MySQL
 - **Version**: 8.0 trở lên
-- **Port**: 3306 (mặc định)
+- **Port**: 3307 
+- **Database**: lila_shop
 
 ## Cài đặt và chạy
 
 ### 1. Clone repository
 ```bash
 git clone <repository-url>
-cd lumina-books
+cd LilaShop
 ```
 
 ### 2. Cấu hình database
 Tạo database MySQL:
 ```sql
-CREATE DATABASE cosmetics_db;
-CREATE USER 'cosmetics_user'@'localhost' IDENTIFIED BY 'password';
-GRANT ALL PRIVILEGES ON cosmetics_db.* TO 'cosmetics_user'@'localhost';
+CREATE DATABASE lila_shop;
+CREATE USER 'root'@'localhost' IDENTIFIED BY 'root';
+GRANT ALL PRIVILEGES ON lila_shop.* TO 'root'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
 ### 3. Cấu hình application
-Cập nhật file `src/main/resources/application.yml`:
+Cập nhật file `src/main/resources/application.yaml`:
 ```yaml
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/cosmetics_db
-    username: cosmetics_user
-    password: password
+    url: jdbc:mysql://localhost:3307/lila_shop
+    username: root
+    password: root
 ```
 
 ### 4. Chạy ứng dụng
@@ -49,7 +50,7 @@ mvn spring-boot:run
 
 # Hoặc build và chạy JAR
 mvn clean package
-java -jar target/lumina-books-0.0.1-SNAPSHOT.jar
+java -jar target/lila-shop-0.0.1-SNAPSHOT.jar
 ```
 
 ## Tương thích JDK
@@ -136,17 +137,17 @@ MIT License
 
 
 ## Docker guideline
-`docker build -t <account>/lumina-books:0.9.0 .`
-`docker build -t linhdev610/lumina-books:0.9.0 .`
+`docker build -t <account>/lila-shop:0.9.0 .`
+`docker build -t linhdev610/lila-shop:0.9.0 .`
 ### Push docker image to Docker Hub
-`docker image push <account>/lumina-books:0.9.0`
-`docker image push linhdev610/lumina-books:0.9.0`
+`docker image push <account>/lila-shop:0.9.0`
+`docker image push linhdev610/lila-shop:0.9.0`
 
 ### Create network:
 `docker network create devteria-network`
 ### Show network list:
 `docker network ls`
 ### Start MySQL in devteria-network
-`docker run --network devteria-network --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root -d mysql:8.0.43-debian`
+`docker run --network devteria-network --name mysql -p 3307:3306 -e MYSQL_ROOT_PASSWORD=root -d mysql:8.0.43-debian`
 ### Run your application in devteria-network
-`docker run --name lumina-books --network devteria-network -p 8080:8080 -e DBMS_CONNECTION=jdbc:mysql://mysql:3306/identity_service lumina-books:0.9.0`
+`docker run --name lila-shop --network devteria-network -p 8080:8080 -e DBMS_CONNECTION=jdbc:mysql://mysql:3306/lila_shop lila-shop:0.9.0`

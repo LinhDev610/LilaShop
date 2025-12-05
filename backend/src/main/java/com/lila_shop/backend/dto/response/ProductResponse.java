@@ -19,8 +19,17 @@ public class ProductResponse {
     String name;
     String description;
     String size;
-    String author;
-    String publisher;
+    String brand;
+    String shadeColor;
+    String finish;
+    String skinType;
+    String skinConcern;
+    String volume;
+    String origin;
+    LocalDate expiryDate;
+    String ingredients;
+    String usageInstructions;
+    String safetyNote;
     Double weight;
     Double length;
     Double width;
@@ -32,7 +41,6 @@ public class ProductResponse {
     Double discountValue;
     Integer quantitySold;
     ProductStatus status;
-    LocalDate publicationDate;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 
