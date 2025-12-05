@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 
 // Logo - TODO: Replace logo_luminabook.png with LilaShop logo
-import logoIcon from '../../../../assets/icons/logo_luminabook.png';
+import logoIcon from '../../../../assets/icons/icon_lila_shop.png';
 import guestIcon from '../../../../assets/icons/icon_guest.png';
 import useLocalStorage from '../../../../hooks/useLocalStorage';
 
