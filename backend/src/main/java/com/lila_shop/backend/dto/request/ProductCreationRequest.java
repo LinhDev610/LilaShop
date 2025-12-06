@@ -23,6 +23,9 @@ public class ProductCreationRequest {
     @Size(max = 5000, message = "Mô tả không được vượt quá 5000 ký tự")
     String description;
 
+    @Size(max = 100, message = "Kích thước không được vượt quá 100 ký tự")
+    String size;
+
     @NotBlank(message = "Thương hiệu không được để trống")
     @Size(max = 255, message = "Tên thương hiệu không được vượt quá 255 ký tự")
     String brand;
@@ -66,7 +69,8 @@ public class ProductCreationRequest {
     @DecimalMin(value = "0.0", message = "Chiều cao phải lớn hơn hoặc bằng 0")
     Double height;
 
-    @NotNull(message = "Giá niêm yết (giá gốc) không được để trống")
+    // unitPrice, price, tax, purchasePrice are optional when product has variants
+    // When product has variants, these fields are managed at variant level
     @DecimalMin(value = "0.0", message = "Giá niêm yết phải lớn hơn hoặc bằng 0")
     Double unitPrice;
 
@@ -88,7 +92,6 @@ public class ProductCreationRequest {
     // Promotion (optional)
     String promotionId;
 
-    @NotNull(message = "Số lượng tồn kho không được để trống")
     @Min(value = 0, message = "Số lượng tồn kho phải lớn hơn hoặc bằng 0")
     Integer stockQuantity;
 

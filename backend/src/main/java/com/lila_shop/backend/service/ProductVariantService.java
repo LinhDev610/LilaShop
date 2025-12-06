@@ -55,8 +55,10 @@ public class ProductVariantService {
     public ProductVariantResponse createVariant(String productId, ProductVariantRequest req) {
         Product product = findProduct(productId);
 
-        boolean hasDefault = product.getVariants() != null
-                && product.getVariants().stream().anyMatch(v -> Boolean.TRUE.equals(v.getIsDefault()));
+        // Kiểm tra xem đã có variant mặc định chưa
+        List<ProductVariant> existingVariants = productVariantRepository.findByProductId(productId);
+        boolean hasDefault = existingVariants.stream()
+                .anyMatch(v -> Boolean.TRUE.equals(v.getIsDefault()));
 
         ProductVariant variant = ProductVariant.builder()
                 .product(product)
@@ -74,15 +76,39 @@ public class ProductVariantService {
                 .build();
 
         ProductVariant saved = productVariantRepository.save(variant);
+        log.info("Created variant {} for product {}", saved.getId(), productId);
 
-        // If this variant is default, unset others
+        // If this variant is default, unset others and update product price
         if (saved.getIsDefault()) {
-            productVariantRepository.findByProductId(productId).forEach(v -> {
+            log.info("Variant {} is default, updating product price", saved.getId());
+            
+            // Unset other variants as default
+            existingVariants.forEach(v -> {
                 if (!v.getId().equals(saved.getId()) && Boolean.TRUE.equals(v.getIsDefault())) {
                     v.setIsDefault(false);
                     productVariantRepository.save(v);
+                    log.info("Unset default flag for variant {}", v.getId());
                 }
             });
+            
+            try {
+                // Refresh product entity để đảm bảo có dữ liệu mới nhất
+                product = productRepository.findById(productId)
+                        .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+                
+                // Cập nhật giá sản phẩm từ variant mặc định
+                product.setPrice(saved.getPrice());
+                product.setUnitPrice(saved.getUnitPrice());
+                product.setTax(saved.getTax());
+                product.setPurchasePrice(saved.getPurchasePrice());
+                product.setUpdatedAt(LocalDateTime.now());
+                productRepository.save(product);
+                log.info("Updated product {} price from default variant: price={}, unitPrice={}", 
+                    productId, saved.getPrice(), saved.getUnitPrice());
+            } catch (Exception e) {
+                log.error("Error updating product price from variant: {}", e.getMessage(), e);
+                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+            }
         }
 
         return map(saved);
@@ -107,6 +133,7 @@ public class ProductVariantService {
         variant.setUpdatedAt(LocalDateTime.now());
 
         ProductVariant saved = productVariantRepository.save(variant);
+        Product product = findProduct(productId);
 
         if (saved.getIsDefault()) {
             productVariantRepository.findByProductId(productId).forEach(v -> {
@@ -115,6 +142,14 @@ public class ProductVariantService {
                     productVariantRepository.save(v);
                 }
             });
+            
+            // Cập nhật giá sản phẩm từ variant mặc định
+            product.setPrice(saved.getPrice());
+            product.setUnitPrice(saved.getUnitPrice());
+            product.setTax(saved.getTax());
+            product.setPurchasePrice(saved.getPurchasePrice());
+            product.setUpdatedAt(LocalDateTime.now());
+            productRepository.save(product);
         }
         return map(saved);
     }

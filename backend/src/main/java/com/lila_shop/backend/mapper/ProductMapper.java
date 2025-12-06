@@ -32,7 +32,7 @@ public interface ProductMapper {
     @Mapping(target = "promotionStartDate", source = "promotion", qualifiedByName = "mapPromotionStartDate")
     @Mapping(target = "promotionExpiryDate", source = "promotion", qualifiedByName = "mapPromotionExpiryDate")
     @Mapping(target = "mediaUrls", source = "mediaList", qualifiedByName = "mapMediaUrls")
-    @Mapping(target = "defaultMediaUrl", source = "defaultMedia.mediaUrl", qualifiedByName = "normalizeUrl")
+    @Mapping(target = "defaultMediaUrl", source = "defaultMedia", qualifiedByName = "mapDefaultMediaUrl")
     @Mapping(target = "reviewCount", source = "reviews", qualifiedByName = "mapReviewCount")
     @Mapping(target = "averageRating", source = "reviews", qualifiedByName = "mapAverageRating")
     @Mapping(target = "stockQuantity", source = "inventory.stockQuantity")
@@ -59,7 +59,6 @@ public interface ProductMapper {
     @Mapping(target = "variants", ignore = true)
     @Mapping(target = "vouchers", ignore = true)
     @Mapping(target = "status", ignore = true)
-    @Mapping(target = "size", ignore = true)
     Product toProduct(ProductCreationRequest request);
 
     // Update Entity
@@ -86,7 +85,6 @@ public interface ProductMapper {
     @Mapping(target = "rejectionReason", ignore = true)
     @Mapping(target = "variants", ignore = true)
     @Mapping(target = "vouchers", ignore = true)
-    @Mapping(target = "size", ignore = true)
     void updateProduct(@MappingTarget Product product, ProductUpdateRequest request);
 
     @Named("mapMediaUrls")
@@ -142,6 +140,9 @@ public interface ProductMapper {
                         .shadeName(v.getShadeName())
                         .shadeHex(v.getShadeHex())
                         .price(v.getPrice())
+                        .unitPrice(v.getUnitPrice())
+                        .tax(v.getTax())
+                        .purchasePrice(v.getPurchasePrice())
                         .stockQuantity(v.getStockQuantity())
                         .isDefault(v.getIsDefault())
                         .createdAt(v.getCreatedAt())
@@ -159,6 +160,13 @@ public interface ProductMapper {
                 .map(ProductVariant::getId)
                 .findFirst()
                 .orElse(null);
+    }
+
+    @Named("mapDefaultMediaUrl")
+    default String mapDefaultMediaUrl(ProductMedia defaultMedia) {
+        if (defaultMedia == null || defaultMedia.getMediaUrl() == null || defaultMedia.getMediaUrl().isBlank())
+            return null;
+        return normalizeUrl(defaultMedia.getMediaUrl());
     }
 
     @Named("mapPromotionId")

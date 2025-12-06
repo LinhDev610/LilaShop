@@ -57,6 +57,9 @@ function UpdateProductPage() {
     const [status, setStatus] = useState('PENDING');
     const [errors, setErrors] = useState({});
 
+    // Track original values để so sánh thay đổi
+    const [originalValues, setOriginalValues] = useState({});
+
     // Media state (local files + existing media)
     const [mediaFiles, setMediaFiles] = useState([]); // [{file, type, preview, isDefault, uploadedUrl?}]
     const [defaultMediaUrl, setDefaultMediaUrl] = useState('');
@@ -130,6 +133,17 @@ function UpdateProductPage() {
                         : '',
                 );
                 setStatus(product.status || 'PENDING');
+
+                // Lưu giá trị ban đầu để so sánh
+                setOriginalValues({
+                    unitPrice: basePrice,
+                    price: product.price || 0.0,
+                    tax: product.tax || 0,
+                    discountValue: product.discountValue || 0.0,
+                    categoryId: product.categoryId || '',
+                    promotionId: product.promotionId || null,
+                    stockQuantity: inventoryQuantity !== undefined && inventoryQuantity !== null ? inventoryQuantity : 0,
+                });
 
                 // Set existing media
                 if (product.mediaUrls && Array.isArray(product.mediaUrls)) {
@@ -281,10 +295,42 @@ function UpdateProductPage() {
     // ========== Event Handlers ==========
 
     /**
+     * Kiểm tra xem có thay đổi trường cần duyệt 
+     * Trường cần duyệt: giá cả, danh mục, khuyến mãi, tồn kho (nếu thay đổi lớn)
+     */
+    const checkIfRequiresApproval = () => {
+        const currentPrice = Number(price) || 0;
+        const currentTax = Number(taxPercent) / 100 || 0;
+        const currentDiscount = Number(discountValue) || 0;
+        const currentStock = Number(stockQuantity) || 0;
+
+        // Kiểm tra thay đổi giá cả
+        if (originalValues.unitPrice !== currentPrice) return true;
+        if (originalValues.tax !== currentTax) return true;
+        if (originalValues.discountValue !== currentDiscount) return true;
+
+        // Kiểm tra thay đổi danh mục
+        if (originalValues.categoryId !== categoryId) return true;
+
+        // Kiểm tra thay đổi tồn kho (> 50% hoặc từ 0 sang > 0 hoặc ngược lại)
+        const originalStock = originalValues.stockQuantity || 0;
+        if (originalStock !== currentStock) {
+            if (originalStock === 0 && currentStock > 0) return true;
+            if (originalStock > 0 && currentStock === 0) return true;
+            if (originalStock > 0) {
+                const changePercent = Math.abs((currentStock - originalStock) / originalStock) * 100;
+                if (changePercent > 50) return true;
+            }
+        }
+
+        return false;
+    };
+
+    /**
      * Xử lý submit form
      * 1. Validate form
      * 2. Upload media files (nếu có file mới)
-     * 3. Update sản phẩm và đặt status về PENDING (Chờ duyệt)
+     * 3. Update sản phẩm (có thể cần duyệt nếu thay đổi trường quan trọng)
      */
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -426,7 +472,6 @@ function UpdateProductPage() {
                 }
             }
 
-            // Khi gửi lại để duyệt, luôn đặt status về PENDING
             const payload = {
                 name: (name || '').trim(),
                 description: (description || '').trim() || null,
@@ -444,7 +489,6 @@ function UpdateProductPage() {
                 price: Number.isFinite(finalPrice) ? finalPrice : 0,
                 tax: taxDecimal || 0,
                 categoryId: (categoryId || '').trim(),
-                status: 'PENDING', // Luôn đặt về PENDING khi gửi lại để duyệt
             };
 
             // Chỉ thêm các field optional nếu có giá trị hợp lệ
@@ -549,15 +593,19 @@ function UpdateProductPage() {
             // Kiểm tra response sau khi retry
             if (response.ok) {
                 const result = data?.result || data;
+                const requiresApproval = checkIfRequiresApproval();
+
                 setNotifyType('success');
-                setNotifyMsg(
-                    'Cập nhật sản phẩm thành công. Sản phẩm đã được gửi lại để duyệt.',
-                );
+                if (requiresApproval) {
+                    setNotifyMsg('Cập nhật sản phẩm thành công. Sản phẩm đã được gửi lại để duyệt do có thay đổi về giá cả, danh mục hoặc tồn kho.');
+                } else {
+                    setNotifyMsg('Cập nhật sản phẩm thành công.');
+                }
                 setNotifyOpen(true);
-                // Navigate back to product detail after 1.5 seconds
+                // Navigate back to product detail after delay (thêm thời gian để đọc thông báo nếu cần duyệt)
                 setTimeout(() => {
                     navigate(`/staff/products/${id}`, { replace: true });
-                }, 1500);
+                }, requiresApproval ? 2500 : 1500);
             } else {
                 // Extract error message from response
                 const serverMsg = data?.message || data?.error || data?.result || '';
@@ -1130,17 +1178,25 @@ function UpdateProductPage() {
                         </div>
                         <div className={cx('row')}>
                             <label>Trạng thái</label>
-                            <select
-                                value={status}
-                                onChange={(e) => setStatus(e.target.value)}
-                            >
-                                <option value="PENDING">Chờ duyệt</option>
-                                <option value="APPROVED">Đã duyệt</option>
-                                <option value="REJECTED">Từ chối</option>
-                                <option value="DISABLED">Vô hiệu hóa</option>
-                            </select>
+                            <input
+                                type="text"
+                                value={status === 'PENDING' ? 'Chờ duyệt' : status === 'APPROVED' ? 'Đã duyệt' : status === 'REJECTED' ? 'Từ chối' : status === 'DISABLED' ? 'Vô hiệu hóa' : status}
+                                readOnly
+                                className={cx('readonly')}
+                            />
                         </div>
                     </div>
+
+                    {/* Cảnh báo khi thay đổi trường cần duyệt */}
+                    {checkIfRequiresApproval() && (
+                        <div className={cx('approvalWarning')}>
+                            <div className={cx('warningIcon')}>⚠️</div>
+                            <div className={cx('warningContent')}>
+                                <strong>Lưu ý:</strong> Bạn đã thay đổi các trường quan trọng (giá cả, danh mục hoặc tồn kho).
+                                Sản phẩm sẽ được gửi lại để admin duyệt sau khi cập nhật.
+                            </div>
+                        </div>
+                    )}
 
                     <div className={cx('actions')}>
                         <button
@@ -1155,7 +1211,7 @@ function UpdateProductPage() {
                             className={cx('btn', 'primary')}
                             disabled={isLoading}
                         >
-                            {isLoading ? 'Đang gửi...' : 'Gửi lại để duyệt'}
+                            {isLoading ? 'Đang cập nhật...' : 'Cập nhật sản phẩm'}
                         </button>
                     </div>
                 </form>

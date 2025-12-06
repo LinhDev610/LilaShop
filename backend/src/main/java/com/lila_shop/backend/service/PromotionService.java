@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -719,17 +720,26 @@ public class PromotionService {
 
         // Áp dụng promotion cho sản phẩm
         try {
-            double unitPrice = product.getUnitPrice() != null ? product.getUnitPrice() : 0.0;
-            double tax = product.getTax() != null ? product.getTax() : 0.0;
+            // Refresh product từ database để đảm bảo tất cả collections được load đúng
+            Product refreshedProduct = productRepository.findById(product.getId())
+                    .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+            
+            // Đảm bảo variants collection được khởi tạo để tránh lỗi Hibernate
+            if (refreshedProduct.getVariants() == null) {
+                refreshedProduct.setVariants(new ArrayList<>());
+            }
+            
+            double unitPrice = refreshedProduct.getUnitPrice() != null ? refreshedProduct.getUnitPrice() : 0.0;
+            double tax = refreshedProduct.getTax() != null ? refreshedProduct.getTax() : 0.0;
             
             double discountAmount = calculateDiscountAmount(bestPromotion, unitPrice);
             double finalPrice = Math.max(0, unitPrice * (1 + tax) - discountAmount);
 
-            product.setDiscountValue(discountAmount);
-            product.setPrice(finalPrice);
-            product.setPromotion(bestPromotion);
+            refreshedProduct.setDiscountValue(discountAmount);
+            refreshedProduct.setPrice(finalPrice);
+            refreshedProduct.setPromotion(bestPromotion);
             
-            productRepository.save(product);
+            productRepository.save(refreshedProduct);
         } catch (Exception e) {
             log.warn("Failed to apply category promotion {} to product {}: {}", 
                     bestPromotion.getId(), product.getId(), e.getMessage());

@@ -453,3 +453,149 @@
     color: #92400e;
     box-shadow: 0 2px 4px rgba(245, 158, 11, 0.15);
 }
+
+/* ========== Variant List Styling ========== */
+.variantList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.variantCard {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s ease;
+}
+
+.variantCard:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.variantHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.variantNumber {
+    font-weight: 700;
+    font-size: 14px;
+    color: #1e293b;
+}
+
+.variantActions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.defaultCheckbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #475569;
+    font-weight: 500;
+}
+
+.defaultCheckbox input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #3b82f6;
+}
+
+.defaultCheckbox span {
+    user-select: none;
+}
+
+.btnDelete {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btnDelete:hover {
+    background: #fecaca;
+    border-color: #fca5a5;
+}
+
+.btnAdd {
+    background: #173a55;
+    color: #fff;
+    border: none;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    width: 100%;
+    transition: all 0.2s;
+}
+
+.btnAdd:hover {
+    background: #1e4a6e;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(23, 58, 85, 0.2);
+}
+
+.variantBody {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.variantGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.variantGroup.grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.variantGroup.grid2 .row {
+    margin-bottom: 0;
+}
+
+.readonly {
+    background: #f8fafc;
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+.actionsInline {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+/* Responsive cho variant */
+@media (max-width: 768px) {
+    .variantGroup.grid2 {
+        grid-template-columns: 1fr;
+    }
+
+    .variantHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .variantActions {
+        width: 100%;
+        justify-content: space-between;
+    }
+}

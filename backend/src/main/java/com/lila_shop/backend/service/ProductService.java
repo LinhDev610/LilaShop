@@ -12,12 +12,12 @@ import com.lila_shop.backend.exception.AppException;
 import com.lila_shop.backend.exception.ErrorCode;
 import com.lila_shop.backend.mapper.ProductMapper;
 import com.lila_shop.backend.repository.*;
-import com.lila_shop.backend.service.PromotionService;
 import com.lila_shop.backend.util.SecurityUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -83,18 +83,29 @@ public class ProductService {
         product.setCreatedAt(LocalDateTime.now());
         product.setUpdatedAt(LocalDateTime.now());
         product.setQuantitySold(0);
-        product.setStatus(ProductStatus.PENDING);
 
-        // Tính toán giá sản phẩm
-        if (request.getUnitPrice() == null || request.getUnitPrice() < 0) {
-            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        // Staff tự động approve sản phẩm khi tạo
+        product.setStatus(ProductStatus.APPROVED);
+        product.setApprovedBy(user);
+        product.setApprovedAt(LocalDateTime.now());
+
+        // Tính toán giá sản phẩm - chỉ khi có unitPrice (không có variants)
+        if (request.getUnitPrice() != null) {
+            if (request.getUnitPrice() < 0) {
+                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+            }
+            product.setUnitPrice(request.getUnitPrice());
+            Double explicitPrice = request.getPrice();
+            double finalPrice = (explicitPrice != null && explicitPrice >= 0)
+                    ? explicitPrice
+                    : computeFinalPrice(request.getUnitPrice(), request.getTax(), request.getDiscountValue());
+            product.setPrice(finalPrice);
+        } else {
+            // Nếu unitPrice là null, có thể sản phẩm có variants (giá sẽ được quản lý ở variant level)
+            // Set giá mặc định = 0 để tránh lỗi NOT NULL constraint, sẽ được cập nhật từ variant mặc định sau
+            product.setPrice(0.0);
+            product.setUnitPrice(0.0);
         }
-        product.setUnitPrice(request.getUnitPrice());
-        Double explicitPrice = request.getPrice();
-        double finalPrice = (explicitPrice != null && explicitPrice >= 0)
-                ? explicitPrice
-                : computeFinalPrice(request.getUnitPrice(), request.getTax(), request.getDiscountValue());
-        product.setPrice(finalPrice);
 
         // Khởi tạo tồn kho nếu có số lượng ban đầu
         if (request.getStockQuantity() != null) {
@@ -111,11 +122,66 @@ public class ProductService {
 
         // Lưu sản phẩm
         try {
+            // Đảm bảo variants collection được khởi tạo để tránh lỗi Hibernate
+            if (product.getVariants() == null) {
+                product.setVariants(new ArrayList<>());
+            }
+            
             Product savedProduct = productRepository.save(product);
-            log.info("Product created with ID: {} by user: {}", savedProduct.getId(), user.getId());
+            
+            // Đảm bảo defaultMedia được set đúng sau khi save
+            if (savedProduct.getMediaList() != null && !savedProduct.getMediaList().isEmpty()) {
+                ProductMedia defaultMedia = savedProduct.getMediaList().stream()
+                        .filter(ProductMedia::isDefault)
+                        .findFirst()
+                        .orElse(savedProduct.getMediaList().get(0));
+                if (savedProduct.getDefaultMedia() == null || 
+                    !savedProduct.getDefaultMedia().getId().equals(defaultMedia.getId())) {
+                    defaultMedia.setDefault(true);
+                    savedProduct.setDefaultMedia(defaultMedia);
+                    savedProduct = productRepository.save(savedProduct);
+                }
+            }
+
+            // Refresh entity để đảm bảo tất cả collections được load đúng
+            productRepository.flush();
+            savedProduct = productRepository.findById(savedProduct.getId())
+                    .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+            
+            // Đảm bảo variants collection vẫn được reference đúng
+            if (savedProduct.getVariants() == null) {
+                savedProduct.setVariants(new ArrayList<>());
+            }
+
+            // Áp dụng promotion theo category nếu chưa có promotion
+            if (savedProduct.getPromotion() == null) {
+                promotionService.applyCategoryPromotionToProduct(savedProduct);
+            }
+
+            // Refresh lại sau khi apply promotion
+            savedProduct = productRepository.findById(savedProduct.getId())
+                    .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+
             return productMapper.toResponse(savedProduct);
         } catch (DataIntegrityViolationException e) {
             log.error("Data integrity violation when creating product", e);
+
+            // Kiểm tra xem có phải duplicate product ID không
+            if (e.getCause() instanceof ConstraintViolationException) {
+                ConstraintViolationException cve = (ConstraintViolationException) e.getCause();
+                String constraintName = cve.getConstraintName();
+                String message = e.getMessage();
+
+                // Kiểm tra duplicate entry cho product ID
+                if ((constraintName != null && constraintName.contains("product")) ||
+                        (message != null && (message.contains("Duplicate entry") ||
+                                message.contains("unique constraint") ||
+                                message.contains("PRIMARY KEY")))) {
+                    log.warn("Duplicate product ID detected: {}", request.getId());
+                    throw new AppException(ErrorCode.PRODUCT_ALREADY_EXISTS);
+                }
+            }
+
             throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         }
     }
@@ -151,9 +217,21 @@ public class ProductService {
             validateCosmeticFields(request.getBrand(), request.getExpiryDate());
         }
 
+        // Kiểm tra xem có thay đổi trường cần duyệt không (chỉ áp dụng cho staff)
+        boolean requiresApproval = false;
+        if (!isAdmin) {
+            requiresApproval = checkIfRequiresApproval(request, product);
+        }
+
         // Cập nhật thông tin sản phẩm
         productMapper.updateProduct(product, request);
         product.setUpdatedAt(LocalDateTime.now());
+
+        // Nếu cần duyệt và là staff, chuyển status về PENDING
+        if (requiresApproval && !isAdmin) {
+            product.setStatus(ProductStatus.PENDING);
+            product.setRejectionReason(null);
+        }
 
         boolean unitPriceChanged = request.getUnitPrice() != null;
         boolean taxChanged = request.getTax() != null;
@@ -218,9 +296,10 @@ public class ProductService {
             if (request.getVideoUrls() != null) {
                 newMediaUrls.addAll(request.getVideoUrls());
             }
-            
+
             // Xóa media cũ và file vật lý
-            // Logic: Nếu existing media bị user xóa trong frontend, URL đó sẽ không có trong request
+            // Logic: Nếu existing media bị user xóa trong frontend, URL đó sẽ không có
+            // trong request
             // → Backend sẽ xóa file vật lý của những media không có trong request mới
             if (product.getMediaList() != null && !product.getMediaList().isEmpty()) {
                 int deletedFileCount = 0;
@@ -236,7 +315,7 @@ public class ProductService {
                     }
                 }
                 if (deletedFileCount > 0) {
-                    log.info("Deleted {} physical media files for product {} (removed by user or replaced)", 
+                    log.info("Deleted {} physical media files for product {} (removed by user or replaced)",
                             deletedFileCount, productId);
                 }
                 // Clear collection trước khi xóa để tránh lỗi Hibernate orphan removal
@@ -244,7 +323,7 @@ public class ProductService {
                 product.getMediaList().clear();
                 // Xóa media khỏi database
                 productMediaRepository.deleteAll(oldMediaList);
-                log.info("Deleted {} ProductMedia records from database for product {}", 
+                log.info("Deleted {} ProductMedia records from database for product {}",
                         oldMediaList.size(), productId);
             }
             // Gắn media mới từ request (bao gồm cả media cũ và mới)
@@ -350,18 +429,20 @@ public class ProductService {
             productRepository.save(product);
         }
 
-        // 5. Xóa hoặc set null product trong FinancialRecord (tránh foreign key constraint)
+        // 5. Xóa hoặc set null product trong FinancialRecord (tránh foreign key
+        // constraint)
         List<FinancialRecord> financialRecords = financialRecordRepository.findByProductId(productId);
         if (!financialRecords.isEmpty()) {
             for (FinancialRecord record : financialRecords) {
                 record.setProduct(null);
             }
             financialRecordRepository.saveAll(financialRecords);
-            log.info("Set product to null for {} financial records before deleting product {}", 
+            log.info("Set product to null for {} financial records before deleting product {}",
                     financialRecords.size(), productId);
         }
 
-        // 6. Set default_media_id = null trước khi xóa ProductMedia (tránh foreign key constraint)
+        // 6. Set default_media_id = null trước khi xóa ProductMedia (tránh foreign key
+        // constraint)
         if (product.getDefaultMedia() != null) {
             product.setDefaultMedia(null);
             productRepository.saveAndFlush(product); // Flush ngay để đảm bảo thay đổi được ghi vào DB
@@ -376,8 +457,9 @@ public class ProductService {
         if (product.getMediaList() != null) {
             product.getMediaList().size(); // Trigger lazy loading nếu cần
         }
-        
-        // Xóa từng ProductMedia record thủ công thay vì dùng query để tránh foreign key constraint
+
+        // Xóa từng ProductMedia record thủ công thay vì dùng query để tránh foreign key
+        // constraint
         List<ProductMedia> mediaList = productMediaRepository.findByProductIdOrderByDisplayOrderAsc(productId);
         if (!mediaList.isEmpty()) {
             // Clear collection trước khi xóa để tránh lỗi Hibernate orphan removal
@@ -400,10 +482,10 @@ public class ProductService {
         Product product = productRepository
                 .findByIdWithRelations(productId)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
-        
+
         // Tìm promotion active cho sản phẩm này
         Promotion activePromotion = findActivePromotionForProduct(product);
-        
+
         // Nếu có promotion active, set vào product
         if (activePromotion != null) {
             product.setPromotion(activePromotion);
@@ -411,15 +493,16 @@ public class ProductService {
             // Nếu không có promotion active, set null
             product.setPromotion(null);
         }
-        
+
         return productMapper.toResponse(product);
     }
 
-    // Tìm promotion đang active cho sản phẩm (theo product trực tiếp hoặc theo category)
+    // Tìm promotion đang active cho sản phẩm (theo product trực tiếp hoặc theo
+    // category)
     private Promotion findActivePromotionForProduct(Product product) {
         LocalDate today = LocalDate.now();
         List<Promotion> activePromotions = new ArrayList<>();
-        
+
         // 1. Kiểm tra promotion trực tiếp của product
         if (product.getPromotion() != null) {
             Promotion directPromo = product.getPromotion();
@@ -427,32 +510,35 @@ public class ProductService {
                 activePromotions.add(directPromo);
             }
         }
-        
+
         // 2. Tìm promotion active theo product ID (từ promotion_products table)
         if (product.getId() != null) {
             List<Promotion> productPromotions = promotionRepository.findActiveByProductId(product.getId(), today);
             activePromotions.addAll(productPromotions);
         }
-        
+
         // 3. Tìm promotion active theo category
         if (product.getCategory() != null && product.getCategory().getId() != null) {
-            List<Promotion> categoryPromotions = promotionRepository.findActiveByCategoryId(product.getCategory().getId(), today);
+            List<Promotion> categoryPromotions = promotionRepository
+                    .findActiveByCategoryId(product.getCategory().getId(), today);
             activePromotions.addAll(categoryPromotions);
         }
-        
-        // Loại bỏ trùng lặp và lấy promotion có startDate sớm nhất (ưu tiên promotion bắt đầu sớm hơn)
+
+        // Loại bỏ trùng lặp và lấy promotion có startDate sớm nhất (ưu tiên promotion
+        // bắt đầu sớm hơn)
         return activePromotions.stream()
                 .distinct()
                 .filter(p -> isPromotionActive(p, today))
-                .min(Comparator.comparing(Promotion::getStartDate, 
+                .min(Comparator.comparing(Promotion::getStartDate,
                         Comparator.nullsLast(Comparator.naturalOrder())))
                 .orElse(null);
     }
 
     // Kiểm tra promotion có đang active không
     private boolean isPromotionActive(Promotion promotion, LocalDate today) {
-        if (promotion == null) return false;
-        
+        if (promotion == null)
+            return false;
+
         // Phải là APPROVED và isActive = true
         if (promotion.getStatus() != PromotionStatus.APPROVED) {
             return false;
@@ -460,7 +546,7 @@ public class ProductService {
         if (!promotion.getIsActive()) {
             return false;
         }
-        
+
         // Kiểm tra thời gian: startDate <= today <= expiryDate
         if (promotion.getStartDate() != null && promotion.getStartDate().isAfter(today)) {
             return false; // Chưa đến ngày bắt đầu
@@ -468,7 +554,7 @@ public class ProductService {
         if (promotion.getExpiryDate() != null && promotion.getExpiryDate().isBefore(today)) {
             return false; // Đã hết hạn
         }
-        
+
         return true;
     }
 
@@ -542,7 +628,7 @@ public class ProductService {
             product.setApprovedAt(LocalDateTime.now());
             product.setRejectionReason(null);
             product.setUpdatedAt(LocalDateTime.now());
-            
+
             if (product.getPromotion() == null) {
                 promotionService.applyCategoryPromotionToProduct(product);
             }
@@ -559,7 +645,7 @@ public class ProductService {
         } else if ("ENABLE".equals(request.getAction())) {
             product.setStatus(ProductStatus.APPROVED);
             product.setUpdatedAt(LocalDateTime.now());
-            
+
             // Khi enable lại sản phẩm, cũng kiểm tra và áp dụng promotion theo category
             if (product.getPromotion() == null) {
                 promotionService.applyCategoryPromotionToProduct(product);
@@ -594,7 +680,8 @@ public class ProductService {
         }
         var media = mediaOpt.get();
 
-        // Reorder displayOrder so that selected media is first (0) and others shift down
+        // Reorder displayOrder so that selected media is first (0) and others shift
+        // down
         List<ProductMedia> medias = productMediaRepository.findByProductIdOrderByDisplayOrderAsc(productId);
         int order = 1; // start from 1 for non-default
         for (ProductMedia m : medias) {
@@ -615,10 +702,98 @@ public class ProductService {
     }
 
     // ========== PRIVATE HELPER METHODS ==========
-    
+
+    /**
+     * Kiểm tra xem có thay đổi trường cần duyệt không
+     * Trường cần duyệt: giá cả, danh mục, khuyến mãi, tồn kho (nếu thay đổi lớn)
+     * 
+     * @param request ProductUpdateRequest
+     * @param product Product hiện tại
+     * @return true nếu cần duyệt, false nếu không
+     */
+    private boolean checkIfRequiresApproval(ProductUpdateRequest request, Product product) {
+        // 1. Kiểm tra thay đổi giá cả
+        if (request.getUnitPrice() != null) {
+            Double currentUnitPrice = product.getUnitPrice();
+            if (currentUnitPrice == null || !currentUnitPrice.equals(request.getUnitPrice())) {
+                return true;
+            }
+        }
+
+        if (request.getPrice() != null) {
+            Double currentPrice = product.getPrice();
+            if (currentPrice == null || !currentPrice.equals(request.getPrice())) {
+                return true;
+            }
+        }
+
+        if (request.getTax() != null) {
+            Double currentTax = product.getTax();
+            if (currentTax == null || !currentTax.equals(request.getTax())) {
+                return true;
+            }
+        }
+
+        if (request.getDiscountValue() != null) {
+            Double currentDiscount = product.getDiscountValue();
+            if (currentDiscount == null || !currentDiscount.equals(request.getDiscountValue())) {
+                return true;
+            }
+        }
+
+        // 2. Kiểm tra thay đổi danh mục
+        if (request.getCategoryId() != null && !request.getCategoryId().isEmpty()) {
+            String currentCategoryId = product.getCategory() != null ? product.getCategory().getId() : null;
+            if (!request.getCategoryId().equals(currentCategoryId)) {
+                return true;
+            }
+        }
+
+        // 3. Kiểm tra thay đổi khuyến mãi
+        if (request.getPromotionId() != null) {
+            String currentPromotionId = product.getPromotion() != null ? product.getPromotion().getId() : null;
+            String newPromotionId = request.getPromotionId().isEmpty() ? null : request.getPromotionId();
+
+            // So sánh: null != null là false, nhưng null != "something" là true
+            boolean promotionChanged = (currentPromotionId == null && newPromotionId != null) ||
+                    (currentPromotionId != null && !currentPromotionId.equals(newPromotionId));
+            if (promotionChanged) {
+                return true;
+            }
+        }
+
+        // 4. Kiểm tra thay đổi tồn kho (nếu thay đổi > 50% hoặc vượt ngưỡng)
+        if (request.getStockQuantity() != null) {
+            int currentStock = product.getInventory() != null && product.getInventory().getStockQuantity() != null
+                    ? product.getInventory().getStockQuantity()
+                    : 0;
+            int newStock = request.getStockQuantity();
+
+            // Nếu thay đổi > 50% so với hiện tại
+            if (currentStock > 0) {
+                double changePercent = Math.abs((double) (newStock - currentStock) / currentStock) * 100;
+                if (changePercent > 50) {
+                    return true;
+                }
+            } else if (newStock > 0) {
+                if (newStock > 1000) {
+                    return true;
+                }
+            }
+
+            // Nếu thay đổi từ số dương về 0 hoặc ngược lại, cần duyệt
+            if ((currentStock > 0 && newStock == 0) || (currentStock == 0 && newStock > 0)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Validate các trường mỹ phẩm
-     * @param brand Thương hiệu (required cho create, optional cho update)
+     * 
+     * @param brand      Thương hiệu (required cho create, optional cho update)
      * @param expiryDate Ngày hết hạn (optional)
      */
     private void validateCosmeticFields(String brand, LocalDate expiryDate) {
@@ -627,8 +802,9 @@ public class ProductService {
             log.warn("Invalid brand: brand cannot be empty or whitespace only");
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
-        
-        // Validate expiryDate: Cho phép ngày trong quá khứ vì có thể nhập sản phẩm đã sản xuất
+
+        // Validate expiryDate: Cho phép ngày trong quá khứ vì có thể nhập sản phẩm đã
+        // sản xuất
         if (expiryDate != null) {
             // Không được quá 10 năm trong tương lai
             LocalDate maxFutureDate = LocalDate.now().plusYears(10);
@@ -638,7 +814,7 @@ public class ProductService {
             }
         }
     }
-    
+
     private Double computeFinalPrice(Double unitPrice, Double taxNullable, Double discountNullable) {
         double tax = (taxNullable != null && taxNullable >= 0) ? taxNullable : 0.0;
         double discount = (discountNullable != null && discountNullable >= 0) ? discountNullable : 0.0;
@@ -654,7 +830,8 @@ public class ProductService {
         // Xử lý ảnh
         if (request.getImageUrls() != null) {
             for (String url : request.getImageUrls()) {
-                if (url == null || url.isBlank()) continue;
+                if (url == null || url.isBlank())
+                    continue;
                 ProductMedia media = ProductMedia.builder()
                         .mediaUrl(url)
                         .mediaType("IMAGE")
@@ -662,7 +839,8 @@ public class ProductService {
                         .displayOrder(displayOrder++)
                         .product(product)
                         .build();
-                if (media.isDefault()) defaultMedia = media;
+                if (media.isDefault())
+                    defaultMedia = media;
                 mediaEntities.add(media);
             }
         }
@@ -670,7 +848,8 @@ public class ProductService {
         // Xử lý video
         if (request.getVideoUrls() != null) {
             for (String url : request.getVideoUrls()) {
-                if (url == null || url.isBlank()) continue;
+                if (url == null || url.isBlank())
+                    continue;
                 ProductMedia media = ProductMedia.builder()
                         .mediaUrl(url)
                         .mediaType("VIDEO")
@@ -678,7 +857,8 @@ public class ProductService {
                         .displayOrder(displayOrder++)
                         .product(product)
                         .build();
-                if (media.isDefault()) defaultMedia = media;
+                if (media.isDefault())
+                    defaultMedia = media;
                 mediaEntities.add(media);
             }
         }
@@ -710,7 +890,8 @@ public class ProductService {
         // Xử lý ảnh
         if (request.getImageUrls() != null) {
             for (String url : request.getImageUrls()) {
-                if (url == null || url.isBlank()) continue;
+                if (url == null || url.isBlank())
+                    continue;
                 ProductMedia media = ProductMedia.builder()
                         .mediaUrl(url)
                         .mediaType("IMAGE")
@@ -718,7 +899,8 @@ public class ProductService {
                         .displayOrder(displayOrder++)
                         .product(product)
                         .build();
-                if (media.isDefault()) defaultMedia = media;
+                if (media.isDefault())
+                    defaultMedia = media;
                 mediaEntities.add(media);
             }
         }
@@ -726,7 +908,8 @@ public class ProductService {
         // Xử lý video
         if (request.getVideoUrls() != null) {
             for (String url : request.getVideoUrls()) {
-                if (url == null || url.isBlank()) continue;
+                if (url == null || url.isBlank())
+                    continue;
                 ProductMedia media = ProductMedia.builder()
                         .mediaUrl(url)
                         .mediaType("VIDEO")
@@ -734,7 +917,8 @@ public class ProductService {
                         .displayOrder(displayOrder++)
                         .product(product)
                         .build();
-                if (media.isDefault()) defaultMedia = media;
+                if (media.isDefault())
+                    defaultMedia = media;
                 mediaEntities.add(media);
             }
         }
@@ -774,7 +958,8 @@ public class ProductService {
     }
 
     private void deletePhysicalFileByUrl(String url) {
-        if (url == null || url.isBlank()) return;
+        if (url == null || url.isBlank())
+            return;
         try {
             String filename = null;
             try {
@@ -786,11 +971,13 @@ public class ProductService {
                         filename = path.substring(lastSlash + 1);
                     }
                 }
-            } catch (IllegalArgumentException ignored) { }
+            } catch (IllegalArgumentException ignored) {
+            }
 
             if (filename == null) {
                 String path = url;
-                if (path.startsWith("/")) path = path.substring(1);
+                if (path.startsWith("/"))
+                    path = path.substring(1);
                 if (path.startsWith("uploads/product_media/")) {
                     filename = path.substring("uploads/product_media/".length());
                 } else if (path.startsWith("product_media/")) {
@@ -802,7 +989,8 @@ public class ProductService {
                 filename = url;
             }
 
-            if (filename == null || filename.isBlank()) return;
+            if (filename == null || filename.isBlank())
+                return;
 
             // Xác định thư mục dựa trên URL (mặc định là uploads/product_media)
             Path targetDir = Paths.get("uploads", "product_media");

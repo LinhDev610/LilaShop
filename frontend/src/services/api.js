@@ -531,11 +531,25 @@ export async function getProductsByPriceRange(minPrice, maxPrice, token = null) 
 }
 
 export async function createProduct(productData, token = null) {
-    const { data, ok, status } = await apiRequest(products.root, { method: 'POST', body: productData, token });
+    const response = await apiRequest(products.root, { method: 'POST', body: productData, token });
+    const { data, ok, status } = response;
+
+    if (!ok) {
+        return { ok, status, data: data || {} };
+    }
+
+    // Nếu thành công, extract result
     return { ok, status, data: extractResult(data) };
 }
 
 // ========== PRODUCT VARIANT API ==========
+export async function getProductVariants(productId, token = null) {
+    const endpoint = `/products/${encodeURIComponent(productId)}/variants`;
+    const { data, ok, status } = await apiRequest(endpoint, { method: 'GET', token });
+    if (!ok) return [];
+    return extractResult(data, true) || [];
+}
+
 export async function createProductVariant(productId, variantData, token = null) {
     const endpoint = `/products/${encodeURIComponent(productId)}/variants`;
     const { data, ok, status } = await apiRequest(endpoint, { method: 'POST', body: variantData, token });

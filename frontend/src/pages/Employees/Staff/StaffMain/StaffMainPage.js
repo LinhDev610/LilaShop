@@ -17,7 +17,7 @@ export default function StaffMainPage() {
                 <div className={cx('card')} onClick={() => navigate('/staff/products')}>
                     <div className={cx('card-title')}>Sản phẩm</div>
                     <div className={cx('card-desc')}>
-                        Quản lý sản phẩm bạn tạo - chờ admin duyệt trước khi hiển thị.
+                        Quản lý sản phẩm bạn tạo
                     </div>
                 </div>
 

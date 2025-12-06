@@ -29,7 +29,8 @@ public enum ErrorCode {
     INVALID_PROMOTION_SCOPE(2003, "Phạm vi áp dụng khuyến mãi không hợp lệ", HttpStatus.BAD_REQUEST),
     PROMOTION_PRODUCT_CONFLICT(2004, "Một số sản phẩm đã có khuyến mãi đang hoạt động", HttpStatus.BAD_REQUEST),
     PROMOTION_CODE_ALREADY_EXISTS(2005, "Mã khuyến mãi đã tồn tại", HttpStatus.BAD_REQUEST),
-    PROMOTION_OVERLAP_CONFLICT(2006, "Khuyến mãi trùng lặp với chương trình khác trong cùng khoảng thời gian", HttpStatus.BAD_REQUEST),
+    PROMOTION_OVERLAP_CONFLICT(2006, "Khuyến mãi trùng lặp với chương trình khác trong cùng khoảng thời gian",
+            HttpStatus.BAD_REQUEST),
 
     // Voucher
     VOUCHER_NOT_EXISTED(3001, "Voucher không tồn tại", HttpStatus.NOT_FOUND),
@@ -50,6 +51,7 @@ public enum ErrorCode {
 
     // PRODUCT
     PRODUCT_NOT_EXISTED(6001, "Product không tồn tại", HttpStatus.NOT_FOUND),
+    PRODUCT_ALREADY_EXISTS(6003, "Mã sản phẩm đã tồn tại", HttpStatus.BAD_REQUEST),
     CATEGORY_NOT_EXISTED(6004, "Danh mục không tồn tại", HttpStatus.NOT_FOUND),
     CATEGORY_ALREADY_EXISTS(6005, "Mã danh mục hoặc tên danh mục đã tồn tại", HttpStatus.BAD_REQUEST),
     CATEGORY_HAS_PRODUCTS(6006, "Không thể xóa danh mục vì còn sản phẩm thuộc danh mục này", HttpStatus.BAD_REQUEST),
