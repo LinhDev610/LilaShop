@@ -88,9 +88,108 @@
 }
 
 .readonly {
-    background: #f8fafc;
-    color: #64748b;
-    cursor: not-allowed;
+    background: #f8fafc !important;
+    color: #64748b !important;
+    cursor: not-allowed !important;
+    opacity: 0.7;
+}
+
+.readonly:disabled,
+.readonly[readonly] {
+    background: #f8fafc !important;
+    color: #64748b !important;
+    cursor: not-allowed !important;
+    opacity: 0.7;
+}
+
+/* Section styling */
+.section {
+    margin-bottom: 32px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 2px solid;
+    background: #f9fafb;
+}
+
+.section-header h4 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.section-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.section-auto .section-header {
+    border-bottom-color: #10b981;
+    background: #f0fdf4;
+}
+
+.badge-auto {
+    background: #10b981;
+    color: #fff;
+}
+
+.section-approval .section-header {
+    border-bottom-color: #f59e0b;
+    background: #fffbeb;
+}
+
+.badge-approval {
+    background: #f59e0b;
+    color: #fff;
+}
+
+.section-admin .section-header {
+    border-bottom-color: #ef4444;
+    background: #fef2f2;
+}
+
+.badge-admin {
+    background: #ef4444;
+    color: #fff;
+}
+
+.section-content {
+    padding: 20px;
+}
+
+.approvalNotice {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 20px;
+    background: #fef3c7;
+    border-bottom: 1px solid #fde68a;
+    color: #92400e;
+}
+
+.noticeIcon {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.noticeContent {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.noticeContent strong {
+    font-weight: 600;
 }
 
 .approvalWarning {
@@ -155,3 +254,40 @@
 .defaultToggle { color: #fff; font-size: 12px; display: flex; align-items: center; gap: 6px; }
 .mediaActions .btn.muted { background: rgba(255,255,255,0.9); color: #111827; padding: 6px 8px; border-radius: 6px; }
 .mediaActions .btn.muted:hover { background: #fff; }
+
+/* Stock quantity hint */
+.stockHint {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 8px 12px;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #0369a1;
+}
+
+.hintIcon {
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.hintText {
+    flex: 1;
+}
+
+.hintText strong {
+    font-weight: 600;
+    color: #0c4a6e;
+}
+
+.hintWarning {
+    display: block;
+    margin-top: 4px;
+    color: #dc2626;
+    font-weight: 500;
+}

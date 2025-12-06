@@ -28,13 +28,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.Optional;
+import java.util.ArrayList;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -99,25 +101,27 @@ public class PromotionService {
             promotion.setStatus(PromotionStatus.APPROVED);
             promotion.setApprovedBy(admin);
             promotion.setApprovedAt(LocalDateTime.now());
-            
-            // Chỉ activate và apply ngay nếu startDate đã đến, nếu chưa thì để scheduled task tự động activate
+
+            // Chỉ activate và apply ngay nếu startDate đã đến, nếu chưa thì để scheduled
+            // task tự động activate
             LocalDate today = LocalDate.now();
             if (promotion.getStartDate() != null && !promotion.getStartDate().isAfter(today)) {
                 // StartDate đã đến hoặc hôm nay - activate và apply ngay
                 promotion.setIsActive(true);
                 applyPromotionToTargets(promotion);
             } else {
-                // StartDate chưa đến - set isActive = false, scheduled task sẽ tự động activate khi đến startDate
+                // StartDate chưa đến - set isActive = false, scheduled task sẽ tự động activate
+                // khi đến startDate
                 promotion.setIsActive(false);
             }
-            // log.info("Promotion approved: {} by admin: {}", promotion.getId(), admin.getId());
         } else if ("REJECT".equals(request.getAction())) {
             promotion.setStatus(PromotionStatus.REJECTED);
             promotion.setApprovedBy(admin);
             promotion.setApprovedAt(LocalDateTime.now());
             promotion.setRejectionReason(request.getReason());
             promotion.setIsActive(false);
-            // log.info("Promotion rejected: {} by admin: {}", promotion.getId(), admin.getId());
+            // log.info("Promotion rejected: {} by admin: {}", promotion.getId(),
+            // admin.getId());
         }
 
         Promotion savedPromotion = promotionRepository.save(promotion);
@@ -196,8 +200,9 @@ public class PromotionService {
         promotionMapper.updatePromotion(promotion, request);
 
         if (request.getApplyScope() != null || request.getCategoryIds() != null || request.getProductIds() != null) {
-            DiscountApplyScope scope =
-                    request.getApplyScope() != null ? request.getApplyScope() : promotion.getApplyScope();
+            DiscountApplyScope scope = request.getApplyScope() != null
+                    ? request.getApplyScope()
+                    : promotion.getApplyScope();
             applyScopeTargets(scope, request.getCategoryIds(), request.getProductIds(), promotion);
             promotion.setApplyScope(scope);
         }
@@ -320,7 +325,8 @@ public class PromotionService {
         return resolveEntities(productIds, productRepository::findById, ErrorCode.PRODUCT_NOT_EXISTED);
     }
 
-    private <T, ID> Set<T> resolveEntities(Set<ID> ids, java.util.function.Function<ID, java.util.Optional<T>> finder, ErrorCode notFoundError) {
+    private <T, ID> Set<T> resolveEntities(Set<ID> ids, Function<ID, Optional<T>> finder,
+            ErrorCode notFoundError) {
         return ids.stream()
                 .map(id -> finder.apply(id).orElseThrow(() -> new AppException(notFoundError)))
                 .collect(Collectors.toSet());
@@ -329,13 +335,13 @@ public class PromotionService {
     public void applyPromotionToTargets(Promotion promotion) {
         // Chỉ áp dụng promotion đã được duyệt (APPROVED)
         if (promotion.getStatus() != PromotionStatus.APPROVED) {
-            log.warn("Cannot apply promotion {} because it is not approved. Status: {}", 
+            log.warn("Không thể áp dụng promotion {} vì chưa được duyệt. Trạng thái: {}",
                     promotion.getId(), promotion.getStatus());
             return;
         }
-        
+
         if (promotion.getApplyScope() == DiscountApplyScope.ORDER) {
-            return; 
+            return;
         }
         List<Product> targetProducts = resolveTargetProducts(promotion);
         if (targetProducts.isEmpty()) {
@@ -379,35 +385,36 @@ public class PromotionService {
         LocalDate today = LocalDate.now();
         List<String> conflicted = new ArrayList<>();
         List<String> conflictedNames = new ArrayList<>();
-        
+
         for (Product product : products) {
             // Kiểm tra promotion hiện tại của sản phẩm
-            if (product.getPromotion() != null 
+            if (product.getPromotion() != null
                     && !promotion.getId().equals(product.getPromotion().getId())) {
                 Promotion existingPromo = product.getPromotion();
-                
+
                 // Kiểm tra xem promotion hiện tại còn active không
                 boolean isExistingActive = existingPromo.getStatus() == PromotionStatus.APPROVED
                         && (existingPromo.getIsActive())
                         && (existingPromo.getExpiryDate() == null || !existingPromo.getExpiryDate().isBefore(today))
                         && (existingPromo.getStartDate() == null || !existingPromo.getStartDate().isAfter(today));
-                
+
                 if (isExistingActive) {
                     // Kiểm tra date range overlap
                     boolean hasDateOverlap = hasDateRangeOverlap(
                             promotion.getStartDate(), promotion.getExpiryDate(),
                             existingPromo.getStartDate(), existingPromo.getExpiryDate());
-                    
+
                     if (hasDateOverlap) {
                         conflicted.add(product.getId());
                         conflictedNames.add(product.getName());
                     }
                 }
             }
-            
-            // Kiểm tra các promotion khác có thể áp dụng cho sản phẩm này (theo product hoặc category)
+
+            // Kiểm tra các promotion khác có thể áp dụng cho sản phẩm này (theo product
+            // hoặc category)
             List<Promotion> otherActivePromotions = new ArrayList<>();
-            
+
             // Tìm theo product
             if (product.getId() != null) {
                 otherActivePromotions.addAll(
@@ -415,7 +422,7 @@ public class PromotionService {
                                 .filter(p -> !p.getId().equals(promotion.getId()))
                                 .toList());
             }
-            
+
             // Tìm theo category
             if (product.getCategory() != null && product.getCategory().getId() != null) {
                 otherActivePromotions.addAll(
@@ -423,43 +430,47 @@ public class PromotionService {
                                 .filter(p -> !p.getId().equals(promotion.getId()))
                                 .toList());
             }
-            
+
             // Kiểm tra date range overlap với các promotion khác
             for (Promotion otherPromo : otherActivePromotions) {
                 boolean hasDateOverlap = hasDateRangeOverlap(
                         promotion.getStartDate(), promotion.getExpiryDate(),
                         otherPromo.getStartDate(), otherPromo.getExpiryDate());
-                
+
                 if (hasDateOverlap && !conflicted.contains(product.getId())) {
                     conflicted.add(product.getId());
                     conflictedNames.add(product.getName());
                 }
             }
         }
-        
+
         if (!conflicted.isEmpty()) {
-            log.warn("Cannot apply promotion {} due to date range conflicts on products {}", promotion.getId(), conflicted);
+            log.warn("Không thể áp dụng promotion {} vì có date range trùng lặp trên các sản phẩm {}",
+                    promotion.getId(),
+                    conflicted);
             String errorMessage = String.format(
-                    "Không thể áp dụng khuyến mãi. Các sản phẩm sau đã có khuyến mãi đang hoạt động trong khoảng thời gian trùng lặp: %s. " +
-                    "Vui lòng chọn: 'Thay đổi chương trình khuyến mãi sang chương trình mới' hoặc 'Giữ nguyên, không áp promotion mới cho sản phẩm này'",
+                    "Không thể áp dụng khuyến mãi. Các sản phẩm sau đã có khuyến mãi đang hoạt động trong khoảng thời gian trùng lặp: %s. "
+                            +
+                            "Vui lòng chọn: 'Thay đổi chương trình khuyến mãi sang chương trình mới' hoặc 'Giữ nguyên, không áp promotion mới cho sản phẩm này'",
                     String.join(", ", conflictedNames));
             throw new AppException(ErrorCode.PROMOTION_PRODUCT_CONFLICT, errorMessage);
         }
     }
-    
+
     /**
      * Kiểm tra xem hai khoảng thời gian có trùng lặp không
+     * 
      * @param start1 Ngày bắt đầu của promotion 1
-     * @param end1 Ngày kết thúc của promotion 1
+     * @param end1   Ngày kết thúc của promotion 1
      * @param start2 Ngày bắt đầu của promotion 2
-     * @param end2 Ngày kết thúc của promotion 2
+     * @param end2   Ngày kết thúc của promotion 2
      * @return true nếu có overlap
      */
     private boolean hasDateRangeOverlap(LocalDate start1, LocalDate end1, LocalDate start2, LocalDate end2) {
         if (start1 == null || end1 == null || start2 == null || end2 == null) {
             return false; // Nếu thiếu thông tin, không thể xác định overlap
         }
-        
+
         // start1 <= end2 && start2 <= end1
         return !start1.isAfter(end2) && !start2.isAfter(end1);
     }
@@ -525,11 +536,11 @@ public class PromotionService {
                                 .map(Category::getId)
                                 .collect(Collectors.toSet());
                         Set<String> newCategoryIds = request.getCategoryIds();
-                        
+
                         // Kiểm tra xem có category nào trùng không
                         boolean hasCommonCategory = newCategoryIds.stream()
                                 .anyMatch(existingCategoryIds::contains);
-                        
+
                         if (hasCommonCategory) {
                             hasScopeOverlap = true;
                             Set<String> commonCategories = newCategoryIds.stream()
@@ -549,7 +560,8 @@ public class PromotionService {
                     }
                 }
             } else if (newScope == DiscountApplyScope.PRODUCT) {
-                // PRODUCT overlap với ORDER, CATEGORY (của category của product), hoặc PRODUCT (cùng product)
+                // PRODUCT overlap với ORDER, CATEGORY (của category của product), hoặc PRODUCT
+                // (cùng product)
                 if (existingPromo.getApplyScope() == DiscountApplyScope.ORDER) {
                     hasScopeOverlap = true;
                     conflictMessage = String.format(
@@ -562,14 +574,14 @@ public class PromotionService {
                         Set<String> existingCategoryIds = existingPromo.getCategoryApply().stream()
                                 .map(Category::getId)
                                 .collect(Collectors.toSet());
-                        
+
                         // Kiểm tra xem có product nào thuộc category của existing promotion không
                         List<Product> newProducts = productRepository.findAllById(request.getProductIds());
                         boolean hasProductInCategory = newProducts.stream()
                                 .anyMatch(product -> product.getCategory() != null
                                         && product.getCategory().getId() != null
                                         && existingCategoryIds.contains(product.getCategory().getId()));
-                        
+
                         if (hasProductInCategory) {
                             hasScopeOverlap = true;
                             List<String> conflictProductNames = newProducts.stream()
@@ -593,11 +605,11 @@ public class PromotionService {
                                 .map(Product::getId)
                                 .collect(Collectors.toSet());
                         Set<String> newProductIds = request.getProductIds();
-                        
+
                         // Kiểm tra xem có product nào trùng không
                         boolean hasCommonProduct = newProductIds.stream()
                                 .anyMatch(existingProductIds::contains);
-                        
+
                         if (hasCommonProduct) {
                             hasScopeOverlap = true;
                             Set<String> commonProducts = newProductIds.stream()
@@ -626,15 +638,16 @@ public class PromotionService {
     }
 
     private void applyPricingForProducts(Promotion promotion, List<Product> products) {
-        if (products.isEmpty()) return;
+        if (products.isEmpty())
+            return;
 
         for (Product product : products) {
             double unitPrice = product.getUnitPrice() != null ? product.getUnitPrice() : 0.0;
             double tax = product.getTax() != null ? product.getTax() : 0.0; // tax là phần trăm (0.1 = 10%)
-            
+
             // Tính discountValue từ promotion
             double discountAmount = calculateDiscountAmount(promotion, unitPrice);
-            
+
             // Tính price = unitPrice * (1 + tax) - discountValue
             double finalPrice = Math.max(0, unitPrice * (1 + tax) - discountAmount);
 
@@ -647,8 +660,10 @@ public class PromotionService {
     }
 
     /**
-     * Tự động áp dụng promotion theo category cho sản phẩm khi sản phẩm được approve.
-     * Tìm promotion active theo category của sản phẩm và áp dụng nếu không có conflict.
+     * Tự động áp dụng promotion theo category cho sản phẩm khi sản phẩm được
+     * approve.
+     * Tìm promotion active theo category của sản phẩm và áp dụng nếu không có
+     * conflict.
      */
     @Transactional
     public void applyCategoryPromotionToProduct(Product product) {
@@ -661,18 +676,18 @@ public class PromotionService {
         }
 
         LocalDate today = LocalDate.now();
-        
+
         // Tìm các promotion active theo category
         List<Promotion> categoryPromotions = promotionRepository.findActiveByCategoryId(
                 product.getCategory().getId(), today);
-        
+
         if (categoryPromotions.isEmpty()) {
             return;
         }
 
         // Lọc các promotion đã được approve và đang active
         List<Promotion> activePromotions = categoryPromotions.stream()
-                .filter(p -> p.getStatus() == PromotionStatus.APPROVED 
+                .filter(p -> p.getStatus() == PromotionStatus.APPROVED
                         && Boolean.TRUE.equals(p.getIsActive())
                         && (p.getStartDate() == null || !p.getStartDate().isAfter(today))
                         && (p.getExpiryDate() == null || !p.getExpiryDate().isBefore(today)))
@@ -684,7 +699,7 @@ public class PromotionService {
 
         // Chọn promotion có startDate sớm nhất
         Promotion bestPromotion = activePromotions.stream()
-                .min(Comparator.comparing(Promotion::getStartDate, 
+                .min(Comparator.comparing(Promotion::getStartDate,
                         Comparator.nullsLast(Comparator.naturalOrder())))
                 .orElse(null);
 
@@ -693,25 +708,25 @@ public class PromotionService {
         }
 
         // Kiểm tra xem sản phẩm đã có promotion khác chưa
-        if (product.getPromotion() != null 
+        if (product.getPromotion() != null
                 && !product.getPromotion().getId().equals(bestPromotion.getId())) {
             Promotion existingPromo = product.getPromotion();
-            
+
             // Kiểm tra xem promotion hiện tại còn active không
             boolean isExistingActive = existingPromo.getStatus() == PromotionStatus.APPROVED
                     && existingPromo.getIsActive()
                     && (existingPromo.getExpiryDate() == null || !existingPromo.getExpiryDate().isBefore(today))
                     && (existingPromo.getStartDate() == null || !existingPromo.getStartDate().isAfter(today));
-            
+
             if (isExistingActive) {
                 // Kiểm tra date range overlap
                 boolean hasDateOverlap = hasDateRangeOverlap(
                         bestPromotion.getStartDate(), bestPromotion.getExpiryDate(),
                         existingPromo.getStartDate(), existingPromo.getExpiryDate());
-                
+
                 if (hasDateOverlap) {
                     // Có conflict, không áp dụng promotion mới
-                    log.debug("Cannot apply category promotion {} to product {} due to conflict with existing promotion {}", 
+                    log.debug("Không thể áp dụng promotion {} cho sản phẩm {} vì có conflict với promotion hiện tại {}",
                             bestPromotion.getId(), product.getId(), existingPromo.getId());
                     return;
                 }
@@ -723,31 +738,32 @@ public class PromotionService {
             // Refresh product từ database để đảm bảo tất cả collections được load đúng
             Product refreshedProduct = productRepository.findById(product.getId())
                     .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
-            
+
             // Đảm bảo variants collection được khởi tạo để tránh lỗi Hibernate
             if (refreshedProduct.getVariants() == null) {
                 refreshedProduct.setVariants(new ArrayList<>());
             }
-            
+
             double unitPrice = refreshedProduct.getUnitPrice() != null ? refreshedProduct.getUnitPrice() : 0.0;
             double tax = refreshedProduct.getTax() != null ? refreshedProduct.getTax() : 0.0;
-            
+
             double discountAmount = calculateDiscountAmount(bestPromotion, unitPrice);
             double finalPrice = Math.max(0, unitPrice * (1 + tax) - discountAmount);
 
             refreshedProduct.setDiscountValue(discountAmount);
             refreshedProduct.setPrice(finalPrice);
             refreshedProduct.setPromotion(bestPromotion);
-            
+
             productRepository.save(refreshedProduct);
         } catch (Exception e) {
-            log.warn("Failed to apply category promotion {} to product {}: {}", 
+            log.warn("Failed to apply category promotion {} to product {}: {}",
                     bestPromotion.getId(), product.getId(), e.getMessage());
         }
     }
 
     private double calculateDiscountAmount(Promotion promotion, double basePrice) {
-        if (basePrice <= 0) return 0;
+        if (basePrice <= 0)
+            return 0;
         double discountValue = promotion.getDiscountValue() != null ? promotion.getDiscountValue() : 0;
         double discountAmount = 0;
 
@@ -769,21 +785,21 @@ public class PromotionService {
         if (products.isEmpty()) {
             return;
         }
-        
+
         LocalDate today = LocalDate.now();
-        
+
         for (Product product : products) {
             double unitPrice = product.getUnitPrice() != null ? product.getUnitPrice() : 0.0;
             double tax = product.getTax() != null ? product.getTax() : 0.0; // tax là phần trăm (0.1 = 10%)
-            
+
             // Kiểm tra xem có promotion kế tiếp nào còn hiệu lực không
             Promotion nextPromotion = findNextActivePromotionForProduct(product, today);
-            
+
             if (nextPromotion != null) {
                 // Áp dụng promotion kế tiếp
                 double discountAmount = calculateDiscountAmount(nextPromotion, unitPrice);
                 double finalPrice = Math.max(0, unitPrice + (tax * unitPrice) - discountAmount);
-                
+
                 product.setDiscountValue(discountAmount);
                 product.setPrice(finalPrice);
                 product.setPromotion(nextPromotion);
@@ -797,7 +813,7 @@ public class PromotionService {
         }
         productRepository.saveAll(products);
     }
-    
+
     /**
      * Tìm promotion kế tiếp còn hiệu lực cho sản phẩm
      * (promotion có date range overlap hoặc tiếp nối với promotion hiện tại)
@@ -805,21 +821,21 @@ public class PromotionService {
     private Promotion findNextActivePromotionForProduct(Product product, LocalDate today) {
         // Tìm các promotion active cho sản phẩm này (theo product hoặc category)
         List<Promotion> activePromotions = new ArrayList<>();
-        
+
         // Tìm theo product
         if (product.getId() != null) {
             activePromotions.addAll(promotionRepository.findActiveByProductId(product.getId(), today));
         }
-        
+
         // Tìm theo category
         if (product.getCategory() != null && product.getCategory().getId() != null) {
             activePromotions.addAll(promotionRepository.findActiveByCategoryId(product.getCategory().getId(), today));
         }
-        
+
         // Loại bỏ trùng lặp và sắp xếp theo startDate
         return activePromotions.stream()
                 .distinct() // Loại bỏ trùng lặp
-                .filter(p -> p.getStatus() == PromotionStatus.APPROVED 
+                .filter(p -> p.getStatus() == PromotionStatus.APPROVED
                         && (p.getIsActive())
                         && (p.getExpiryDate() == null || !p.getExpiryDate().isBefore(today))
                         && (p.getStartDate() == null || !p.getStartDate().isAfter(today)))
@@ -851,7 +867,8 @@ public class PromotionService {
     }
 
     private void deletePhysicalFileByUrl(String url) {
-        if (url == null || url.isBlank()) return;
+        if (url == null || url.isBlank())
+            return;
         try {
             String filename = null;
             try {
@@ -877,7 +894,8 @@ public class PromotionService {
                         }
                     }
                 }
-            } catch (IllegalArgumentException ignored) { }
+            } catch (IllegalArgumentException ignored) {
+            }
 
             if (filename == null) {
                 String path = url;
@@ -886,13 +904,15 @@ public class PromotionService {
                     try {
                         URI uri = URI.create(path);
                         path = uri.getPath();
-                    } catch (Exception ignored) { }
+                    } catch (Exception ignored) {
+                    }
                 }
                 // Loại bỏ context path nếu có
                 if (path.startsWith("/lila_shop")) {
                     path = path.substring("/lila_shop".length());
                 }
-                if (path.startsWith("/")) path = path.substring(1);
+                if (path.startsWith("/"))
+                    path = path.substring(1);
                 if (path.startsWith("uploads/promotions/")) {
                     filename = path.substring("uploads/promotions/".length());
                 } else if (path.startsWith("promotion_media/")) {
@@ -906,7 +926,8 @@ public class PromotionService {
                 filename = url;
             }
 
-            if (filename == null || filename.isBlank()) return;
+            if (filename == null || filename.isBlank())
+                return;
 
             // Xác định thư mục dựa trên URL (mặc định là uploads/promotions)
             Path targetDir = Paths.get("uploads", "promotions");
@@ -917,9 +938,6 @@ public class PromotionService {
                 Path legacyDir = Paths.get("promotions");
                 Path legacyPath = legacyDir.resolve(filename);
                 deleted = Files.deleteIfExists(legacyPath);
-                // if (deleted) {
-                //     log.info("Deleted media file from legacy folder: {}", legacyPath.toAbsolutePath());
-                // }
             } else {
                 log.info("Deleted media file: {}", filePath.toAbsolutePath());
             }

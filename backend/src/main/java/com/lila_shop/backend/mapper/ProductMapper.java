@@ -103,12 +103,14 @@ public interface ProductMapper {
         if (lower.startsWith("http://") || lower.startsWith("https://")) {
             return url;
         }
-        // Nếu URL bắt đầu với /product_media, thì thêm thông tin context path (ví dụ: /lila_shop)
+        // Nếu URL bắt đầu với /product_media, thì thêm thông tin context path (ví dụ:
+        // /lila_shop)
         if (url.startsWith("/product_media")) {
             String base = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
             return base + url;
         }
-        // Nếu URL không phải là absolute và không bắt đầu với /product_media, thì coi như là tên file hoặc relative và mount dưới /product_media/
+        // Nếu URL không phải 2 phần trên, thì coi như là tên file hoặc relative và
+        // mount dưới /product_media/
         String base = ServletUriComponentsBuilder.fromCurrentContextPath().path("/product_media/").build()
                 .toUriString();
         if (base.endsWith("/"))

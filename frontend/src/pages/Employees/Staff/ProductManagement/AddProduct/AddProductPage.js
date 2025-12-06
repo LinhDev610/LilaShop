@@ -758,8 +758,8 @@ export default function AddProductPage() {
                 tax: taxDecimal || 0,
                 purchasePrice:
                     purchasePrice !== undefined &&
-                    purchasePrice !== null &&
-                    purchasePrice !== ''
+                        purchasePrice !== null &&
+                        purchasePrice !== ''
                         ? Number(purchasePrice)
                         : null,
             }),

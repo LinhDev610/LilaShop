@@ -101,8 +101,6 @@ public class ProductService {
                     : computeFinalPrice(request.getUnitPrice(), request.getTax(), request.getDiscountValue());
             product.setPrice(finalPrice);
         } else {
-            // Nếu unitPrice là null, có thể sản phẩm có variants (giá sẽ được quản lý ở variant level)
-            // Set giá mặc định = 0 để tránh lỗi NOT NULL constraint, sẽ được cập nhật từ variant mặc định sau
             product.setPrice(0.0);
             product.setUnitPrice(0.0);
         }
@@ -126,17 +124,17 @@ public class ProductService {
             if (product.getVariants() == null) {
                 product.setVariants(new ArrayList<>());
             }
-            
+
             Product savedProduct = productRepository.save(product);
-            
+
             // Đảm bảo defaultMedia được set đúng sau khi save
             if (savedProduct.getMediaList() != null && !savedProduct.getMediaList().isEmpty()) {
                 ProductMedia defaultMedia = savedProduct.getMediaList().stream()
                         .filter(ProductMedia::isDefault)
                         .findFirst()
                         .orElse(savedProduct.getMediaList().get(0));
-                if (savedProduct.getDefaultMedia() == null || 
-                    !savedProduct.getDefaultMedia().getId().equals(defaultMedia.getId())) {
+                if (savedProduct.getDefaultMedia() == null ||
+                        !savedProduct.getDefaultMedia().getId().equals(defaultMedia.getId())) {
                     defaultMedia.setDefault(true);
                     savedProduct.setDefaultMedia(defaultMedia);
                     savedProduct = productRepository.save(savedProduct);
@@ -147,7 +145,7 @@ public class ProductService {
             productRepository.flush();
             savedProduct = productRepository.findById(savedProduct.getId())
                     .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
-            
+
             // Đảm bảo variants collection vẫn được reference đúng
             if (savedProduct.getVariants() == null) {
                 savedProduct.setVariants(new ArrayList<>());

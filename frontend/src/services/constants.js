@@ -409,3 +409,7 @@ export const INITIAL_FORM_STATE_ADDRESS_DETAIL = {
     postalCode: '',
     defaultAddress: false,
 };
+
+// =========== Staff Product Update Constants ===========
+// Giới hạn số lượng tồn kho nhân viên có thể thêm mà không cần duyệt
+export const STAFF_STOCK_ADD_LIMIT = 100;

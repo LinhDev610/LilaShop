@@ -79,7 +79,7 @@ function ProductDetailPage() {
                 }
 
                 setProduct(productData);
-                
+
                 // Fetch variants nếu có
                 if (productData.id) {
                     try {
@@ -91,7 +91,7 @@ function ProductDetailPage() {
                         console.warn('Could not fetch variants:', e);
                     }
                 }
-                
+
                 // Debug: Log promotion info
                 console.log('Product data:', productData);
                 console.log('Promotion info:', {
@@ -643,7 +643,7 @@ function ProductDetailPage() {
                                     {product.description || '-'}
                                 </span>
                             </div>
-                            
+
                             {/* Hiển thị variants nếu có */}
                             {variants.length > 0 && (
                                 <div className={cx('variants-section')}>

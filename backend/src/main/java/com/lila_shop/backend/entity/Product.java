@@ -29,9 +29,6 @@ public class Product {
     @Column(name = "description", columnDefinition = "TEXT")
     String description;
 
-    @Column(name = "size")
-    String size;
-
     @Column(name = "brand")
     String brand;
 

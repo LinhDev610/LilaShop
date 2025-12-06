@@ -46,7 +46,7 @@ function ProductDetailPage() {
                 }
 
                 setProduct(productData);
-                
+
                 // Fetch variants nếu có
                 if (productData.id) {
                     try {
@@ -58,7 +58,7 @@ function ProductDetailPage() {
                         console.warn('Could not fetch variants:', e);
                     }
                 }
-                
+
                 // Debug: Log promotion info
                 console.log('Product data:', productData);
                 console.log('Promotion info:', {
@@ -387,14 +387,6 @@ function ProductDetailPage() {
                                         </span>
                                     </div>
                                 )}
-                                {product.size && (
-                                    <div className={cx('info-row')}>
-                                        <span className={cx('info-label')}>Kích thước:</span>
-                                        <span className={cx('info-value')}>
-                                            {product.size}
-                                        </span>
-                                    </div>
-                                )}
                                 {product.unitPrice !== undefined && product.unitPrice !== null && (
                                     <div className={cx('info-row')}>
                                         <span className={cx('info-label')}>Giá niêm yết:</span>
@@ -577,7 +569,7 @@ function ProductDetailPage() {
                                         {product.description || '-'}
                                     </span>
                                 </div>
-                                
+
                                 {/* Hiển thị variants nếu có */}
                                 {variants.length > 0 && (
                                     <div className={cx('variants-section')}>
@@ -626,17 +618,15 @@ function ProductDetailPage() {
 
                             {/* Action Buttons */}
                             <div className={cx('action-buttons')}>
-                                {/* Staff: Chỉ hiển thị nút "Sửa lại" khi sản phẩm bị từ chối */}
-                                {product.status === 'Từ chối' && (
-                                    <button
-                                        className={cx('btn', 'btn-edit')}
-                                        onClick={() => {
-                                            navigate(`/staff/products/${id}/update`);
-                                        }}
-                                    >
-                                        Sửa lại
-                                    </button>
-                                )}
+                                {/* Staff: Hiển thị nút "Cập nhật thông tin" cho tất cả sản phẩm */}
+                                <button
+                                    className={cx('btn', 'btn-edit')}
+                                    onClick={() => {
+                                        navigate(`/staff/products/${id}/update`);
+                                    }}
+                                >
+                                    Cập nhật thông tin
+                                </button>
                             </div>
                         </div>
                     </div>

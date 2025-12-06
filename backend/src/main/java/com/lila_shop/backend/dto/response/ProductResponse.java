@@ -18,7 +18,6 @@ public class ProductResponse {
     String id;
     String name;
     String description;
-    String size;
     String brand;
     String shadeColor;
     String skinType;
@@ -64,8 +63,8 @@ public class ProductResponse {
     // Promotion info
     String promotionId;
     String promotionName;
-    LocalDate promotionStartDate; // Ngày bắt đầu áp dụng promotion
-    LocalDate promotionExpiryDate; // Ngày kết thúc áp dụng promotion
+    LocalDate promotionStartDate;
+    LocalDate promotionExpiryDate;
 
     // Media info
     List<String> mediaUrls;
