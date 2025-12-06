@@ -8,6 +8,7 @@ import {
     getStoredToken,
     formatDateTime,
     getProductById,
+    getProductVariants,
     notifyStaffOnApproval,
     notifyStaffOnRejection,
     notifyStaffOnDelete,
@@ -23,6 +24,7 @@ function ProductDetailPage() {
     const { success, error: notifyError } = useNotification();
     const { id } = useParams();
     const [product, setProduct] = useState(null);
+    const [variants, setVariants] = useState([]);
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -77,6 +79,19 @@ function ProductDetailPage() {
                 }
 
                 setProduct(productData);
+                
+                // Fetch variants nếu có
+                if (productData.id) {
+                    try {
+                        const variantsData = await getProductVariants(productData.id, token);
+                        if (variantsData && Array.isArray(variantsData)) {
+                            setVariants(variantsData);
+                        }
+                    } catch (e) {
+                        console.warn('Could not fetch variants:', e);
+                    }
+                }
+                
                 // Debug: Log promotion info
                 console.log('Product data:', productData);
                 console.log('Promotion info:', {
@@ -628,6 +643,61 @@ function ProductDetailPage() {
                                     {product.description || '-'}
                                 </span>
                             </div>
+                            
+                            {/* Hiển thị variants nếu có */}
+                            {variants.length > 0 && (
+                                <div className={cx('variants-section')}>
+                                    <div className={cx('section-title')}>Các lựa chọn sản phẩm:</div>
+                                    <div className={cx('variants-list')}>
+                                        {variants.map((variant) => (
+                                            <div key={variant.id} className={cx('variant-item', { 'is-default': variant.isDefault })}>
+                                                <div className={cx('variant-header')}>
+                                                    <span className={cx('variant-name')}>
+                                                        {variant.name || variant.shadeName || 'Lựa chọn'}
+                                                        {variant.isDefault && (
+                                                            <span className={cx('default-badge')}> (Mặc định)</span>
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                <div className={cx('variant-details')}>
+                                                    {variant.shadeName && (
+                                                        <div className={cx('variant-info')}>
+                                                            <span>Tên màu: {variant.shadeName}</span>
+                                                            {variant.shadeHex && (
+                                                                <span
+                                                                    className={cx('color-preview')}
+                                                                    style={{ backgroundColor: variant.shadeHex }}
+                                                                />
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    <div className={cx('variant-price')}>
+                                                        <span>Giá: {formatPrice(variant.price || 0)}</span>
+                                                        {variant.unitPrice && variant.unitPrice !== variant.price && (
+                                                            <span className={cx('original-price')}>
+                                                                (Giá niêm yết: {formatPrice(variant.unitPrice)})
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {variant.tax && (
+                                                        <div className={cx('variant-tax')}>
+                                                            <span>Thuế: {Math.round(variant.tax * 100)}%</span>
+                                                        </div>
+                                                    )}
+                                                    {variant.purchasePrice && (
+                                                        <div className={cx('variant-purchase')}>
+                                                            <span>Giá nhập: {formatPrice(variant.purchasePrice)}</span>
+                                                        </div>
+                                                    )}
+                                                    <div className={cx('variant-stock')}>
+                                                        <span>Tồn kho: {variant.stockQuantity || 0}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Action Buttons */}

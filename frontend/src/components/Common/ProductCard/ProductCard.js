@@ -70,7 +70,16 @@ export default function ProductCard({ product = {} }) {
         <div className={cx('hot-product')}>
             <Link to={productLink} className={cx('product-link')}>
                 <div className={cx('image-wrapper')}>
-                    <img src={resolvedImage} alt={resolvedTitle} className={cx('product-image')} />
+                    <img 
+                        src={resolvedImage} 
+                        alt={resolvedTitle} 
+                        className={cx('product-image')}
+                        onError={(e) => {
+                            if (e.target.src !== defaultProductImage) {
+                                e.target.src = defaultProductImage;
+                            }
+                        }}
+                    />
                 </div>
                 <div className={cx('product-info')}>
                     <h3 className={cx('product-title')}>{resolvedTitle}</h3>
