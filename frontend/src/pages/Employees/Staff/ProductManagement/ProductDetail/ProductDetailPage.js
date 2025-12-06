@@ -341,14 +341,6 @@ function ProductDetailPage() {
                                         </span>
                                     </div>
                                 )}
-                                {product.finish && (
-                                    <div className={cx('info-row')}>
-                                        <span className={cx('info-label')}>Độ hoàn thiện:</span>
-                                        <span className={cx('info-value')}>
-                                            {product.finish}
-                                        </span>
-                                    </div>
-                                )}
                                 {product.skinType && (
                                     <div className={cx('info-row')}>
                                         <span className={cx('info-label')}>Loại da:</span>

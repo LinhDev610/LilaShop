@@ -11,6 +11,7 @@ import java.util.Optional;
 @Repository
 public interface CartItemRepository extends JpaRepository<CartItem, String> {
 
-    @Query("select ci from CartItem ci where ci.cart.id = :cartId and ci.product.id = :productId")
-    Optional<CartItem> findByCartIdAndProductId(@Param("cartId") String cartId, @Param("productId") String productId);
+    @Query("select ci from CartItem ci where ci.cart.id = :cartId and ci.product.id = :productId and (ci.variant.id = :variantId or (:variantId is null and ci.variant is null))")
+    Optional<CartItem> findByCartIdAndProductIdAndVariantId(@Param("cartId") String cartId,
+            @Param("productId") String productId, @Param("variantId") String variantId);
 }

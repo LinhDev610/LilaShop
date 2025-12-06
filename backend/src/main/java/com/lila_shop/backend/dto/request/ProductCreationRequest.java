@@ -30,9 +30,6 @@ public class ProductCreationRequest {
     @Size(max = 100, message = "Màu sắc không được vượt quá 100 ký tự")
     String shadeColor;
 
-    @Size(max = 100, message = "Độ hoàn thiện không được vượt quá 100 ký tự")
-    String finish;
-
     @Size(max = 100, message = "Loại da không được vượt quá 100 ký tự")
     String skinType;
 

@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -136,14 +137,27 @@ public class CategoryService {
                 .findById(categoryId)
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
 
-        // Check if category has sub-categories
-        if (categoryRepository.countSubCategoriesByCategoryId(categoryId) > 0) {
-            throw new AppException(ErrorCode.CATEGORY_HAS_SUBCATEGORIES);
+        // Get all subcategories
+        List<Category> subCategories = categoryRepository.findByParentCategoryId(categoryId);
+
+        // Build list of ids to check products (parent + subcategories)
+        List<String> idsToCheck = new ArrayList<>();
+        idsToCheck.add(categoryId);
+        if (subCategories != null && !subCategories.isEmpty()) {
+            idsToCheck.addAll(subCategories.stream().map(Category::getId).toList());
         }
 
-        // Check if category has products
-        if (categoryRepository.countProductsByCategoryId(categoryId) > 0) {
+        // If any product exists in parent or its subcategories, block deletion
+        long productCount = idsToCheck.isEmpty()
+                ? 0
+                : categoryRepository.countProductsInCategories(idsToCheck);
+        if (productCount > 0) {
             throw new AppException(ErrorCode.CATEGORY_HAS_PRODUCTS);
+        }
+
+        // Delete subcategories first (if any), then delete parent
+        if (subCategories != null && !subCategories.isEmpty()) {
+            categoryRepository.deleteAll(subCategories);
         }
 
         categoryRepository.delete(category);

@@ -3,6 +3,7 @@ package com.lila_shop.backend.service;
 import com.lila_shop.backend.entity.*;
 import com.lila_shop.backend.enums.DiscountApplyScope;
 import com.lila_shop.backend.enums.DiscountValueType;
+import com.lila_shop.backend.enums.VoucherStatus;
 import com.lila_shop.backend.exception.AppException;
 import com.lila_shop.backend.exception.ErrorCode;
 import com.lila_shop.backend.repository.*;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +28,7 @@ public class CartService {
     CartItemRepository cartItemRepository;
     UserRepository userRepository;
     ProductRepository productRepository;
+    ProductVariantRepository productVariantRepository;
     @SuppressWarnings("unused")
     PromotionRepository promotionRepository;
     VoucherRepository voucherRepository;
@@ -59,7 +62,7 @@ public class CartService {
 
     @Transactional
     @PreAuthorize("hasRole('CUSTOMER')")
-    public Cart addItem(String productId, int quantity) {
+    public Cart addItem(String productId, String variantId, int quantity) {
         if (quantity <= 0) {
             throw new AppException(ErrorCode.OUT_OF_STOCK);
         }
@@ -70,18 +73,37 @@ public class CartService {
                 .findById(productId)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
 
-        // Kiểm tra tồn kho thực tế
-        Integer stockQuantity = product.getInventory() != null ? product.getInventory().getStockQuantity() : null;
+        ProductVariant variant = null;
+        if (variantId != null && !variantId.isBlank()) {
+            variant = productVariantRepository.findById(variantId)
+                    .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+            if (!variant.getProduct().getId().equals(productId)) {
+                throw new AppException(ErrorCode.BAD_REQUEST);
+            }
+        } else if (product.getVariants() != null && !product.getVariants().isEmpty()) {
+            variant = product.getVariants().stream()
+                    .filter(v -> Boolean.TRUE.equals(v.getIsDefault()))
+                    .findFirst()
+                    .orElse(product.getVariants().get(0));
+        }
+
+        Integer stockQuantity = null;
+        if (variant != null) {
+            stockQuantity = variant.getStockQuantity();
+        } else if (product.getInventory() != null) {
+            stockQuantity = product.getInventory().getStockQuantity();
+        }
         if (stockQuantity != null && stockQuantity <= 0) {
             throw new AppException(ErrorCode.OUT_OF_STOCK);
         }
 
         CartItem cartItem = cartItemRepository
-                .findByCartIdAndProductId(cart.getId(), productId)
+                .findByCartIdAndProductIdAndVariantId(cart.getId(), productId, variant != null ? variant.getId() : null)
                 .orElse(CartItem.builder()
                         .cart(cart)
                         .product(product)
-                        .unitPrice(calculateUnitPrice(product))
+                        .variant(variant)
+                        .unitPrice(calculateUnitPrice(product, variant))
                         .quantity(0)
                         .build());
 
@@ -102,15 +124,13 @@ public class CartService {
         return cart;
     }
 
-    /**
-     * Tính đơn giá sản phẩm cho giỏ hàng.
-     * Hiện tại giá khuyến mãi đã được áp trực tiếp vào product.price
-     * (PromotionService.applyPricingForProducts), nên ở đây chỉ cần lấy lại
-     * product.price và làm tròn về đồng, KHÔNG áp khuyến mãi lần nữa để tránh
-     * giảm hai lần (ví dụ 100k giảm 10% => 90k, không phải 89.980).
-     */
-    private double calculateUnitPrice(Product product) {
-        double price = product.getPrice() != null ? product.getPrice() : 0.0;
+    private double calculateUnitPrice(Product product, ProductVariant variant) {
+        double price;
+        if (variant != null && variant.getPrice() != null) {
+            price = variant.getPrice();
+        } else {
+            price = product.getPrice() != null ? product.getPrice() : 0.0;
+        }
         return Math.round(price);
     }
 
@@ -121,9 +141,8 @@ public class CartService {
                 Product product = item.getProduct();
                 if (product != null) {
                     // Tính lại đơn giá dựa trên cấu hình khuyến mãi hiện tại
-                    double unitPrice = calculateUnitPrice(product);
+                    double unitPrice = calculateUnitPrice(product, item.getVariant());
                     item.setUnitPrice(unitPrice);
-                    // Thành tiền = đơn giá * số lượng
                     double finalPrice = unitPrice * item.getQuantity();
                     item.setFinalPrice(finalPrice);
                     cartItemRepository.save(item);
@@ -144,7 +163,6 @@ public class CartService {
         subtotal = Math.round(subtotal);
         cart.setSubtotal(subtotal);
 
-        // voucherDiscount có thể null với giỏ hàng mới => mặc định 0
         Double rawVoucherDiscount = cart.getVoucherDiscount();
         double voucherDiscount = rawVoucherDiscount == null ? 0.0 : rawVoucherDiscount;
         // Làm tròn tiền giảm giá về đơn vị đồng
@@ -154,16 +172,17 @@ public class CartService {
         if (cart.getAppliedVoucherCode() != null && !cart.getAppliedVoucherCode().isEmpty()) {
             try {
                 var voucher = voucherRepository.findByCode(cart.getAppliedVoucherCode()).orElse(null);
-                if (voucher != null && voucher.getIsActive() && voucher.getStatus() == com.lila_shop.backend.enums.VoucherStatus.APPROVED) {
+                if (voucher != null && voucher.getIsActive()
+                        && voucher.getStatus() == VoucherStatus.APPROVED) {
                     double applicableSubtotal = calculateApplicableSubtotal(cart, voucher);
-                    
+
                     // Kiểm tra lại minOrderValue
-                    if (voucher.getMinOrderValue() != null && voucher.getMinOrderValue() > 0 
+                    if (voucher.getMinOrderValue() != null && voucher.getMinOrderValue() > 0
                             && applicableSubtotal < voucher.getMinOrderValue()) {
                         // Voucher không còn hợp lệ, xóa voucher
                         cart.setAppliedVoucherCode(null);
                         voucherDiscount = 0.0;
-                    } else if (voucher.getMaxOrderValue() != null && voucher.getMaxOrderValue() > 0 
+                    } else if (voucher.getMaxOrderValue() != null && voucher.getMaxOrderValue() > 0
                             && applicableSubtotal > voucher.getMaxOrderValue()) {
                         // Voucher không còn hợp lệ, xóa voucher
                         cart.setAppliedVoucherCode(null);
@@ -177,7 +196,7 @@ public class CartService {
                         } else {
                             discount = discountValue;
                         }
-                        
+
                         if (voucher.getMaxDiscountValue() != null && voucher.getMaxDiscountValue() > 0) {
                             discount = Math.min(discount, voucher.getMaxDiscountValue());
                         }
@@ -220,10 +239,10 @@ public class CartService {
             throw new AppException(ErrorCode.CART_ITEM_NOT_EXISTED);
         }
 
-        var voucher =
-                voucherRepository.findByCode(code).orElseThrow(() -> new AppException(ErrorCode.VOUCHER_NOT_EXISTED));
+        var voucher = voucherRepository.findByCode(code)
+                .orElseThrow(() -> new AppException(ErrorCode.VOUCHER_NOT_EXISTED));
 
-        if (!voucher.getIsActive() || voucher.getStatus() != com.lila_shop.backend.enums.VoucherStatus.APPROVED) {
+        if (!voucher.getIsActive() || voucher.getStatus() != VoucherStatus.APPROVED) {
             throw new AppException(ErrorCode.VOUCHER_NOT_EXISTED);
         }
         LocalDate today = LocalDate.now();
@@ -231,7 +250,7 @@ public class CartService {
                 || (voucher.getExpiryDate() != null && today.isAfter(voucher.getExpiryDate()))) {
             throw new AppException(ErrorCode.VOUCHER_NOT_EXISTED);
         }
-        
+
         // Lấy current user
         User currentUser = cart.getUser();
         if (currentUser == null) {
@@ -239,42 +258,43 @@ public class CartService {
             currentUser = userRepository.findByEmail(authentication.getName())
                     .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         }
-        
+
         // Lưu userId vào biến final để sử dụng trong lambda
         final String userId = currentUser.getId();
-        
+
         boolean alreadyUsed = userRepository.existsByIdAndUsedVouchers_Id(userId, voucher.getId());
         if (alreadyUsed) {
             throw new AppException(ErrorCode.VOUCHER_ALREADY_USED);
         }
-        
+
         recalcCartTotals(cart);
-        
+
         // Tính tổng giá trị đơn hàng có thể áp dụng voucher
         double applicableSubtotal = calculateApplicableSubtotal(cart, voucher);
-        
+
         // Kiểm tra minOrderValue: giá trị đơn hàng phải >= minOrderValue (nếu có)
         if (voucher.getMinOrderValue() != null && voucher.getMinOrderValue() > 0) {
             double minValue = voucher.getMinOrderValue();
             if (applicableSubtotal < minValue) {
-                throw new AppException(ErrorCode.INVALID_VOUCHER_MINIUM, 
-                        String.format("Voucher yêu cầu đơn hàng tối thiểu %.0f VND, nhưng đơn hàng hiện tại chỉ có %.0f VND", 
+                throw new AppException(ErrorCode.INVALID_VOUCHER_MINIUM,
+                        String.format(
+                                "Voucher yêu cầu đơn hàng tối thiểu %.0f VND, đơn hàng hiện tại hiện có %.0f VND",
                                 minValue, applicableSubtotal));
             }
         }
-        
+
         // Kiểm tra maxOrderValue: giá trị đơn hàng phải <= maxOrderValue (nếu có)
-        if (voucher.getMaxOrderValue() != null && voucher.getMaxOrderValue() > 0 
+        if (voucher.getMaxOrderValue() != null && voucher.getMaxOrderValue() > 0
                 && applicableSubtotal > voucher.getMaxOrderValue()) {
-            throw new AppException(ErrorCode.INVALID_VOUCHER_MINIUM, 
+            throw new AppException(ErrorCode.INVALID_VOUCHER_MINIUM,
                     "Giá trị đơn hàng vượt quá giá trị tối đa cho phép của voucher");
         }
-        
+
         // Kiểm tra applyScope: đảm bảo có ít nhất một sản phẩm phù hợp với scope
         if (voucher.getApplyScope() != null && voucher.getApplyScope() != DiscountApplyScope.ORDER) {
             double scopeSubtotal = calculateApplicableSubtotal(cart, voucher);
             if (scopeSubtotal <= 0) {
-                throw new AppException(ErrorCode.INVALID_VOUCHER_SCOPE, 
+                throw new AppException(ErrorCode.INVALID_VOUCHER_SCOPE,
                         "Không có sản phẩm nào trong giỏ hàng phù hợp với phạm vi áp dụng của voucher");
             }
         }
@@ -287,18 +307,18 @@ public class CartService {
         } else {
             discount = discountValue;
         }
-        
-        // Nếu giá trị giảm giá vượt quá giá trị giảm giá tối đa của voucher, set giá trị giảm giá tối đa của voucher
+
+        // Discount > MaxDiscountValue của voucher, set MaxDiscountValue của voucher
         if (voucher.getMaxDiscountValue() != null && voucher.getMaxDiscountValue() > 0) {
             discount = Math.min(discount, voucher.getMaxDiscountValue());
         }
-        
-        // Nếu giá trị giảm giá vượt quá giá trị đơn hàng có thể áp dụng voucher, set giá trị giảm giá tối đa của voucher
+
+        // Discount > applicableSubtotal, set applicableSubtotal
         discount = Math.min(discount, applicableSubtotal);
-        
+
         // Làm tròn tiền giảm giá về đơn vị đồng
         discount = Math.round(discount);
-        
+
         // Lấy tổng giá trị đơn hàng để tính toán cuối cùng
         double fullSubtotal = cart.getSubtotal();
 
@@ -309,7 +329,8 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
-    // Tính tổng giá trị đơn hàng có thể áp dụng voucher dựa trên phạm vi áp dụng của voucher
+    // Tính tổng giá trị đơn hàng có thể áp dụng voucher dựa trên phạm vi áp dụng
+    // của voucher
     private double calculateApplicableSubtotal(Cart cart, Voucher voucher) {
         if (voucher.getApplyScope() == null || voucher.getApplyScope() == DiscountApplyScope.ORDER) {
             // Áp dụng cho toàn bộ đơn hàng
@@ -326,7 +347,7 @@ public class CartService {
                     if (item == null) {
                         return false;
                     }
-                    
+
                     Product product = item.getProduct();
                     if (product == null) {
                         return false;
@@ -341,13 +362,16 @@ public class CartService {
                         return voucher.getProductApply().stream()
                                 .anyMatch(vp -> vp != null && vp.getId() != null && vp.getId().equals(product.getId()));
                     } else if (scope == DiscountApplyScope.CATEGORY) {
-                        // Nếu danh mục sản phẩm có nằm trong danh sách danh mục của voucher, return true
+                        // Nếu danh mục sản phẩm có nằm trong danh sách danh mục của voucher, return
+                        // true
                         Category productCategory = product.getCategory();
-                        if (productCategory == null || voucher.getCategoryApply() == null || voucher.getCategoryApply().isEmpty()) {
+                        if (productCategory == null || voucher.getCategoryApply() == null
+                                || voucher.getCategoryApply().isEmpty()) {
                             return false;
                         }
                         return voucher.getCategoryApply().stream()
-                                .anyMatch(vc -> vc != null && vc.getId() != null && vc.getId().equals(productCategory.getId()));
+                                .anyMatch(vc -> vc != null && vc.getId() != null
+                                        && vc.getId().equals(productCategory.getId()));
                     }
                     return false;
                 })
@@ -356,7 +380,7 @@ public class CartService {
                     return finalPrice != null ? finalPrice : 0.0;
                 })
                 .sum();
-        
+
         // Làm tròn về đơn vị đồng
         return Math.round(applicableSubtotal);
     }
@@ -377,16 +401,20 @@ public class CartService {
             throw new AppException(ErrorCode.CART_ITEM_NOT_EXISTED);
         }
 
-        // Kiểm tra tồn kho: không cho vượt quá stockQuantity nếu có
         Product product = cartItem.getProduct();
-        if (product != null && product.getInventory() != null) {
-            Integer stockQuantity = product.getInventory().getStockQuantity();
-            if (stockQuantity != null && quantity > stockQuantity) {
-                throw new AppException(ErrorCode.OUT_OF_STOCK);
-            }
+        Integer stockQuantity = null;
+        if (cartItem.getVariant() != null) {
+            stockQuantity = cartItem.getVariant().getStockQuantity();
+        } else if (product != null && product.getInventory() != null) {
+            stockQuantity = product.getInventory().getStockQuantity();
+        }
+        // Tự động giới hạn quantity nếu vượt quá stockQuantity
+        int finalQuantity = quantity;
+        if (stockQuantity != null && quantity > stockQuantity) {
+            finalQuantity = stockQuantity;
         }
 
-        cartItem.setQuantity(quantity);
+        cartItem.setQuantity(finalQuantity);
         double finalPrice = cartItem.getQuantity() * cartItem.getUnitPrice();
         cartItem.setFinalPrice(finalPrice);
 
@@ -445,7 +473,7 @@ public class CartService {
     }
 
     @Transactional
-    public void removeCartItemsForOrder(User user, java.util.List<String> cartItemIds) {
+    public void removeCartItemsForOrder(User user, List<String> cartItemIds) {
         if (user == null || cartItemIds == null || cartItemIds.isEmpty()) {
             return;
         }
@@ -453,19 +481,19 @@ public class CartService {
         if (cart == null) {
             return;
         }
-        
+
         // Xóa items khỏi collection trước để tránh lỗi khi recalcCartTotals
         if (cart.getCartItems() != null && !cart.getCartItems().isEmpty()) {
             cart.getCartItems().removeIf(item -> cartItemIds.contains(item.getId()));
         }
-        
+
         // Sau đó mới xóa items khỏi DB
         cartItemIds.forEach(id -> cartItemRepository.findById(id).ifPresent(item -> {
             if (item.getCart() != null && item.getCart().getId().equals(cart.getId())) {
                 cartItemRepository.delete(item);
             }
         }));
-        
+
         // Tính lại tổng tiền sau khi đã loại bỏ items
         recalcCartTotals(cart);
     }

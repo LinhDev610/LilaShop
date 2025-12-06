@@ -53,7 +53,6 @@ export const mapProduct = (product, apiBaseUrl) => {
             description: product.description,
             brand: product.brand,
             shadeColor: product.shadeColor,
-            finish: product.finish,
             skinType: product.skinType,
             skinConcern: product.skinConcern,
             volume: product.volume,

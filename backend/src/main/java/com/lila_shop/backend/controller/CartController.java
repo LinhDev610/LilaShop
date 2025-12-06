@@ -31,8 +31,10 @@ public class CartController {
     @PostMapping("/items")
     @PreAuthorize("hasRole('CUSTOMER')")
     ApiResponse<CartResponse> addItem(
-            @RequestParam("productId") String productId, @RequestParam("quantity") int quantity) {
-        var cart = cartService.addItem(productId, quantity);
+            @RequestParam("productId") String productId,
+            @RequestParam(value = "variantId", required = false) String variantId,
+            @RequestParam("quantity") int quantity) {
+        var cart = cartService.addItem(productId, variantId, quantity);
         return ApiResponse.<CartResponse>builder()
                 .result(cartMapper.toResponse(cart))
                 .build();

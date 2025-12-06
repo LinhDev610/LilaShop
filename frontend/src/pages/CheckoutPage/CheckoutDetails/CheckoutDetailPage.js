@@ -44,6 +44,7 @@ export default function CheckoutDetailPage() {
     const directCheckout = location.state?.directCheckout || false;
     const directProductId = location.state?.productId || null;
     const directQuantity = location.state?.quantity || 1;
+    const directVariantId = location.state?.variantId || null;
 
     // Debug log
     if (directCheckout) {
@@ -313,16 +314,29 @@ export default function CheckoutDetailPage() {
         if (directCheckout && directProductId) {
             // Direct checkout: tạo item từ product
             if (directProduct) {
-                const unitPrice = directProduct.price || 0;
+                // Tìm variant nếu có variantId
+                let selectedVariant = null;
+                if (directVariantId && directProduct.variants && Array.isArray(directProduct.variants)) {
+                    selectedVariant = directProduct.variants.find((v) => v.id === directVariantId);
+                }
+
+                // Ưu tiên giá variant, fallback về giá product
+                const unitPrice = selectedVariant?.price ?? directProduct.price ?? 0;
                 const finalPrice = unitPrice * directQuantity;
                 const items = [
                     {
                         id: `direct-${directProductId}`,
                         productId: directProductId,
+                        variantId: directVariantId,
                         product: directProduct,
+                        variant: selectedVariant,
                         quantity: directQuantity,
                         unitPrice: unitPrice,
                         finalPrice: finalPrice,
+                        variantName: selectedVariant?.name || null,
+                        shadeColor: selectedVariant?.shadeColor || null,
+                        volumeMl: selectedVariant?.volumeMl || null,
+                        weightGr: selectedVariant?.weightGr || null,
                     },
                 ];
                 console.log('CheckoutDetailPage: checkoutItems (direct):', items);
@@ -342,7 +356,7 @@ export default function CheckoutDetailPage() {
         const selectedSet = new Set(selectedItemIds);
         const filtered = items.filter((item) => selectedSet.has(item.id));
         return filtered.length > 0 ? filtered : items;
-    }, [directCheckout, directProductId, directProduct, directQuantity, cart, selectedItemIds, loading]);
+    }, [directCheckout, directProductId, directProduct, directQuantity, directVariantId, cart, selectedItemIds, loading]);
 
     // Tính phí vận chuyển từ GHN API
     useEffect(() => {
@@ -874,6 +888,7 @@ export default function CheckoutDetailPage() {
                 directCheckout: directCheckout,
                 productId: directProductId,
                 quantity: directQuantity,
+                variantId: directVariantId,
                 // Giữ lại danh sách cartItemId đã chọn để backend biết item nào cần thanh toán (nếu không phải direct checkout)
                 cartItemIds: directCheckout ? [] : selectedItemIds,
                 address: {
@@ -1124,6 +1139,14 @@ export default function CheckoutDetailPage() {
                                                 <div className={cx('product-name')}>
                                                     {displayName}
                                                 </div>
+                                                {item.variantName && (
+                                                    <div className={cx('product-variant')}>
+                                                        {item.variantName}
+                                                        {item.shadeColor && ` - ${item.shadeColor}`}
+                                                        {item.volumeMl && ` - ${item.volumeMl}ml`}
+                                                        {item.weightGr && ` - ${item.weightGr}g`}
+                                                    </div>
+                                                )}
                                                 <div className={cx('product-qty')}>
                                                     Số lượng: {quantity}
                                                 </div>

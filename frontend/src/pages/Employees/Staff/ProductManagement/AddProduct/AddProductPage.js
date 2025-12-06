@@ -9,6 +9,7 @@ import {
     refreshToken as refreshTokenAPI,
     getActiveCategories,
     createProduct,
+    createProductVariant,
     uploadProductMedia,
     getMyProducts,
     INITIAL_FORM_STATE_PRODUCT,
@@ -24,6 +25,41 @@ const MAX_TOTAL_MEDIA_SIZE = 50 * 1024 * 1024; // 50MB tổng dung lượng ản
  * @param {Array} categories - Danh sách tất cả categories
  * @returns {Object} Config object với fields và label
  */
+const keywordMatch = (text = '', keywords = []) => {
+    const lower = text.toLowerCase();
+    return keywords.some((k) => lower.includes(k));
+};
+
+const findRootCategory = (category, categories) => {
+    if (!category) return null;
+    let current = category;
+    const visited = new Set();
+    while (current && (current.parentId || current.parentCategory?.id)) {
+        const parentId = current.parentId || current.parentCategory?.id;
+        if (!parentId || visited.has(parentId)) break;
+        visited.add(parentId);
+        const parent = categories.find((c) => (c.id || c.categoryId) === parentId);
+        if (!parent) break;
+        current = parent;
+    }
+    return current;
+};
+
+// Xác định mode lựa chọn theo danh mục (fragrance, makeup hoặc default)
+const getVariantMode = (categoryId, categories) => {
+    const selectedCategory = categories.find((c) => (c.id || c.categoryId) === categoryId);
+    const root = findRootCategory(selectedCategory, categories) || selectedCategory;
+    const name = (root?.name || selectedCategory?.name || '').toLowerCase();
+    if (!name) return 'default';
+    if (name.includes('nước hoa') || name.includes('fragrance') || name.includes('perfume')) {
+        return 'fragrance';
+    }
+    if (name.includes('trang điểm') || name.includes('makeup') || name.includes('son') || name.includes('phấn')) {
+        return 'makeup';
+    }
+    return 'default';
+};
+
 const getFieldsForCategory = (categoryId, categories) => {
     if (!categoryId) {
         return { fields: [], label: '' }; // Chưa chọn category
@@ -41,23 +77,45 @@ const getFieldsForCategory = (categoryId, categories) => {
         return { fields: [], label: '' };
     }
 
-    const categoryName = (selectedCategory.name || '').toLowerCase();
+    const rootCategory = findRootCategory(selectedCategory, categories) || selectedCategory;
+    const rootName = (rootCategory.name || selectedCategory.name || '').toLowerCase();
 
-    // Kiểm tra các loại category khác dựa vào keyword trong tên
-    if (categoryName.includes('chăm sóc da') || categoryName.includes('skincare')) {
+    // Map theo danh mục cha
+    if (rootName.includes('chăm sóc da') || rootName.includes('skincare')) {
         return CATEGORY_FIELD_CONFIG.skincare;
     }
-    if (categoryName.includes('trang điểm') || categoryName.includes('makeup')) {
+    if (rootName.includes('trang điểm') || rootName.includes('makeup')) {
         return CATEGORY_FIELD_CONFIG.makeup;
     }
-    if (categoryName.includes('chăm sóc tóc') || categoryName.includes('haircare')) {
+    if (rootName.includes('chăm sóc tóc') || rootName.includes('haircare')) {
         return CATEGORY_FIELD_CONFIG.haircare;
     }
-    if (categoryName.includes('nước hoa') || categoryName.includes('fragrance')) {
+    if (rootName.includes('chăm sóc cơ thể') || rootName.includes('bodycare')) {
+        return CATEGORY_FIELD_CONFIG.bodycare;
+    }
+    if (rootName.includes('nước hoa') || rootName.includes('fragrance') || rootName.includes('perfume')) {
         return CATEGORY_FIELD_CONFIG.fragrance;
     }
-    if (categoryName.includes('chăm sóc cơ thể') || categoryName.includes('bodycare')) {
-        return CATEGORY_FIELD_CONFIG.bodycare;
+
+    // Fallback nhận diện theo từ khóa của danh mục con
+    const categoryName = (selectedCategory.name || '').toLowerCase();
+    if (keywordMatch(categoryName, ['son', 'lip', 'lipstick', 'lip gloss', 'lip balm'])) {
+        return { ...CATEGORY_FIELD_CONFIG.makeup, label: 'Son môi' };
+    }
+    if (keywordMatch(categoryName, ['phấn', 'foundation', 'cushion', 'bb', 'cc'])) {
+        return { ...CATEGORY_FIELD_CONFIG.makeup, label: 'Nền/Phấn' };
+    }
+    if (keywordMatch(categoryName, ['má hồng', 'blush'])) {
+        return { ...CATEGORY_FIELD_CONFIG.makeup, label: 'Má hồng' };
+    }
+    if (keywordMatch(categoryName, ['serum', 'essence', 'ampoule'])) {
+        return { ...CATEGORY_FIELD_CONFIG.skincare, label: 'Serum' };
+    }
+    if (keywordMatch(categoryName, ['kem chống nắng', 'sunscreen', 'spf'])) {
+        return { ...CATEGORY_FIELD_CONFIG.skincare, label: 'Chống nắng' };
+    }
+    if (keywordMatch(categoryName, ['nước hoa', 'perfume', 'eau'])) {
+        return CATEGORY_FIELD_CONFIG.fragrance;
     }
 
     // Mặc định: không hiển thị fields đặc biệt (chỉ hiển thị fields cơ bản)
@@ -78,6 +136,20 @@ const shouldShowField = (fieldName, categoryId, categories) => {
     return config.fields.includes(fieldName);
 };
 
+const emptyVariant = () => ({
+    id: crypto.randomUUID(),
+    name: '',
+    shadeName: '',
+    shadeHex: '',
+    price: '',
+    unitPrice: '',
+    taxPercent: '',
+    purchasePrice: '',
+    finalPrice: '',
+    stockQuantity: '',
+    isDefault: false,
+});
+
 export default function AddProductPage() {
     const navigate = useNavigate();
     const formRef = useRef(null);
@@ -92,7 +164,6 @@ export default function AddProductPage() {
     );
     const [brand, setBrand] = useState(INITIAL_FORM_STATE_PRODUCT.brand);
     const [shadeColor, setShadeColor] = useState(INITIAL_FORM_STATE_PRODUCT.shadeColor);
-    const [finish, setFinish] = useState(INITIAL_FORM_STATE_PRODUCT.finish);
     const [skinType, setSkinType] = useState(INITIAL_FORM_STATE_PRODUCT.skinType);
     const [skinConcern, setSkinConcern] = useState(
         INITIAL_FORM_STATE_PRODUCT.skinConcern,
@@ -125,8 +196,13 @@ export default function AddProductPage() {
     );
     const [mediaFiles, setMediaFiles] = useState(INITIAL_FORM_STATE_PRODUCT.mediaFiles);
     const [errors, setErrors] = useState(INITIAL_FORM_STATE_PRODUCT.errors);
+    const [variants, setVariants] = useState([]);
     const [categories, setCategories] = useState([]);
     const [existingProductsMap, setExistingProductsMap] = useState({});
+    const variantMode = useMemo(
+        () => getVariantMode(categoryId, categories),
+        [categoryId, categories],
+    );
 
     // State cho tìm kiếm danh mục
     const [categorySearchTerm, setCategorySearchTerm] = useState('');
@@ -146,8 +222,8 @@ export default function AddProductPage() {
             // Kiểm tra có parent không
             const hasParent = Boolean(
                 category.parentId ||
-                    category.parentCategory?.id ||
-                    category.parentCategory,
+                category.parentCategory?.id ||
+                category.parentCategory,
             );
 
             // Kiểm tra có subCategories không
@@ -267,7 +343,7 @@ export default function AddProductPage() {
                 localStorage.setItem('refreshToken', responseData.token);
                 return responseData.token;
             }
-        } catch (_) {}
+        } catch (_) { }
         return null;
     }, [getStoredToken]);
 
@@ -289,6 +365,30 @@ export default function AddProductPage() {
             return { ...response, token: currentToken };
         },
         [refreshTokenIfNeeded],
+    );
+
+    const submitVariants = useCallback(
+        async (productId, token) => {
+            if (!variants.length) return true;
+            const results = await Promise.all(
+                variants.map((v) =>
+                    createProductVariant(productId, {
+                        name: v.name?.trim() || null,
+                        shadeName: v.shadeName?.trim() || null,
+                        shadeHex: v.shadeHex?.trim() || null,
+                        price: v.finalPrice ? Number(v.finalPrice) : 0, // Giá cuối cùng (đã gồm thuế)
+                        unitPrice: v.unitPrice ? Number(v.unitPrice) : null,
+                        tax: v.taxPercent ? Number(v.taxPercent) : null,
+                        purchasePrice: v.purchasePrice ? Number(v.purchasePrice) : null,
+                        stockQuantity: v.stockQuantity === '' ? 0 : Number(v.stockQuantity),
+                        isDefault: Boolean(v.isDefault),
+                    }, token),
+                ),
+            );
+            const failed = results.find((r) => !r.ok);
+            return !failed;
+        },
+        [variants],
     );
 
     const handleProductIdInput = useCallback((value) => {
@@ -337,14 +437,13 @@ export default function AddProductPage() {
     const resetForm = useCallback(() => {
         try {
             formRef.current?.reset();
-        } catch (_) {}
+        } catch (_) { }
         // Reset tất cả fields về giá trị ban đầu từ constants
         setProductId(INITIAL_FORM_STATE_PRODUCT.productId);
         setName(INITIAL_FORM_STATE_PRODUCT.name);
         setDescription(INITIAL_FORM_STATE_PRODUCT.description);
         setBrand(INITIAL_FORM_STATE_PRODUCT.brand);
         setShadeColor(INITIAL_FORM_STATE_PRODUCT.shadeColor);
-        setFinish(INITIAL_FORM_STATE_PRODUCT.finish);
         setSkinType(INITIAL_FORM_STATE_PRODUCT.skinType);
         setSkinConcern(INITIAL_FORM_STATE_PRODUCT.skinConcern);
         setVolume(INITIAL_FORM_STATE_PRODUCT.volume);
@@ -424,23 +523,26 @@ export default function AddProductPage() {
             newErrors.categoryId = 'Vui lòng chọn danh mục từ danh sách.';
         }
 
-        // Validate price - must be a valid number and >= 0
-        const priceNum = Number(price);
-        if (isNaN(priceNum) || priceNum < 0) {
-            newErrors.price = 'Giá không hợp lệ. Vui lòng nhập số lớn hơn hoặc bằng 0.';
-        }
+        // Chỉ validate Giá & Thuế khi không có variants
+        if (variants.length === 0) {
+            // Validate price - must be a valid number and >= 0
+            const priceNum = Number(price);
+            if (isNaN(priceNum) || priceNum < 0) {
+                newErrors.price = 'Giá không hợp lệ. Vui lòng nhập số lớn hơn hoặc bằng 0.';
+            }
 
-        // Validate purchasePrice - must be < unitPrice (giá niêm yết)
-        if (
-            purchasePrice !== undefined &&
-            purchasePrice !== null &&
-            purchasePrice !== ''
-        ) {
-            const purchaseNum = Number(purchasePrice);
-            if (Number.isNaN(purchaseNum) || purchaseNum < 0) {
-                newErrors.purchasePrice = 'Giá nhập phải lớn hơn hoặc bằng 0.';
-            } else if (priceNum > 0 && purchaseNum >= priceNum) {
-                newErrors.purchasePrice = 'Giá nhập phải nhỏ hơn giá niêm yết.';
+            // Validate purchasePrice - must be < unitPrice (giá niêm yết)
+            if (
+                purchasePrice !== undefined &&
+                purchasePrice !== null &&
+                purchasePrice !== ''
+            ) {
+                const purchaseNum = Number(purchasePrice);
+                if (Number.isNaN(purchaseNum) || purchaseNum < 0) {
+                    newErrors.purchasePrice = 'Giá nhập phải lớn hơn hoặc bằng 0.';
+                } else if (priceNum > 0 && purchaseNum >= priceNum) {
+                    newErrors.purchasePrice = 'Giá nhập phải nhỏ hơn giá niêm yết.';
+                }
             }
         }
 
@@ -475,27 +577,62 @@ export default function AddProductPage() {
                 newErrors.weight = 'Trọng lượng tối thiểu là 0.';
             }
         }
-        if (
-            stockQuantity === undefined ||
-            stockQuantity === null ||
-            stockQuantity === ''
-        ) {
-            newErrors.stockQuantity = 'Vui lòng nhập số lượng tồn kho.';
-        } else {
-            const stockNum = Number(stockQuantity);
-            if (Number.isNaN(stockNum) || stockNum < 0) {
-                newErrors.stockQuantity = 'Số lượng tồn kho tối thiểu là 0.';
+        // Chỉ validate stockQuantity khi không có variants
+        if (variants.length === 0) {
+            if (
+                stockQuantity === undefined ||
+                stockQuantity === null ||
+                stockQuantity === ''
+            ) {
+                newErrors.stockQuantity = 'Vui lòng nhập số lượng tồn kho.';
+            } else {
+                const stockNum = Number(stockQuantity);
+                if (Number.isNaN(stockNum) || stockNum < 0) {
+                    newErrors.stockQuantity = 'Số lượng tồn kho tối thiểu là 0.';
+                }
             }
         }
 
-        // Validate phần trăm thuế
-        if (taxPercent === undefined || taxPercent === null || taxPercent === '') {
-            newErrors.taxPercent = 'Vui lòng nhập thuế (từ 0 đến 99%).';
-        } else {
-            const taxNum = parseInt(taxPercent, 10);
-            if (isNaN(taxNum) || taxNum < 0 || taxNum > 99) {
-                newErrors.taxPercent = 'Thuế phải là số nguyên từ 0 đến 99.';
+        // Chỉ validate Giá & Thuế khi không có variants
+        if (variants.length === 0) {
+            // Validate phần trăm thuế
+            if (taxPercent === undefined || taxPercent === null || taxPercent === '') {
+                newErrors.taxPercent = 'Vui lòng nhập thuế (từ 0 đến 99%).';
+            } else {
+                const taxNum = parseInt(taxPercent, 10);
+                if (isNaN(taxNum) || taxNum < 0 || taxNum > 99) {
+                    newErrors.taxPercent = 'Thuế phải là số nguyên từ 0 đến 99.';
+                }
             }
+        }
+
+        // Validate variants (optional)
+        if (variants.length > 0) {
+            variants.forEach((v) => {
+                if (!v.name?.trim()) {
+                    newErrors[`variant_name_${v.id}`] = 'Vui lòng nhập tên/nhãn lựa chọn.';
+                }
+                const unitPriceNum = Number(v.unitPrice);
+                if (Number.isNaN(unitPriceNum) || unitPriceNum < 0) {
+                    newErrors[`variant_unitPrice_${v.id}`] = 'Giá niêm yết phải >= 0.';
+                }
+                const taxNum = Number(v.taxPercent);
+                if (Number.isNaN(taxNum) || taxNum < 0 || taxNum > 99) {
+                    newErrors[`variant_taxPercent_${v.id}`] = 'Thuế phải là số từ 0 đến 99.';
+                }
+                const purchasePriceNum = Number(v.purchasePrice);
+                if (v.purchasePrice !== '' && (Number.isNaN(purchasePriceNum) || purchasePriceNum < 0)) {
+                    newErrors[`variant_purchasePrice_${v.id}`] = 'Giá nhập phải >= 0.';
+                }
+                const finalPriceNum = Number(v.finalPrice);
+                if (Number.isNaN(finalPriceNum) || finalPriceNum < 0) {
+                    newErrors[`variant_finalPrice_${v.id}`] = 'Giá cuối cùng phải >= 0.';
+                }
+                const stockNum = v.stockQuantity === '' ? 0 : Number(v.stockQuantity);
+                if (Number.isNaN(stockNum) || stockNum < 0) {
+                    newErrors[`variant_stock_${v.id}`] = 'Tồn kho lựa chọn phải >= 0.';
+                }
+            });
         }
 
         setErrors(newErrors);
@@ -577,7 +714,6 @@ export default function AddProductPage() {
             description: (description || '').trim() || null,
             brand: (brand || '').trim(),
             shadeColor: (shadeColor || '').trim() || null,
-            finish: (finish || '').trim() || null,
             skinType: (skinType || '').trim() || null,
             skinConcern: (skinConcern || '').trim() || null,
             volume: (volume || '').trim() || null,
@@ -597,15 +733,16 @@ export default function AddProductPage() {
                 discountValue && Number(discountValue) > 0 ? Number(discountValue) : null,
             purchasePrice:
                 purchasePrice !== undefined &&
-                purchasePrice !== null &&
-                purchasePrice !== ''
+                    purchasePrice !== null &&
+                    purchasePrice !== ''
                     ? Number(purchasePrice)
                     : null,
             categoryId: (categoryId || '').trim(),
             imageUrls: imageUrls.length ? imageUrls : undefined,
             videoUrls: videoUrls.length ? videoUrls : undefined,
             defaultMediaUrl: defaultUrl || undefined,
-            stockQuantity: Number(stockQuantity),
+            // Chỉ gửi stockQuantity khi không có variants
+            ...(variants.length === 0 && { stockQuantity: Number(stockQuantity) }),
         }),
         [
             productId,
@@ -613,7 +750,6 @@ export default function AddProductPage() {
             description,
             brand,
             shadeColor,
-            finish,
             skinType,
             skinConcern,
             volume,
@@ -633,6 +769,7 @@ export default function AddProductPage() {
             categoryId,
             stockQuantity,
             finalPrice,
+            variants,
         ],
     );
 
@@ -697,12 +834,6 @@ export default function AddProductPage() {
             return;
         }
 
-        if (hasDuplicateProductId(normalizedProductId)) {
-            setIsLoading(false);
-            notifyDuplicateProductId(normalizedProductId);
-            return;
-        }
-
         try {
             const token = ensureAuthToken();
             if (!token) {
@@ -723,8 +854,18 @@ export default function AddProductPage() {
             const { ok, data, status } = await submitProductWithRetry(payload, token);
 
             if (ok) {
+                const productIdCreated = data?.id || payload.id;
+                if (productIdCreated) {
+                    const variantsOk = await submitVariants(productIdCreated, token);
+                    if (!variantsOk) {
+                        notifyError('Tạo lựa chọn thất bại. Vui lòng kiểm tra lại.');
+                        setIsLoading(false);
+                        return;
+                    }
+                }
                 success('Thêm sản phẩm thành công.');
                 rememberProductId(normalizedProductId, payload.name);
+                setVariants([]);
                 resetForm();
             } else {
                 if (status === 401) {
@@ -808,17 +949,17 @@ export default function AddProductPage() {
                                         >
                                             {categoryId
                                                 ? (
-                                                      displayCategories.find(
-                                                          (c) =>
-                                                              (c.id || c.categoryId) ===
-                                                              categoryId,
-                                                      ) ||
-                                                      categories.find(
-                                                          (c) =>
-                                                              (c.id || c.categoryId) ===
-                                                              categoryId,
-                                                      )
-                                                  )?.name || '--Chọn danh mục--'
+                                                    displayCategories.find(
+                                                        (c) =>
+                                                            (c.id || c.categoryId) ===
+                                                            categoryId,
+                                                    ) ||
+                                                    categories.find(
+                                                        (c) =>
+                                                            (c.id || c.categoryId) ===
+                                                            categoryId,
+                                                    )
+                                                )?.name || '--Chọn danh mục--'
                                                 : '--Chọn danh mục--'}
                                         </span>
                                         <span className={cx('categorySelectArrow')}>
@@ -922,9 +1063,9 @@ export default function AddProductPage() {
                                                                                 )
                                                                                     return prev;
                                                                                 const next =
-                                                                                    {
-                                                                                        ...prev,
-                                                                                    };
+                                                                                {
+                                                                                    ...prev,
+                                                                                };
                                                                                 delete next.categoryId;
                                                                                 return next;
                                                                             },
@@ -983,42 +1124,20 @@ export default function AddProductPage() {
                         </div>
                         {/* ========== CÁC TRƯỜNG ĐẶC BIỆT ========== */}
                         {/* Các trường này chỉ hiển thị khi chọn category phù hợp */}
-                        {/* Ví dụ: "Màu sắc" và "Độ hoàn thiện" chỉ hiển thị cho Makeup và Skincare */}
 
-                        {shouldShowField('shadeColor', categoryId, categories) ||
-                        shouldShowField('finish', categoryId, categories) ? (
-                            <div className={cx('grid2')}>
-                                {shouldShowField(
-                                    'shadeColor',
-                                    categoryId,
-                                    categories,
-                                ) && (
-                                    <div className={cx('row')}>
-                                        <label>Màu sắc</label>
-                                        <input
-                                            placeholder="VD: #Nude, #Coral, #Rose"
-                                            value={shadeColor}
-                                            onChange={(e) =>
-                                                setShadeColor(e.target.value)
-                                            }
-                                        />
-                                    </div>
-                                )}
-                                {shouldShowField('finish', categoryId, categories) && (
-                                    <div className={cx('row')}>
-                                        <label>Độ hoàn thiện</label>
-                                        <input
-                                            placeholder="VD: Matte, Glossy, Satin"
-                                            value={finish}
-                                            onChange={(e) => setFinish(e.target.value)}
-                                        />
-                                    </div>
-                                )}
+                        {shouldShowField('shadeColor', categoryId, categories) && (
+                            <div className={cx('row')}>
+                                <label>Màu sắc</label>
+                                <input
+                                    placeholder="VD: #Nude, #Coral, #Rose"
+                                    value={shadeColor}
+                                    onChange={(e) => setShadeColor(e.target.value)}
+                                />
                             </div>
-                        ) : null}
+                        )}
 
                         {shouldShowField('skinType', categoryId, categories) ||
-                        shouldShowField('skinConcern', categoryId, categories) ? (
+                            shouldShowField('skinConcern', categoryId, categories) ? (
                             <div className={cx('grid2')}>
                                 {shouldShowField('skinType', categoryId, categories) && (
                                     <div className={cx('row')}>
@@ -1035,22 +1154,22 @@ export default function AddProductPage() {
                                     categoryId,
                                     categories,
                                 ) && (
-                                    <div className={cx('row')}>
-                                        <label>Vấn đề da</label>
-                                        <input
-                                            placeholder="VD: Mụn, Lão hóa, Nhạy cảm"
-                                            value={skinConcern}
-                                            onChange={(e) =>
-                                                setSkinConcern(e.target.value)
-                                            }
-                                        />
-                                    </div>
-                                )}
+                                        <div className={cx('row')}>
+                                            <label>Vấn đề da</label>
+                                            <input
+                                                placeholder="VD: Mụn, Lão hóa, Nhạy cảm"
+                                                value={skinConcern}
+                                                onChange={(e) =>
+                                                    setSkinConcern(e.target.value)
+                                                }
+                                            />
+                                        </div>
+                                    )}
                             </div>
                         ) : null}
 
                         {shouldShowField('volume', categoryId, categories) ||
-                        shouldShowField('origin', categoryId, categories) ? (
+                            shouldShowField('origin', categoryId, categories) ? (
                             <div className={cx('grid2')}>
                                 {shouldShowField('volume', categoryId, categories) && (
                                     <div className={cx('row')}>
@@ -1134,128 +1253,371 @@ export default function AddProductPage() {
 
                     <div className={cx('section')}>
                         <div className={cx('sectionHeader')}>
-                            <div className={cx('sectionTitle')}>Giá & Thuế</div>
+                            <div className={cx('sectionTitle')}>Lựa chọn (tùy danh mục)</div>
                             <div className={cx('sectionHint')}>
-                                Các trường liên quan đến giá bán và thuế
+                                Nước hoa: tên = dung tích (ml). Trang điểm: tên = tên màu, kèm mã màu (hex). Các danh mục khác: dùng tên/nhãn tùy ý.
                             </div>
                         </div>
-                        <div className={cx('grid2')}>
-                            <div className={cx('row')}>
-                                <label>Giá niêm yết (VND)</label>
-                                <input
-                                    placeholder="VD: 150000"
-                                    inputMode="numeric"
-                                    value={price}
-                                    onChange={(e) => {
-                                        setPrice(
-                                            Number(
-                                                e.target.value.replace(/[^0-9]/g, ''),
-                                            ) || 0,
-                                        );
-                                        // Xóa lỗi purchasePrice khi thay đổi giá niêm yết
-                                        setErrors((prev) => {
-                                            if (!prev?.purchasePrice) return prev;
-                                            const next = { ...prev };
-                                            delete next.purchasePrice;
-                                            return next;
-                                        });
-                                    }}
-                                />
-                                {errors.price && (
-                                    <div className={cx('errorText')}>{errors.price}</div>
-                                )}
-                            </div>
-                            <div className={cx('row')}>
-                                <label>Thuế (%)</label>
-                                <div className={cx('inputSuffix')}>
-                                    <input
-                                        placeholder="Ví dụ: 5 hoặc 10"
-                                        inputMode="numeric"
-                                        value={taxPercent}
-                                        onChange={(e) => handleTaxInput(e.target.value)}
-                                    />
-                                    <span className={cx('suffix')}>%</span>
+
+                        <div className={cx('variantList')}>
+                            {variants.map((v) => (
+                                <div key={v.id} className={cx('variantRow')}>
+                                    <div className={cx('grid3')}>
+                                        <div className={cx('row')}>
+                                            <label>
+                                                {variantMode === 'fragrance'
+                                                    ? 'Dung tích (ml)'
+                                                    : variantMode === 'makeup'
+                                                        ? 'Tên màu'
+                                                        : 'Tên/nhãn'}
+                                            </label>
+                                            <input
+                                                placeholder={
+                                                    variantMode === 'fragrance'
+                                                        ? 'VD: 30ml, 50ml'
+                                                        : variantMode === 'makeup'
+                                                            ? 'VD: Coral, Nude, #01'
+                                                            : 'Tên lựa chọn'
+                                                }
+                                                value={v.name}
+                                                onChange={(e) =>
+                                                    setVariants((prev) =>
+                                                        prev.map((x) =>
+                                                            x.id === v.id ? { ...x, name: e.target.value } : x,
+                                                        ),
+                                                    )
+                                                }
+                                            />
+                                            {errors[`variant_name_${v.id}`] && (
+                                                <div className={cx('errorText')}>{errors[`variant_name_${v.id}`]}</div>
+                                            )}
+                                        </div>
+                                        <div className={cx('row')}>
+                                            <label>Tồn kho</label>
+                                            <input
+                                                type="number"
+                                                inputMode="numeric"
+                                                value={v.stockQuantity}
+                                                onChange={(e) =>
+                                                    setVariants((prev) =>
+                                                        prev.map((x) =>
+                                                            x.id === v.id ? { ...x, stockQuantity: e.target.value } : x,
+                                                        ),
+                                                    )
+                                                }
+                                            />
+                                            {errors[`variant_stock_${v.id}`] && (
+                                                <div className={cx('errorText')}>{errors[`variant_stock_${v.id}`]}</div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Giá & Thuế cho lựa chọn */}
+                                    <div className={cx('grid2')}>
+                                        <div className={cx('row')}>
+                                            <label>Giá niêm yết (VND)</label>
+                                            <input
+                                                type="number"
+                                                inputMode="numeric"
+                                                placeholder="VD: 150000"
+                                                value={v.unitPrice}
+                                                onChange={(e) => {
+                                                    const cleaned = (e.target.value || '').replace(/[^0-9]/g, '');
+                                                    const unitPriceValue = cleaned === '' ? '' : Number(cleaned);
+                                                    setVariants((prev) =>
+                                                        prev.map((x) => {
+                                                            if (x.id === v.id) {
+                                                                const taxDecimal = (Number(x.taxPercent) || 0) / 100;
+                                                                const finalPriceValue = unitPriceValue ? Math.round(unitPriceValue * (1 + taxDecimal)) : '';
+                                                                return { ...x, unitPrice: unitPriceValue, finalPrice: finalPriceValue };
+                                                            }
+                                                            return x;
+                                                        }),
+                                                    );
+                                                }}
+                                            />
+                                            {errors[`variant_unitPrice_${v.id}`] && (
+                                                <div className={cx('errorText')}>{errors[`variant_unitPrice_${v.id}`]}</div>
+                                            )}
+                                        </div>
+                                        <div className={cx('row')}>
+                                            <label>Thuế (%)</label>
+                                            <div className={cx('inputSuffix')}>
+                                                <input
+                                                    type="number"
+                                                    inputMode="numeric"
+                                                    placeholder="VD: 5 hoặc 10"
+                                                    value={v.taxPercent}
+                                                    onChange={(e) => {
+                                                        const cleaned = (e.target.value || '').replace(/[^0-9]/g, '');
+                                                        let taxValue = '';
+                                                        if (cleaned !== '') {
+                                                            const num = parseInt(cleaned, 10);
+                                                            if (!isNaN(num)) {
+                                                                if (num < 0) {
+                                                                    taxValue = '0';
+                                                                } else if (num > 99) {
+                                                                    taxValue = '99';
+                                                                } else {
+                                                                    taxValue = num.toString();
+                                                                }
+                                                            }
+                                                        }
+                                                        setVariants((prev) =>
+                                                            prev.map((x) => {
+                                                                if (x.id === v.id) {
+                                                                    const unitPriceNum = Number(x.unitPrice) || 0;
+                                                                    const taxDecimal = (Number(taxValue) || 0) / 100;
+                                                                    const finalPriceValue = unitPriceNum ? Math.round(unitPriceNum * (1 + taxDecimal)) : '';
+                                                                    return { ...x, taxPercent: taxValue, finalPrice: finalPriceValue };
+                                                                }
+                                                                return x;
+                                                            }),
+                                                        );
+                                                    }}
+                                                />
+                                                <span className={cx('suffix')}>%</span>
+                                            </div>
+                                            {errors[`variant_taxPercent_${v.id}`] && (
+                                                <div className={cx('errorText')}>{errors[`variant_taxPercent_${v.id}`]}</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className={cx('grid2')}>
+                                        <div className={cx('row')}>
+                                            <label>Giá nhập (VND)</label>
+                                            <input
+                                                type="number"
+                                                inputMode="numeric"
+                                                placeholder="VD: 90000"
+                                                value={v.purchasePrice}
+                                                onChange={(e) => {
+                                                    const cleaned = (e.target.value || '').replace(/[^0-9]/g, '');
+                                                    setVariants((prev) =>
+                                                        prev.map((x) =>
+                                                            x.id === v.id ? { ...x, purchasePrice: cleaned === '' ? '' : Number(cleaned) } : x,
+                                                        ),
+                                                    );
+                                                }}
+                                            />
+                                            {errors[`variant_purchasePrice_${v.id}`] && (
+                                                <div className={cx('errorText')}>{errors[`variant_purchasePrice_${v.id}`]}</div>
+                                            )}
+                                        </div>
+                                        <div className={cx('row')}>
+                                            <label>Giá cuối cùng (đã gồm thuế)</label>
+                                            <input
+                                                placeholder="Tự động tính"
+                                                value={v.finalPrice || ''}
+                                                readOnly
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {variantMode === 'makeup' && (
+                                        <div className={cx('grid3')}>
+                                            <div className={cx('row')}>
+                                                <label>Shade/Màu (hiển thị)</label>
+                                                <input
+                                                    placeholder="VD: Coral"
+                                                    value={v.shadeName}
+                                                    onChange={(e) =>
+                                                        setVariants((prev) =>
+                                                            prev.map((x) =>
+                                                                x.id === v.id ? { ...x, shadeName: e.target.value } : x,
+                                                            ),
+                                                        )
+                                                    }
+                                                />
+                                            </div>
+                                            <div className={cx('row')}>
+                                                <label>Mã màu (Hex)</label>
+                                                <input
+                                                    placeholder="#FF8899"
+                                                    value={v.shadeHex}
+                                                    onChange={(e) =>
+                                                        setVariants((prev) =>
+                                                            prev.map((x) =>
+                                                                x.id === v.id ? { ...x, shadeHex: e.target.value } : x,
+                                                            ),
+                                                        )
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className={cx('grid3')}>
+                                        <div className={cx('row')}>
+                                            <label>
+                                                <input
+                                                    type="radio"
+                                                    name="defaultVariant"
+                                                    checked={v.isDefault}
+                                                    onChange={() =>
+                                                        setVariants((prev) =>
+                                                            prev.map((x) => ({
+                                                                ...x,
+                                                                isDefault: x.id === v.id,
+                                                            })),
+                                                        )
+                                                    }
+                                                />
+                                                {' '}Đặt làm mặc định
+                                            </label>
+                                        </div>
+                                        <div className={cx('row', 'actionsInline')}>
+                                            <button
+                                                type="button"
+                                                className={cx('btn', 'muted')}
+                                                onClick={() =>
+                                                    setVariants((prev) => prev.filter((x) => x.id !== v.id))
+                                                }
+                                            >
+                                                Xóa lựa chọn
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                                {errors.taxPercent && (
-                                    <div className={cx('errorText')}>
-                                        {errors.taxPercent}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        <div className={cx('grid2')}>
-                            <div className={cx('row')}>
-                                <label>Giá nhập (VND)</label>
-                                <input
-                                    placeholder="VD: 90000"
-                                    inputMode="numeric"
-                                    value={purchasePrice}
-                                    onChange={(e) => {
-                                        const raw = e.target.value.replace(/[^0-9]/g, '');
-                                        setPurchasePrice(raw === '' ? '' : Number(raw));
-                                        // Xóa lỗi purchasePrice khi thay đổi giá nhập
-                                        setErrors((prev) => {
-                                            if (!prev?.purchasePrice) return prev;
-                                            const next = { ...prev };
-                                            delete next.purchasePrice;
-                                            return next;
-                                        });
-                                    }}
-                                />
-                                {errors.purchasePrice && (
-                                    <div className={cx('errorText')}>
-                                        {errors.purchasePrice}
-                                    </div>
-                                )}
-                            </div>
-                            <div className={cx('row')}>
-                                <label>Giá cuối cùng (đã gồm thuế)</label>
-                                <input
-                                    placeholder="Tự động tính"
-                                    value={finalPrice}
-                                    readOnly
-                                />
-                            </div>
+                            ))}
+
+                            <button
+                                type="button"
+                                className={cx('btn', 'primary')}
+                                onClick={() => setVariants((prev) => [...prev, emptyVariant()])}
+                            >
+                                + Thêm lựa chọn
+                            </button>
                         </div>
                     </div>
 
-                    <div className={cx('section')}>
-                        <div className={cx('sectionHeader')}>
-                            <div className={cx('sectionTitle')}>Tồn kho & trạng thái</div>
-                            <div className={cx('sectionHint')}>
-                                Theo dõi số lượng và tình trạng sản phẩm
+                    {variants.length === 0 && (
+                        <div className={cx('section')}>
+                            <div className={cx('sectionHeader')}>
+                                <div className={cx('sectionTitle')}>Giá & Thuế</div>
+                                <div className={cx('sectionHint')}>
+                                    Các trường liên quan đến giá bán và thuế
+                                </div>
                             </div>
-                        </div>
-                        <div className={cx('grid2')}>
-                            <div className={cx('row')}>
-                                <label>Số lượng tồn kho</label>
-                                <input
-                                    inputMode="numeric"
-                                    value={stockQuantity}
-                                    onChange={(e) => {
-                                        const cleaned = (e.target.value || '').replace(
-                                            /[^0-9]/g,
-                                            '',
-                                        );
-                                        setStockQuantity(cleaned);
-                                    }}
-                                />
-                                {errors.stockQuantity && (
-                                    <div className={cx('errorText')}>
-                                        {errors.stockQuantity}
+                            <div className={cx('grid2')}>
+                                <div className={cx('row')}>
+                                    <label>Giá niêm yết (VND)</label>
+                                    <input
+                                        placeholder="VD: 150000"
+                                        inputMode="numeric"
+                                        value={price}
+                                        onChange={(e) => {
+                                            setPrice(
+                                                Number(
+                                                    e.target.value.replace(/[^0-9]/g, ''),
+                                                ) || 0,
+                                            );
+                                            // Xóa lỗi purchasePrice khi thay đổi giá niêm yết
+                                            setErrors((prev) => {
+                                                if (!prev?.purchasePrice) return prev;
+                                                const next = { ...prev };
+                                                delete next.purchasePrice;
+                                                return next;
+                                            });
+                                        }}
+                                    />
+                                    {errors.price && (
+                                        <div className={cx('errorText')}>{errors.price}</div>
+                                    )}
+                                </div>
+                                <div className={cx('row')}>
+                                    <label>Thuế (%)</label>
+                                    <div className={cx('inputSuffix')}>
+                                        <input
+                                            placeholder="Ví dụ: 5 hoặc 10"
+                                            inputMode="numeric"
+                                            value={taxPercent}
+                                            onChange={(e) => handleTaxInput(e.target.value)}
+                                        />
+                                        <span className={cx('suffix')}>%</span>
                                     </div>
-                                )}
+                                    {errors.taxPercent && (
+                                        <div className={cx('errorText')}>
+                                            {errors.taxPercent}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <div className={cx('row')}>
-                                <label>Trạng thái</label>
-                                <select>
-                                    <option>Còn hàng</option>
-                                    <option>Hết hàng</option>
-                                </select>
+                            <div className={cx('grid2')}>
+                                <div className={cx('row')}>
+                                    <label>Giá nhập (VND)</label>
+                                    <input
+                                        placeholder="VD: 90000"
+                                        inputMode="numeric"
+                                        value={purchasePrice}
+                                        onChange={(e) => {
+                                            const raw = e.target.value.replace(/[^0-9]/g, '');
+                                            setPurchasePrice(raw === '' ? '' : Number(raw));
+                                            // Xóa lỗi purchasePrice khi thay đổi giá nhập
+                                            setErrors((prev) => {
+                                                if (!prev?.purchasePrice) return prev;
+                                                const next = { ...prev };
+                                                delete next.purchasePrice;
+                                                return next;
+                                            });
+                                        }}
+                                    />
+                                    {errors.purchasePrice && (
+                                        <div className={cx('errorText')}>
+                                            {errors.purchasePrice}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className={cx('row')}>
+                                    <label>Giá cuối cùng (đã gồm thuế)</label>
+                                    <input
+                                        placeholder="Tự động tính"
+                                        value={finalPrice}
+                                        readOnly
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
+                    {variants.length === 0 && (
+                        <div className={cx('section')}>
+                            <div className={cx('sectionHeader')}>
+                                <div className={cx('sectionTitle')}>Tồn kho & trạng thái</div>
+                                <div className={cx('sectionHint')}>
+                                    Theo dõi số lượng và tình trạng sản phẩm
+                                </div>
+                            </div>
+                            <div className={cx('grid2')}>
+                                <div className={cx('row')}>
+                                    <label>Số lượng tồn kho</label>
+                                    <input
+                                        inputMode="numeric"
+                                        value={stockQuantity}
+                                        onChange={(e) => {
+                                            const cleaned = (e.target.value || '').replace(
+                                                /[^0-9]/g,
+                                                '',
+                                            );
+                                            setStockQuantity(cleaned);
+                                        }}
+                                    />
+                                    {errors.stockQuantity && (
+                                        <div className={cx('errorText')}>
+                                            {errors.stockQuantity}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className={cx('row')}>
+                                    <label>Trạng thái</label>
+                                    <select>
+                                        <option>Còn hàng</option>
+                                        <option>Hết hàng</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     <div className={cx('section')}>
                         <div className={cx('sectionHeader')}>
                             <div className={cx('sectionTitle')}>

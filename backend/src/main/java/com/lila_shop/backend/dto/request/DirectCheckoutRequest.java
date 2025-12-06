@@ -14,6 +14,9 @@ public class DirectCheckoutRequest {
     // ID của sản phẩm muốn mua ngay.
     String productId;
 
+    // ID của biến thể (nếu sản phẩm có biến thể)
+    String variantId;
+
     // Số lượng sản phẩm (mặc định 1).
     Integer quantity;
 

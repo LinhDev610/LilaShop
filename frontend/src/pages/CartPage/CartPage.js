@@ -201,7 +201,7 @@ export default function CartPage() {
                 console.log('Fetching vouchers with token...');
                 const vouchers = await getActiveVouchers(token);
                 console.log('Voucher API result:', vouchers);
-                
+
                 // getActiveVouchers đã dùng extractResult(data, true), nên trả về array trực tiếp
                 if (Array.isArray(vouchers)) {
                     console.log('Parsed vouchers:', vouchers.length, vouchers);
@@ -501,7 +501,7 @@ export default function CartPage() {
         if (!cart?.items || cart.items.length === 0) {
             return [];
         }
-        
+
         // Nếu chưa chọn sản phẩm nào, không hiển thị voucher
         if (selectedItemsData.items.length === 0) {
             return [];
@@ -509,7 +509,7 @@ export default function CartPage() {
 
         // Chỉ sử dụng các sản phẩm đã chọn (bắt buộc phải chọn sản phẩm)
         const itemsToCheck = selectedItemsData.items;
-        
+
         // Tính subtotal dựa trên items đang kiểm tra
         const subtotal = itemsToCheck.reduce((sum, item) => {
             const meta = productMeta[item.productId] || {};
@@ -521,7 +521,7 @@ export default function CartPage() {
 
         const selectedProductIds = new Set(itemsToCheck.map((item) => item.productId));
         const selectedCategoryIds = new Set();
-        
+
         // Lấy categoryIds từ productMeta
         itemsToCheck.forEach((item) => {
             const meta = productMeta[item.productId];
@@ -543,7 +543,7 @@ export default function CartPage() {
 
             // Kiểm tra applyScope
             const applyScope = voucher.applyScope || 'ORDER';
-            
+
             if (applyScope === 'ORDER') {
                 // Áp dụng cho toàn bộ đơn hàng
                 return true;
@@ -551,7 +551,7 @@ export default function CartPage() {
                 // Kiểm tra xem có sản phẩm nào trong giỏ nằm trong productApply không
                 const productApply = voucher.productApply || [];
                 if (productApply.length === 0) return false;
-                
+
                 const productApplyIds = new Set(
                     productApply.map((p) => (typeof p === 'string' ? p : p.id))
                 );
@@ -560,7 +560,7 @@ export default function CartPage() {
                 // Kiểm tra xem có sản phẩm nào trong giỏ thuộc categoryApply không
                 const categoryApply = voucher.categoryApply || [];
                 if (categoryApply.length === 0) return false;
-                
+
                 const categoryApplyIds = new Set(
                     categoryApply.map((c) => (typeof c === 'string' ? c : c.id))
                 );
@@ -689,6 +689,14 @@ export default function CartPage() {
 
                                         <div className={cx('item-info')}>
                                             <h3 className={cx('item-name')}>{item.productName}</h3>
+                                            {item.variantName && (
+                                                <div className={cx('item-variant')}>
+                                                    {item.variantName}
+                                                    {item.shadeColor && ` - ${item.shadeColor}`}
+                                                    {item.volumeMl && ` - ${item.volumeMl}ml`}
+                                                    {item.weightGr && ` - ${item.weightGr}g`}
+                                                </div>
+                                            )}
                                             <div className={cx('item-price')}>
                                                 <span className={cx('current-price')}>
                                                     {formatPrice(currentPrice)}
@@ -813,7 +821,7 @@ export default function CartPage() {
                                                 voucher.discountValueType === 'PERCENTAGE'
                                                     ? `Giảm ${voucher.discountValue}%`
                                                     : `Giảm ${formatPrice(voucher.discountValue || 0)}`;
-                                            
+
                                             return (
                                                 <div
                                                     key={voucher.id}

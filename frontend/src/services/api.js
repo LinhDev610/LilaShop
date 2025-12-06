@@ -535,6 +535,13 @@ export async function createProduct(productData, token = null) {
     return { ok, status, data: extractResult(data) };
 }
 
+// ========== PRODUCT VARIANT API ==========
+export async function createProductVariant(productId, variantData, token = null) {
+    const endpoint = `/products/${encodeURIComponent(productId)}/variants`;
+    const { data, ok, status } = await apiRequest(endpoint, { method: 'POST', body: variantData, token });
+    return { ok, status, data: extractResult(data) };
+}
+
 export async function updateProduct(productId, productData, token = null) {
     const { data, ok } = await apiRequest(products.detail(productId), { method: 'PUT', body: productData, token });
     return { ok, data: extractResult(data) };
@@ -792,14 +799,13 @@ export async function deleteReview(reviewId, token = null) {
 }
 
 // ========== CART API ==========
-export async function addCartItem(productId, quantity, token = null) {
-    const { data, ok, status } = await apiRequest(
-        `/cart/items?productId=${encodeURIComponent(productId)}&quantity=${quantity}`,
-        {
-            method: 'POST',
-            token,
-        }
-    );
+export async function addCartItem(productId, quantity, token = null, variantId = null) {
+    const url = `/cart/items?productId=${encodeURIComponent(productId)}&quantity=${quantity}${variantId ? `&variantId=${encodeURIComponent(variantId)}` : ''
+        }`;
+    const { data, ok, status } = await apiRequest(url, {
+        method: 'POST',
+        token,
+    });
     return { ok, status, data: extractResult(data) };
 }
 

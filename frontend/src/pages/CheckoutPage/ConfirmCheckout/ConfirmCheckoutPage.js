@@ -36,6 +36,7 @@ export default function ConfirmCheckoutPage() {
     const directCheckout = state.directCheckout || false;
     const directProductId = state.productId || null;
     const directQuantity = state.quantity || 1;
+    const directVariantId = state.variantId || null;
 
     const items = summary.items || [];
     const shippingFee = summary.shippingFee || 0;
@@ -173,6 +174,7 @@ export default function ConfirmCheckoutPage() {
                 const directPayload = {
                     productId: directProductId,
                     quantity: directQuantity,
+                    variantId: directVariantId || null,
                     addressId: address.id || address.addressId || null,
                     shippingAddress: JSON.stringify(shippingInfo),
                     note: '',

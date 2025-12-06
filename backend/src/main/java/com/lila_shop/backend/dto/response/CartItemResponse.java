@@ -13,6 +13,10 @@ public class CartItemResponse {
     String id;
     String productId;
     String productName;
+    String variantId;
+    String variantName;
+    String shadeName;
+    String shadeHex;
     Double unitPrice;
     Integer quantity;
     Double finalPrice;

@@ -18,11 +18,16 @@ public interface CartMapper {
 
     @Mapping(target = "productId", source = "product.id")
     @Mapping(target = "productName", source = "product.name")
+    @Mapping(target = "variantId", source = "variant.id")
+    @Mapping(target = "variantName", source = "variant.name")
+    @Mapping(target = "shadeName", source = "variant.shadeName")
+    @Mapping(target = "shadeHex", source = "variant.shadeHex")
     CartItemResponse toItemResponse(CartItem cartItem);
 
     @Named("mapItems")
     default List<CartItemResponse> mapItems(List<CartItem> items) {
-        if (items == null) return List.of();
+        if (items == null)
+            return List.of();
         return items.stream().map(this::toItemResponse).toList();
     }
 }

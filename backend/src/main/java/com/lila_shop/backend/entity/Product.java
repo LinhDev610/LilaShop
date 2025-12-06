@@ -38,9 +38,6 @@ public class Product {
     @Column(name = "shade_color")
     String shadeColor;
 
-    @Column(name = "finish")
-    String finish;
-
     @Column(name = "skin_type")
     String skinType;
 
@@ -130,6 +127,10 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("displayOrder ASC")
     List<ProductMedia> mediaList;
+
+    // Variants
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    List<ProductVariant> variants;
 
     // Default media
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)

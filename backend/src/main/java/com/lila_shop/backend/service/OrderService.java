@@ -51,6 +51,7 @@ public class OrderService {
     MomoService momoService;
     BrevoEmailService brevoEmailService;
     ProductRepository productRepository;
+    ProductVariantRepository productVariantRepository;
     UserRepository userRepository;
     @Lazy
     ShipmentService shipmentService;
@@ -77,34 +78,38 @@ public class OrderService {
         PricingSummary pricing = calculatePricing(cart, selectedItems, request.getShippingFee());
 
         PaymentMethod paymentMethod = resolvePaymentMethod(request.getPaymentMethod());
-        
+
         // Với MoMo: KHÔNG tạo đơn hàng ngay, chỉ tạo payment link
         if (paymentMethod == PaymentMethod.MOMO) {
             // Generate order code trước để dùng cho MoMo payment
             String orderCode = generateOrderCode();
-            
+
             // Tạo payment link với order code
             CreateMomoResponse momoResponse = momoService.createMomoPayment(
                     Math.round(pricing.orderTotal), orderCode);
-            
+
             if (momoResponse == null) {
                 log.error("MoMo API returned null response");
-                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Không thể tạo đường dẫn thanh toán MoMo. Vui lòng thử lại.");
+                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION,
+                        "Không thể tạo đường dẫn thanh toán MoMo. Vui lòng thử lại.");
             }
-            
+
             if (momoResponse.getResultCode() != 0) {
-                log.error("MoMo API returned error. resultCode: {}, message: {}", 
+                log.error("MoMo API returned error. resultCode: {}, message: {}",
                         momoResponse.getResultCode(), momoResponse.getMessage());
-                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, 
-                        "Không thể tạo đường dẫn thanh toán MoMo: " + (momoResponse.getMessage() != null ? momoResponse.getMessage() : "Lỗi không xác định"));
+                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION,
+                        "Không thể tạo đường dẫn thanh toán MoMo: "
+                                + (momoResponse.getMessage() != null ? momoResponse.getMessage()
+                                        : "Lỗi không xác định"));
             }
-            
+
             if (momoResponse.getPayUrl() == null || momoResponse.getPayUrl().isBlank()) {
-                log.error("MoMo API returned null or blank payUrl. resultCode: {}", 
+                log.error("MoMo API returned null or blank payUrl. resultCode: {}",
                         momoResponse.getResultCode());
-                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Không nhận được đường dẫn thanh toán MoMo từ server.");
+                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION,
+                        "Không nhận được đường dẫn thanh toán MoMo từ server.");
             }
-            
+
             // Trả về payment URL và order code, KHÔNG tạo đơn hàng
             // Frontend sẽ lưu checkout info và tạo đơn hàng sau khi thanh toán thành công
             return new CheckoutResult(null, momoResponse.getPayUrl(), orderCode);
@@ -121,7 +126,7 @@ public class OrderService {
         String finalOrderCode = generateOrderCode();
         int maxRetries = 3;
         Order savedOrder = null;
-        
+
         for (int attempt = 0; attempt < maxRetries; attempt++) {
             try {
                 Order order = Order.builder()
@@ -149,15 +154,18 @@ public class OrderService {
                 cartService.clearVoucherForUser(cart.getUser());
 
                 // Xóa cart items sau khi tạo đơn hàng
-                if (savedOrder.getUser() != null && pricing.selectedCartItemIds != null && !pricing.selectedCartItemIds.isEmpty()) {
+                if (savedOrder.getUser() != null && pricing.selectedCartItemIds != null
+                        && !pricing.selectedCartItemIds.isEmpty()) {
                     cartService.removeCartItemsForOrder(savedOrder.getUser(), pricing.selectedCartItemIds);
                 }
 
-                // Ghi nhận doanh thu: COD chỉ ghi nhận khi DELIVERED, các phương thức khác ghi nhận ngay
+                // Ghi nhận doanh thu: COD chỉ ghi nhận khi DELIVERED, các phương thức khác ghi
+                // nhận ngay
                 if (paymentMethod != PaymentMethod.COD) {
                     recordOrderRevenue(savedOrder);
                 }
-                // COD: Doanh thu sẽ được ghi nhận khi status chuyển sang DELIVERED (trong ShipmentService)
+                // COD: Doanh thu sẽ được ghi nhận khi status chuyển sang DELIVERED (trong
+                // ShipmentService)
 
                 // Thành công, break khỏi loop
                 break;
@@ -166,13 +174,12 @@ public class OrderService {
                 if (e.getCause() instanceof ConstraintViolationException) {
                     ConstraintViolationException cve = (ConstraintViolationException) e.getCause();
                     String constraintName = cve.getConstraintName();
-                    String sqlState = cve.getSQLState();
                     String message = e.getMessage();
-                    
+
                     // Kiểm tra xem có phải duplicate order code không
                     if ((constraintName != null && constraintName.contains("order_code")) ||
-                        (message != null && message.contains("order_code")) ||
-                        (message != null && message.contains("UK_dhk2umg8ijjkg4njg6891trit"))) {
+                            (message != null && message.contains("order_code")) ||
+                            (message != null && message.contains("UK_dhk2umg8ijjkg4njg6891trit"))) {
                         log.warn("Duplicate order code detected: {}, generating new code (attempt {}/{})",
                                 finalOrderCode, attempt + 1, maxRetries);
                         finalOrderCode = generateOrderCode();
@@ -194,7 +201,8 @@ public class OrderService {
         return new CheckoutResult(savedOrder, null);
     }
 
-    // Tạo đơn hàng trực tiếp từ sản phẩm (không qua giỏ hàng). Số lượng mặc định là 1.
+    // Tạo đơn hàng trực tiếp từ sản phẩm (không qua giỏ hàng). Số lượng mặc định là
+    // 1.
     @Transactional
     @PreAuthorize("hasRole('CUSTOMER')")
     public CheckoutResult createOrderDirectly(DirectCheckoutRequest request) {
@@ -205,46 +213,55 @@ public class OrderService {
 
         // Payment method
         PaymentMethod paymentMethod = resolvePaymentMethod(request.getPaymentMethod());
-        
+
         // Với MoMo: KHÔNG tạo đơn hàng ngay, chỉ tạo payment link
         if (paymentMethod == PaymentMethod.MOMO) {
-            // Lấy product để tính giá
             Product product = productRepository.findById(request.getProductId())
                     .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
-            
-            int quantity = request.getQuantity() != null && request.getQuantity() > 0 
-                    ? request.getQuantity() 
+            ProductVariant variant = null;
+            if (request.getVariantId() != null && !request.getVariantId().isBlank()) {
+                variant = productVariantRepository.findById(request.getVariantId())
+                        .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+            }
+
+            int quantity = request.getQuantity() != null && request.getQuantity() > 0
+                    ? request.getQuantity()
                     : 1;
-            double unitPrice = product.getPrice() != null ? product.getPrice() : 0.0;
+            double unitPrice = (variant != null && variant.getPrice() != null) ? variant.getPrice()
+                    : (product.getPrice() != null ? product.getPrice() : 0.0);
             double finalPrice = Math.round(unitPrice * quantity);
             double shippingFee = request.getShippingFee() != null ? Math.round(request.getShippingFee()) : 0.0;
             double orderTotal = Math.round(finalPrice + shippingFee);
-            
+
             // Generate order code trước để dùng cho MoMo payment
             String orderCode = generateOrderCode();
-            
+
             // Tạo payment link với order code
             CreateMomoResponse momoResponse = momoService.createMomoPayment(
                     Math.round(orderTotal), orderCode);
-            
+
             if (momoResponse == null) {
                 log.error("MoMo API returned null response");
-                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Không thể tạo đường dẫn thanh toán MoMo. Vui lòng thử lại.");
+                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION,
+                        "Không thể tạo đường dẫn thanh toán MoMo. Vui lòng thử lại.");
             }
-            
+
             if (momoResponse.getResultCode() != 0) {
-                log.error("MoMo API returned error. resultCode: {}, message: {}", 
+                log.error("MoMo API returned error. resultCode: {}, message: {}",
                         momoResponse.getResultCode(), momoResponse.getMessage());
-                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, 
-                        "Không thể tạo đường dẫn thanh toán MoMo: " + (momoResponse.getMessage() != null ? momoResponse.getMessage() : "Lỗi không xác định"));
+                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION,
+                        "Không thể tạo đường dẫn thanh toán MoMo: "
+                                + (momoResponse.getMessage() != null ? momoResponse.getMessage()
+                                        : "Lỗi không xác định"));
             }
-            
+
             if (momoResponse.getPayUrl() == null || momoResponse.getPayUrl().isBlank()) {
-                log.error("MoMo API returned null or blank payUrl. resultCode: {}", 
+                log.error("MoMo API returned null or blank payUrl. resultCode: {}",
                         momoResponse.getResultCode());
-                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Không nhận được đường dẫn thanh toán MoMo từ server.");
+                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION,
+                        "Không nhận được đường dẫn thanh toán MoMo từ server.");
             }
-            
+
             // Trả về payment URL và order code, KHÔNG tạo đơn hàng
             return new CheckoutResult(null, momoResponse.getPayUrl(), orderCode);
         }
@@ -254,12 +271,19 @@ public class OrderService {
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
 
         // Số lượng mặc định là 1
-        int quantity = request.getQuantity() != null && request.getQuantity() > 0 
-                ? request.getQuantity() 
+        int quantity = request.getQuantity() != null && request.getQuantity() > 0
+                ? request.getQuantity()
                 : 1;
 
         // Tính giá
-        double unitPrice = product.getPrice() != null ? product.getPrice() : 0.0;
+        ProductVariant variant = null;
+        if (request.getVariantId() != null && !request.getVariantId().isBlank()) {
+            variant = productVariantRepository.findById(request.getVariantId())
+                    .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+        }
+
+        double unitPrice = (variant != null && variant.getPrice() != null) ? variant.getPrice()
+                : (product.getPrice() != null ? product.getPrice() : 0.0);
         double finalPrice = Math.round(unitPrice * quantity);
         double shippingFee = request.getShippingFee() != null ? Math.round(request.getShippingFee()) : 0.0;
         double orderTotal = Math.round(finalPrice + shippingFee);
@@ -301,6 +325,7 @@ public class OrderService {
                 OrderItem orderItem = OrderItem.builder()
                         .order(savedOrder)
                         .product(product)
+                        .variant(variant)
                         .quantity(quantity)
                         .unitPrice(unitPrice)
                         .finalPrice(finalPrice)
@@ -310,15 +335,16 @@ public class OrderService {
                 // Sử dụng ArrayList thay vì List.of() để tránh UnsupportedOperationException
                 savedOrder.setItems(new ArrayList<>(List.of(orderItem)));
 
-                updateInventoryAndSales(product, quantity);
+                updateInventoryAndSales(product, variant, quantity);
                 finalizeVoucherUsageForUser(user);
 
-                // Ghi nhận doanh thu: COD chỉ ghi nhận khi DELIVERED, các phương thức khác ghi nhận ngay
+                // Ghi nhận doanh thu: COD chỉ ghi nhận khi DELIVERED
                 if (paymentMethod != PaymentMethod.COD) {
                     recordOrderRevenue(savedOrder);
                 }
                 // COD: Tạo đơn hàng ngay và giữ status CREATED, chờ admin/staff xác nhận
-                // Doanh thu COD sẽ được ghi nhận khi status chuyển sang DELIVERED (trong ShipmentService)
+                // Doanh thu COD sẽ được ghi nhận khi status chuyển sang DELIVERED (trong
+                // ShipmentService)
                 return new CheckoutResult(savedOrder, null);
             } catch (DataIntegrityViolationException e) {
                 // Nếu duplicate order code, generate lại và retry
@@ -326,12 +352,12 @@ public class OrderService {
                     ConstraintViolationException cve = (ConstraintViolationException) e.getCause();
                     String constraintName = cve.getConstraintName();
                     String message = e.getMessage();
-                    
+
                     // Kiểm tra xem có phải duplicate order code không
                     if ((constraintName != null && constraintName.contains("order_code")) ||
-                        (message != null && message.contains("order_code")) ||
-                        (message != null && message.contains("UK_dhk2umg8ijjkg4njg6891trit")) ||
-                        (message != null && message.contains("Duplicate entry"))) {
+                            (message != null && message.contains("order_code")) ||
+                            (message != null && message.contains("UK_dhk2umg8ijjkg4njg6891trit")) ||
+                            (message != null && message.contains("Duplicate entry"))) {
                         log.warn("Duplicate order code detected: {}, generating new code (attempt {}/{})",
                                 finalOrderCode, attempt + 1, maxRetries);
                         finalOrderCode = generateOrderCode();
@@ -415,16 +441,18 @@ public class OrderService {
                 cartService.clearVoucherForUser(cart.getUser());
 
                 // Xóa cart items sau khi tạo đơn hàng
-                if (savedOrder.getUser() != null && pricing.selectedCartItemIds != null && !pricing.selectedCartItemIds.isEmpty()) {
+                if (savedOrder.getUser() != null && pricing.selectedCartItemIds != null
+                        && !pricing.selectedCartItemIds.isEmpty()) {
                     cartService.removeCartItemsForOrder(savedOrder.getUser(), pricing.selectedCartItemIds);
                 }
 
-                // Ghi nhận doanh thu: COD chỉ ghi nhận khi DELIVERED, các phương thức khác ghi nhận ngay
+                // Ghi nhận doanh thu: COD chỉ ghi nhận khi DELIVERED
                 PaymentMethod orderPaymentMethod = savedOrder.getPaymentMethod();
                 if (orderPaymentMethod != PaymentMethod.COD) {
                     recordOrderRevenue(savedOrder);
                 }
-                // COD: Doanh thu sẽ được ghi nhận khi status chuyển sang DELIVERED (trong ShipmentService)
+                // COD: Doanh thu sẽ được ghi nhận khi status chuyển sang DELIVERED (trong
+                // ShipmentService)
 
                 return savedOrder;
             } catch (DataIntegrityViolationException e) {
@@ -433,12 +461,12 @@ public class OrderService {
                     ConstraintViolationException cve = (ConstraintViolationException) e.getCause();
                     String constraintName = cve.getConstraintName();
                     String message = e.getMessage();
-                    
+
                     // Kiểm tra xem có phải duplicate order code không
                     if ((constraintName != null && constraintName.contains("order_code")) ||
-                        (message != null && message.contains("order_code")) ||
-                        (message != null && message.contains("UK_dhk2umg8ijjkg4njg6891trit")) ||
-                        (message != null && message.contains("Duplicate entry"))) {
+                            (message != null && message.contains("order_code")) ||
+                            (message != null && message.contains("UK_dhk2umg8ijjkg4njg6891trit")) ||
+                            (message != null && message.contains("Duplicate entry"))) {
                         log.warn("Duplicate order code detected: {}, generating new code (attempt {}/{})",
                                 finalOrderCode, attempt + 1, maxRetries);
                         finalOrderCode = generateOrderCode();
@@ -470,11 +498,18 @@ public class OrderService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
 
-        int quantity = request.getQuantity() != null && request.getQuantity() > 0 
-                ? request.getQuantity() 
+        ProductVariant variant = null;
+        if (request.getVariantId() != null && !request.getVariantId().isBlank()) {
+            variant = productVariantRepository.findById(request.getVariantId())
+                    .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+        }
+
+        int quantity = request.getQuantity() != null && request.getQuantity() > 0
+                ? request.getQuantity()
                 : 1;
 
-        double unitPrice = product.getPrice() != null ? product.getPrice() : 0.0;
+        double unitPrice = (variant != null && variant.getPrice() != null) ? variant.getPrice()
+                : (product.getPrice() != null ? product.getPrice() : 0.0);
         double finalPrice = Math.round(unitPrice * quantity);
         double shippingFee = request.getShippingFee() != null ? Math.round(request.getShippingFee()) : 0.0;
         double orderTotal = Math.round(finalPrice + shippingFee);
@@ -527,6 +562,7 @@ public class OrderService {
                 OrderItem orderItem = OrderItem.builder()
                         .order(savedOrder)
                         .product(product)
+                        .variant(variant)
                         .quantity(quantity)
                         .unitPrice(unitPrice)
                         .finalPrice(finalPrice)
@@ -535,15 +571,16 @@ public class OrderService {
                 orderItemRepository.flush();
                 savedOrder.setItems(new ArrayList<>(List.of(orderItem)));
 
-                updateInventoryAndSales(product, quantity);
+                updateInventoryAndSales(product, variant, quantity);
                 finalizeVoucherUsageForUser(user);
 
-                // Ghi nhận doanh thu: COD chỉ ghi nhận khi DELIVERED, các phương thức khác ghi nhận ngay
+                // Ghi nhận doanh thu: COD chỉ ghi nhận khi DELIVERED
                 PaymentMethod orderPaymentMethod = savedOrder.getPaymentMethod();
                 if (orderPaymentMethod != PaymentMethod.COD) {
                     recordOrderRevenue(savedOrder);
                 }
-                // COD: Doanh thu sẽ được ghi nhận khi status chuyển sang DELIVERED (trong ShipmentService)
+                // COD: Doanh thu sẽ được ghi nhận khi status chuyển sang DELIVERED (trong
+                // ShipmentService)
 
                 return savedOrder;
             } catch (DataIntegrityViolationException e) {
@@ -552,12 +589,12 @@ public class OrderService {
                     ConstraintViolationException cve = (ConstraintViolationException) e.getCause();
                     String constraintName = cve.getConstraintName();
                     String message = e.getMessage();
-                    
+
                     // Kiểm tra xem có phải duplicate order code không
                     if ((constraintName != null && constraintName.contains("order_code")) ||
-                        (message != null && message.contains("order_code")) ||
-                        (message != null && message.contains("UK_dhk2umg8ijjkg4njg6891trit")) ||
-                        (message != null && message.contains("Duplicate entry"))) {
+                            (message != null && message.contains("order_code")) ||
+                            (message != null && message.contains("UK_dhk2umg8ijjkg4njg6891trit")) ||
+                            (message != null && message.contains("Duplicate entry"))) {
                         log.warn("Duplicate order code detected: {}, generating new code (attempt {}/{})",
                                 finalOrderCode, attempt + 1, maxRetries);
                         finalOrderCode = generateOrderCode();
@@ -697,6 +734,7 @@ public class OrderService {
                 .map(ci -> OrderItem.builder()
                         .order(order)
                         .product(ci.getProduct())
+                        .variant(ci.getVariant())
                         .quantity(ci.getQuantity())
                         .unitPrice(ci.getUnitPrice())
                         .finalPrice(ci.getFinalPrice())
@@ -706,7 +744,7 @@ public class OrderService {
         orderItemRepository.flush(); // Ensure items are persisted immediately
         order.setItems(orderItems);
 
-        selectedItems.forEach(ci -> updateInventoryAndSales(ci.getProduct(), ci.getQuantity()));
+        selectedItems.forEach(ci -> updateInventoryAndSales(ci.getProduct(), ci.getVariant(), ci.getQuantity()));
     }
 
     private void finalizePaidOrder(Order order, List<String> cartItemIds) {
@@ -716,7 +754,7 @@ public class OrderService {
         // Không tự động chuyển sang CONFIRMED - giữ ở CREATED để admin/staff xác nhận
         orderRepository.save(order);
         orderRepository.flush();
-        
+
         Order reloadedOrder = orderRepository.findById(order.getId()).orElse(order);
         sendOrderConfirmationEmail(reloadedOrder);
     }
@@ -726,7 +764,7 @@ public class OrderService {
         if (request == null || request.getOrderId() == null) {
             return;
         }
-        
+
         Order order = orderRepository.findByCode(request.getOrderId())
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_EXISTED));
 
@@ -752,7 +790,7 @@ public class OrderService {
         finalizePaidOrder(order, parseCartItemIds(order.getCartItemIdsSnapshot()));
     }
 
-    private void updateInventoryAndSales(Product product, int quantity) {
+    private void updateInventoryAndSales(Product product, ProductVariant variant, int quantity) {
         if (product == null || quantity <= 0) {
             return;
         }
@@ -760,7 +798,13 @@ public class OrderService {
         int sold = product.getQuantitySold() != null ? product.getQuantitySold() : 0;
         product.setQuantitySold(sold + quantity);
 
-        if (product.getInventory() != null) {
+        if (variant != null) {
+            Integer stock = variant.getStockQuantity();
+            if (stock == null)
+                stock = 0;
+            int updatedStock = stock - quantity;
+            variant.setStockQuantity(Math.max(0, updatedStock));
+        } else if (product.getInventory() != null) {
             Integer stock = product.getInventory().getStockQuantity();
             if (stock == null) {
                 stock = 0;
@@ -794,7 +838,8 @@ public class OrderService {
             return new ArrayList<>();
         }
         try {
-            List<String> result = objectMapper.readValue(snapshot, objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
+            List<String> result = objectMapper.readValue(snapshot,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
             return result != null ? new ArrayList<>(result) : new ArrayList<>();
         } catch (Exception e) {
             return new ArrayList<>();
@@ -810,37 +855,35 @@ public class OrderService {
         sendOrderConfirmationEmail(order);
     }
 
-
     @Transactional
     public void verifyPaymentAndSendEmail(String orderId) {
         Order order = orderRepository.findByCode(orderId).orElse(null);
         if (order == null) {
             order = orderRepository.findById(orderId).orElse(null);
         }
-        
+
         if (order == null) {
             throw new AppException(ErrorCode.ORDER_NOT_EXISTED);
         }
 
         // Nếu là MoMo và payment status vẫn là PENDING, cập nhật thành PAID
-        // (Vì user đã quay lại từ MoMo với resultCode=0, nghĩa là thanh toán thành công)
-        if (order.getPaymentMethod() == PaymentMethod.MOMO && 
-            order.getPaymentStatus() == PaymentStatus.PENDING && 
-            !Boolean.TRUE.equals(order.getPaid())) {
+        if (order.getPaymentMethod() == PaymentMethod.MOMO &&
+                order.getPaymentStatus() == PaymentStatus.PENDING &&
+                !(order.getPaid())) {
             order.setPaymentStatus(PaymentStatus.PAID);
             order.setPaid(true);
             // Không tự động chuyển sang CONFIRMED - giữ ở CREATED để admin/staff xác nhận
             orderRepository.save(order);
             orderRepository.flush();
-            
+
             // Ghi nhận doanh thu khi verify payment thành công
             recordOrderRevenue(order);
         }
 
         // Kiểm tra nếu payment đã thành công
-        if (Boolean.TRUE.equals(order.getPaid()) || 
-            order.getPaymentStatus() == PaymentStatus.PAID ||
-            (order.getPaymentMethod() == PaymentMethod.COD && order.getStatus() == OrderStatus.CONFIRMED)) {
+        if (order.getPaid() ||
+                order.getPaymentStatus() == PaymentStatus.PAID ||
+                (order.getPaymentMethod() == PaymentMethod.COD && order.getStatus() == OrderStatus.CONFIRMED)) {
             Order reloadedOrder = orderRepository.findById(order.getId()).orElse(order);
             sendOrderConfirmationEmail(reloadedOrder);
         }
@@ -848,18 +891,18 @@ public class OrderService {
 
     // Set để track các order đã gửi email trong session này (tránh gửi trùng)
     private static final Set<String> emailSentOrders = java.util.Collections.synchronizedSet(new java.util.HashSet<>());
-    
+
     private void sendOrderConfirmationEmail(Order order) {
         if (order == null || order.getUser() == null || order.getUser().getEmail() == null) {
             return;
         }
-        
+
         // Kiểm tra xem email đã được gửi cho order này chưa
         String orderKey = order.getId();
         if (emailSentOrders.contains(orderKey)) {
             return; // Đã gửi rồi, không gửi lại
         }
-        
+
         try {
             // Force load lazy-loaded fields
             if (order.getItems() != null) {
@@ -870,7 +913,7 @@ public class OrderService {
                     }
                 }
             }
-            
+
             brevoEmailService.sendOrderConfirmationEmail(order);
             emailSentOrders.add(orderKey); // Đánh dấu đã gửi
         } catch (Exception e) {
@@ -994,7 +1037,8 @@ public class OrderService {
     }
 
     private void appendPart(StringBuilder sb, String value) {
-        if (value == null || value.isBlank()) return;
+        if (value == null || value.isBlank())
+            return;
         if (sb.length() > 0) {
             sb.append(", ");
         }
@@ -1020,13 +1064,13 @@ public class OrderService {
         private final Order order;
         private final String payUrl;
         private final String orderCode; // For MoMo: order code to be created after payment
-        
+
         public CheckoutResult(Order order, String payUrl) {
             this.order = order;
             this.payUrl = payUrl;
             this.orderCode = order != null ? order.getCode() : null;
         }
-        
+
         public CheckoutResult(Order order, String payUrl, String orderCode) {
             this.order = order;
             this.payUrl = payUrl;
@@ -1174,7 +1218,7 @@ public class OrderService {
         try {
             String email = SecurityUtil.getAuthentication().getName();
             List<Order> orders = orderRepository.findByUserEmail(email);
-                        // Đồng bộ trạng thái từ GHN cho các đơn có shipment
+            // Đồng bộ trạng thái từ GHN cho các đơn có shipment
             for (Order order : orders) {
                 if (order.getShipment() != null && order.getShipment().getOrderCode() != null) {
                     try {
@@ -1198,11 +1242,11 @@ public class OrderService {
     public OrderStatistics getOrderStatistics(LocalDate start, LocalDate end) {
         LocalDateTime startDateTime = start.atStartOfDay();
         LocalDateTime endDateTime = end.atTime(23, 59, 59, 999999999);
-        
+
         Long totalOrders = orderRepository.countByOrderDateTimeBetween(startDateTime, endDateTime);
         Long cancelledOrders = orderRepository.countCancelledOrdersByOrderDateTimeBetween(startDateTime, endDateTime);
         Long refundedOrders = orderRepository.countRefundedOrdersByOrderDateTimeBetween(startDateTime, endDateTime);
-        
+
         return OrderStatistics.builder()
                 .totalOrders(totalOrders)
                 .cancelledOrders(cancelledOrders)
@@ -1216,7 +1260,7 @@ public class OrderService {
     public Page<Order> getOrdersByDateRangePage(LocalDate start, LocalDate end, int page, int size) {
         LocalDateTime startDateTime = start.atStartOfDay();
         LocalDateTime endDateTime = end.atTime(23, 59, 59, 999999999);
-        
+
         Pageable pageable = PageRequest.of(page, size);
         return orderRepository.findByOrderDateTimeBetween(startDateTime, endDateTime, pageable);
     }
@@ -1229,8 +1273,7 @@ public class OrderService {
                 OrderStatus.RETURN_REQUESTED,
                 OrderStatus.RETURN_CS_CONFIRMED,
                 OrderStatus.RETURN_STAFF_CONFIRMED,
-                OrderStatus.RETURN_REJECTED
-        );
+                OrderStatus.RETURN_REJECTED);
         return orderRepository.findByStatusIn(returnStatuses);
     }
 
@@ -1257,7 +1300,8 @@ public class OrderService {
         boolean isStaffOrAdminOrSupport = auth.getAuthorities().stream()
                 .anyMatch(a -> {
                     String role = a.getAuthority();
-                    return "ROLE_STAFF".equals(role) || "ROLE_ADMIN".equals(role) || "ROLE_CUSTOMER_SUPPORT".equals(role);
+                    return "ROLE_STAFF".equals(role) || "ROLE_ADMIN".equals(role)
+                            || "ROLE_CUSTOMER_SUPPORT".equals(role);
                 });
 
         if (!isStaffOrAdminOrSupport) {
@@ -1334,8 +1378,9 @@ public class OrderService {
             // Cho phép yêu cầu trả hàng từ DELIVERED hoặc gửi lại từ RETURN_REJECTED
             if (order.getStatus() != OrderStatus.DELIVERED && order.getStatus() != OrderStatus.RETURN_REJECTED) {
                 log.warn("Invalid order status for return request: orderId={}, status={}", orderId, order.getStatus());
-                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, 
-                        String.format("Chỉ có thể yêu cầu trả hàng cho đơn hàng đã giao (DELIVERED) hoặc đơn hàng đã bị từ chối hoàn tiền (RETURN_REJECTED). Trạng thái hiện tại: %s", 
+                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION,
+                        String.format(
+                                "Chỉ có thể yêu cầu trả hàng cho đơn hàng đã giao (DELIVERED) hoặc đơn hàng đã bị từ chối hoàn tiền (RETURN_REJECTED). Trạng thái hiện tại: %s",
                                 order.getStatus() != null ? order.getStatus().name() : "null"));
             }
 
@@ -1346,130 +1391,131 @@ public class OrderService {
             }
 
             order.setStatus(OrderStatus.RETURN_REQUESTED);
-        
-        // Save refund request information to dedicated fields
-        if (request != null) {
-            order.setRefundReasonType(request.getReasonType());
-            order.setRefundDescription(request.getDescription());
-            order.setRefundEmail(request.getEmail());
-            order.setRefundReturnAddress(request.getReturnAddress());
-            order.setRefundMethod(request.getRefundMethod());
-            order.setRefundBank(request.getBank());
-            order.setRefundAccountNumber(request.getAccountNumber());
-            order.setRefundAccountHolder(request.getAccountHolder());
-            
-            // Save selected product IDs as JSON array
-            if (request.getSelectedProductIds() != null && !request.getSelectedProductIds().isEmpty()) {
-                try {
-                    String productIdsJson = objectMapper.writeValueAsString(request.getSelectedProductIds());
-                    order.setRefundSelectedProductIds(productIdsJson);
-                } catch (Exception e) {
-                    log.warn("Failed to serialize selected product IDs to JSON", e);
-                    order.setRefundSelectedProductIds(null);
-                }
-            }
-            
-            // Save media URLs as JSON array
-            if (request.getMediaUrls() != null && !request.getMediaUrls().isEmpty()) {
-                try {
-                    String mediaUrlsJson = objectMapper.writeValueAsString(request.getMediaUrls());
-                    order.setRefundMediaUrls(mediaUrlsJson);
-                } catch (Exception e) {
-                    log.warn("Failed to serialize media URLs to JSON", e);
-                    order.setRefundMediaUrls(null);
-                }
-            }
-            
-            // Calculate and save refund amount and return fee
-            if (order.getItems() != null && request.getSelectedProductIds() != null) {
-                try {
-                    double productValue = order.getItems().stream()
-                            .filter(item -> request.getSelectedProductIds().contains(item.getId()))
-                            .mapToDouble(item -> item.getFinalPrice() != null ? item.getFinalPrice() : 0.0)
-                            .sum();
-                    
-                    double shippingFee = order.getShippingFee() != null ? order.getShippingFee() : 0.0;
-                    double totalPaid = order.getTotalAmount() != null ? order.getTotalAmount() : productValue + shippingFee;
 
-                    double computedReturnFee = 0.0;
+            // Save refund request information to dedicated fields
+            if (request != null) {
+                order.setRefundReasonType(request.getReasonType());
+                order.setRefundDescription(request.getDescription());
+                order.setRefundEmail(request.getEmail());
+                order.setRefundReturnAddress(request.getReturnAddress());
+                order.setRefundMethod(request.getRefundMethod());
+                order.setRefundBank(request.getBank());
+                order.setRefundAccountNumber(request.getAccountNumber());
+                order.setRefundAccountHolder(request.getAccountHolder());
+
+                // Save selected product IDs as JSON array
+                if (request.getSelectedProductIds() != null && !request.getSelectedProductIds().isEmpty()) {
                     try {
-                        computedReturnFee = shipmentService.estimateReturnShippingFee(order);
+                        String productIdsJson = objectMapper.writeValueAsString(request.getSelectedProductIds());
+                        order.setRefundSelectedProductIds(productIdsJson);
                     } catch (Exception e) {
-                        log.warn("Failed to estimate return shipping fee for order {}: {}", orderId, e.getMessage());
-                        // Continue with fallback calculation
+                        log.warn("Failed to serialize selected product IDs to JSON", e);
+                        order.setRefundSelectedProductIds(null);
                     }
-                    
-                    boolean isStoreReason = "store".equalsIgnoreCase(request.getReasonType());
-                    double fallbackReturnFee = isStoreReason ? shippingFee : Math.round(productValue * 0.1);
-                    double secondShippingFee = computedReturnFee > 0 ? Math.round(computedReturnFee) : Math.max(0.0, fallbackReturnFee);
+                }
 
-                    double penaltyAmount = !isStoreReason
-                            ? Math.max(0.0, Math.round(productValue * 0.1))
-                            : 0.0;
+                // Save media URLs as JSON array
+                if (request.getMediaUrls() != null && !request.getMediaUrls().isEmpty()) {
+                    try {
+                        String mediaUrlsJson = objectMapper.writeValueAsString(request.getMediaUrls());
+                        order.setRefundMediaUrls(mediaUrlsJson);
+                    } catch (Exception e) {
+                        log.warn("Lỗi serialize media URLs to JSON", e);
+                        order.setRefundMediaUrls(null);
+                    }
+                }
 
-                    double customerRefundAmount = isStoreReason
-                            ? totalPaid + secondShippingFee
-                            : Math.max(0.0, totalPaid - secondShippingFee - penaltyAmount);
+                // Calculate and save refund amount and return fee
+                if (order.getItems() != null && request.getSelectedProductIds() != null) {
+                    try {
+                        double productValue = order.getItems().stream()
+                                .filter(item -> request.getSelectedProductIds().contains(item.getId()))
+                                .mapToDouble(item -> item.getFinalPrice() != null ? item.getFinalPrice() : 0.0)
+                                .sum();
 
-                    order.setRefundAmount(customerRefundAmount);
-                    order.setRefundReturnFee(secondShippingFee);
-                    order.setRefundSecondShippingFee(secondShippingFee);
-                    order.setRefundPenaltyAmount(penaltyAmount);
-                    order.setRefundTotalPaid(totalPaid);
-                    // Initialize confirmed values to match customer request, can be adjusted by staff later
-                    order.setRefundConfirmedAmount(customerRefundAmount);
-                    order.setRefundConfirmedPenalty(penaltyAmount);
-                    order.setRefundConfirmedSecondShippingFee(secondShippingFee);
-                } catch (Exception e) {
-                    log.error("Error calculating refund amount for order {}: {}", orderId, e.getMessage(), e);
-                    // Set default values to allow request to proceed
-                    double shippingFee = order.getShippingFee() != null ? order.getShippingFee() : 0.0;
-                    double totalPaid = order.getTotalAmount() != null ? order.getTotalAmount() : 0.0;
-                    order.setRefundAmount(totalPaid);
-                    order.setRefundReturnFee(shippingFee);
-                    order.setRefundSecondShippingFee(shippingFee);
-                    order.setRefundPenaltyAmount(0.0);
-                    order.setRefundTotalPaid(totalPaid);
-                    order.setRefundConfirmedAmount(totalPaid);
-                    order.setRefundConfirmedPenalty(0.0);
-                    order.setRefundConfirmedSecondShippingFee(shippingFee);
+                        double shippingFee = order.getShippingFee() != null ? order.getShippingFee() : 0.0;
+                        double totalPaid = order.getTotalAmount() != null ? order.getTotalAmount()
+                                : productValue + shippingFee;
+
+                        double computedReturnFee = 0.0;
+                        try {
+                            computedReturnFee = shipmentService.estimateReturnShippingFee(order);
+                        } catch (Exception e) {
+                            log.warn("Lỗi tính phí trả hàng cho đơn hàng {}: {}", orderId,
+                                    e.getMessage());
+                        }
+
+                        boolean isStoreReason = "store".equalsIgnoreCase(request.getReasonType());
+                        double fallbackReturnFee = isStoreReason ? shippingFee : Math.round(productValue * 0.1);
+                        double secondShippingFee = computedReturnFee > 0 ? Math.round(computedReturnFee)
+                                : Math.max(0.0, fallbackReturnFee);
+
+                        double penaltyAmount = !isStoreReason
+                                ? Math.max(0.0, Math.round(productValue * 0.1))
+                                : 0.0;
+
+                        double customerRefundAmount = isStoreReason
+                                ? totalPaid + secondShippingFee
+                                : Math.max(0.0, totalPaid - secondShippingFee - penaltyAmount);
+
+                        order.setRefundAmount(customerRefundAmount);
+                        order.setRefundReturnFee(secondShippingFee);
+                        order.setRefundSecondShippingFee(secondShippingFee);
+                        order.setRefundPenaltyAmount(penaltyAmount);
+                        order.setRefundTotalPaid(totalPaid);
+                        // Cập nhật giá trị hoàn tiền sau khi được xác nhận bởi staff
+                        order.setRefundConfirmedAmount(customerRefundAmount);
+                        order.setRefundConfirmedPenalty(penaltyAmount);
+                        order.setRefundConfirmedSecondShippingFee(secondShippingFee);
+                    } catch (Exception e) {
+                        log.error("Lỗi tính giá trị hoàn tiền cho đơn hàng {}: {}", orderId, e.getMessage(), e);
+                        double shippingFee = order.getShippingFee() != null ? order.getShippingFee() : 0.0;
+                        double totalPaid = order.getTotalAmount() != null ? order.getTotalAmount() : 0.0;
+                        order.setRefundAmount(totalPaid);
+                        order.setRefundReturnFee(shippingFee);
+                        order.setRefundSecondShippingFee(shippingFee);
+                        order.setRefundPenaltyAmount(0.0);
+                        order.setRefundTotalPaid(totalPaid);
+                        order.setRefundConfirmedAmount(totalPaid);
+                        order.setRefundConfirmedPenalty(0.0);
+                        order.setRefundConfirmedSecondShippingFee(shippingFee);
+                    }
+                }
+
+                // Lưu vào note field cho tương thích với code cũ
+                if (request.getNote() != null && !request.getNote().isBlank()) {
+                    order.setNote(request.getNote());
+                } else {
+                    // Tạo note từ dữ liệu yêu cầu cho tương thích với code cũ
+                    StringBuilder noteBuilder = new StringBuilder();
+                    if (request.getReasonType() != null) {
+                        String reasonText = "store".equals(request.getReasonType())
+                                ? "Sản phẩm gặp sự cố từ cửa hàng"
+                                : "Thay đổi nhu cầu / Mua nhầm";
+                        noteBuilder.append("Yêu cầu hoàn tiền/trả hàng - ").append(reasonText);
+                    }
+                    if (request.getDescription() != null && !request.getDescription().isBlank()) {
+                        noteBuilder.append("\nMô tả: ").append(request.getDescription());
+                    }
+                    if (request.getReturnAddress() != null && !request.getReturnAddress().isBlank()) {
+                        noteBuilder.append("\nĐịa chỉ gửi hàng: ").append(request.getReturnAddress());
+                    }
+                    if (request.getRefundMethod() != null && !request.getRefundMethod().isBlank()) {
+                        noteBuilder.append("\nPhương thức hoàn tiền: ").append(request.getRefundMethod());
+                    }
+                    if (request.getBank() != null && !request.getBank().isBlank()) {
+                        noteBuilder.append("\nNgân hàng: ").append(request.getBank());
+                    }
+                    if (request.getAccountNumber() != null && !request.getAccountNumber().isBlank()) {
+                        noteBuilder.append("\nSố tài khoản: ").append(request.getAccountNumber());
+                    }
+                    if (request.getAccountHolder() != null && !request.getAccountHolder().isBlank()) {
+                        noteBuilder.append("\nChủ tài khoản: ").append(request.getAccountHolder());
+                    }
+                    order.setNote(noteBuilder.toString());
                 }
             }
-            
-            // Also save to note field for backward compatibility
-            if (request.getNote() != null && !request.getNote().isBlank()) {
-                order.setNote(request.getNote());
-            } else {
-                // Generate note from request data for backward compatibility
-                StringBuilder noteBuilder = new StringBuilder();
-                if (request.getReasonType() != null) {
-                    String reasonText = "store".equals(request.getReasonType())
-                            ? "Sản phẩm gặp sự cố từ cửa hàng"
-                            : "Thay đổi nhu cầu / Mua nhầm";
-                    noteBuilder.append("Yêu cầu hoàn tiền/trả hàng - ").append(reasonText);
-                }
-                if (request.getDescription() != null && !request.getDescription().isBlank()) {
-                    noteBuilder.append("\nMô tả: ").append(request.getDescription());
-                }
-                if (request.getReturnAddress() != null && !request.getReturnAddress().isBlank()) {
-                    noteBuilder.append("\nĐịa chỉ gửi hàng: ").append(request.getReturnAddress());
-                }
-                if (request.getRefundMethod() != null && !request.getRefundMethod().isBlank()) {
-                    noteBuilder.append("\nPhương thức hoàn tiền: ").append(request.getRefundMethod());
-                }
-                if (request.getBank() != null && !request.getBank().isBlank()) {
-                    noteBuilder.append("\nNgân hàng: ").append(request.getBank());
-                }
-                if (request.getAccountNumber() != null && !request.getAccountNumber().isBlank()) {
-                    noteBuilder.append("\nSố tài khoản: ").append(request.getAccountNumber());
-                }
-                if (request.getAccountHolder() != null && !request.getAccountHolder().isBlank()) {
-                    noteBuilder.append("\nChủ tài khoản: ").append(request.getAccountHolder());
-                }
-                order.setNote(noteBuilder.toString());
-            }
-        }
-        
+
             log.info("Saving order with return request: {}", orderId);
             Order saved = orderRepository.save(order);
             log.info("Order saved successfully: {}", orderId);
@@ -1496,13 +1542,13 @@ public class OrderService {
             return saved;
         } catch (AppException e) {
             // Re-throw AppException để giữ nguyên error code và message
-            log.error("AppException in requestReturn for order {}: code={}, message={}", 
+            log.error("AppException in requestReturn for order {}: code={}, message={}",
                     orderId, e.getErrorCode().getCode(), e.getMessage(), e);
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error in requestReturn for order {}: {}", orderId, e.getMessage(), e);
             log.error("Exception stack trace:", e);
-            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, 
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION,
                     "Có lỗi xảy ra khi xử lý yêu cầu trả hàng. Vui lòng thử lại sau.");
         }
     }
@@ -1516,7 +1562,7 @@ public class OrderService {
         if (order.getStatus() != OrderStatus.RETURN_REQUESTED
                 && order.getStatus() != OrderStatus.RETURN_CS_CONFIRMED
                 && order.getStatus() != OrderStatus.RETURN_STAFF_CONFIRMED) {
-            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, 
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION,
                     "Chỉ có thể từ chối yêu cầu hoàn tiền cho đơn hàng đang ở trạng thái 'Hoàn tiền/ trả hàng'");
         }
 
@@ -1575,7 +1621,8 @@ public class OrderService {
             String link = "/staff/refund-orders";
             notificationService.sendToRole(title, message, "INFO", "STAFF", link);
         } catch (Exception e) {
-            log.error("Failed to send notification to staff for CS-confirmed return {}: {}", orderId, e.getMessage(), e);
+            log.error("Failed to send notification to staff for CS-confirmed return {}: {}", orderId, e.getMessage(),
+                    e);
         }
 
         return saved;
@@ -1652,7 +1699,8 @@ public class OrderService {
             String code = resolveDisplayOrderCode(order);
             int itemCount = order.getItems() != null ? order.getItems().size() : 0;
             String message = itemCount > 0
-                    ? String.format("Khách hàng đã hủy đơn %s với %d sản phẩm. Vui lòng kiểm tra tồn kho/đơn hàng.", code, itemCount)
+                    ? String.format("Khách hàng đã hủy đơn %s với %d sản phẩm. Vui lòng kiểm tra tồn kho/đơn hàng.",
+                            code, itemCount)
                     : String.format("Khách hàng đã hủy đơn %s. Vui lòng kiểm tra tồn kho/đơn hàng.", code);
             notificationService.sendToStaff(
                     "Khách hàng hủy đơn hàng",
@@ -1669,7 +1717,9 @@ public class OrderService {
             String code = resolveDisplayOrderCode(order);
             notificationService.sendToStaff(
                     "Đơn hàng hoàn về cần kiểm tra",
-                    String.format("Bộ phận CSKH đã xác nhận hoàn trả cho đơn %s. Vui lòng kiểm tra hàng hoàn và xử lý tồn kho.", code),
+                    String.format(
+                            "Bộ phận CSKH đã xác nhận hoàn trả cho đơn %s. Vui lòng kiểm tra hàng hoàn và xử lý tồn kho.",
+                            code),
                     "INFO",
                     String.format("/staff/orders/%s", order.getId()));
         } catch (Exception e) {
@@ -1678,7 +1728,8 @@ public class OrderService {
     }
 
     private String resolveDisplayOrderCode(Order order) {
-        if (order == null) return "";
+        if (order == null)
+            return "";
         if (order.getCode() != null && !order.getCode().isBlank()) {
             return order.getCode();
         }
@@ -1694,7 +1745,8 @@ public class OrderService {
             String code = product.getId();
             notificationService.sendToStaff(
                     "Sản phẩm sắp hết hàng",
-                    String.format("Sản phẩm \"%s\" (Mã: %s) chỉ còn %d sản phẩm trong kho. Vui lòng nhập thêm.", name, code, stock),
+                    String.format("Sản phẩm \"%s\" (Mã: %s) chỉ còn %d sản phẩm trong kho. Vui lòng nhập thêm.", name,
+                            code, stock),
                     "WARNING",
                     String.format("/staff/products/%s", product.getId()));
         } catch (Exception e) {
@@ -1748,15 +1800,12 @@ public class OrderService {
                             order,
                             item.getProduct(),
                             item.getFinalPrice(),
-                            order.getPaymentMethod()
-                    );
+                            order.getPaymentMethod());
                 } catch (Exception e) {
-                    log.error("Error recording revenue for order {} product {}", 
+                    log.error("Error recording revenue for order {} product {}",
                             order.getId(), item.getProduct().getId(), e);
                 }
             }
         }
     }
 }
-
-

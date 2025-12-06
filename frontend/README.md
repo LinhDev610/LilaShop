@@ -71,7 +71,7 @@ npm run build
 
 ```
 src/
-├── layouts/              # Layout system
+├── layouts/             # Layout system
 │   ├── components/      # Header, Footer, Search
 │   ├── DefaultLayout/   # Layout mặc định
 │   └── CustomLayout/    # Layout tùy chỉnh

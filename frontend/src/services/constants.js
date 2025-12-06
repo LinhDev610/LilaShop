@@ -173,7 +173,6 @@ export const CATEGORY_FIELD_CONFIG = {
     skincare: {
         fields: [
             'shadeColor',
-            'finish',
             'skinType',
             'skinConcern',
             'volume',
@@ -184,13 +183,13 @@ export const CATEGORY_FIELD_CONFIG = {
             'safetyNote',
         ],
         label: 'Chăm sóc da',
-        description: 'Hiển thị đầy đủ thông tin: màu sắc, độ hoàn thiện, loại da, vấn đề da, thành phần, hướng dẫn sử dụng và lưu ý an toàn',
+        description: 'Hiển thị đầy đủ thông tin: màu sắc, loại da, vấn đề da, thành phần, hướng dẫn sử dụng và lưu ý an toàn',
     },
-    // Trang điểm - tập trung vào màu sắc và độ hoàn thiện
+    // Trang điểm - tập trung vào màu sắc
     makeup: {
-        fields: ['shadeColor', 'finish', 'volume', 'origin', 'expiryDate'],
+        fields: ['shadeColor', 'volume', 'origin', 'expiryDate'],
         label: 'Trang điểm',
-        description: 'Tập trung vào màu sắc, độ hoàn thiện, dung tích, xuất xứ và hạn sử dụng',
+        description: 'Tập trung vào màu sắc, dung tích, xuất xứ và hạn sử dụng',
     },
     // Chăm sóc tóc - tập trung vào thành phần và hướng dẫn
     haircare: {
@@ -323,7 +322,6 @@ export const INITIAL_FORM_STATE_PRODUCT = {
     description: '',
     brand: '',
     shadeColor: '',
-    finish: '',
     skinType: '',
     skinConcern: '',
     volume: '',

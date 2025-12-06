@@ -21,7 +21,6 @@ public class ProductResponse {
     String size;
     String brand;
     String shadeColor;
-    String finish;
     String skinType;
     String skinConcern;
     String volume;
@@ -43,6 +42,10 @@ public class ProductResponse {
     ProductStatus status;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
+
+    // Variants
+    List<ProductVariantResponse> variants;
+    String defaultVariantId;
 
     // Submitted by user info
     String submittedBy;

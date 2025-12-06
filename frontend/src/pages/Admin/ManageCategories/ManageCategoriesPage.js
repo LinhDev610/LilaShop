@@ -152,9 +152,17 @@ function ManageCategoriesPage() {
                 resolvedId = resolveCategoryId(cat) || resolvedId;
             } catch (_) { }
 
-            const { ok } = await deleteCategory(resolvedId, tokenToUse);
+            const { ok, data, status } = await deleteCategory(resolvedId, tokenToUse);
             if (!ok) {
-                throw new Error('Không thể xóa danh mục');
+                // Extract error message from backend response
+                const errorMessage =
+                    data?.message ||
+                    data?.error ||
+                    (status === 400 ? 'Không thể xóa danh mục. Vui lòng kiểm tra lại.' :
+                        status === 404 ? 'Danh mục không tồn tại.' :
+                            status === 403 ? 'Bạn không có quyền xóa danh mục.' :
+                                'Không thể xóa danh mục');
+                throw new Error(errorMessage);
             }
             const next = allCategories.filter((c) => resolveCategoryId(c) !== String(resolvedId));
             setAllCategories(next);

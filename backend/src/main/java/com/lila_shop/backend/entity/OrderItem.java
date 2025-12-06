@@ -26,9 +26,11 @@ public class OrderItem {
     @JoinColumn(name = "product_id")
     Product product;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "variant_id")
+    ProductVariant variant;
+
     Integer quantity;
     Double unitPrice;
     Double finalPrice;
 }
-
-

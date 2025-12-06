@@ -35,7 +35,6 @@ function UpdateProductPage() {
     const [description, setDescription] = useState('');
     const [brand, setBrand] = useState('');
     const [shadeColor, setShadeColor] = useState('');
-    const [finish, setFinish] = useState('');
     const [skinType, setSkinType] = useState('');
     const [skinConcern, setSkinConcern] = useState('');
     const [volume, setVolume] = useState('');
@@ -97,7 +96,6 @@ function UpdateProductPage() {
                 setDescription(product.description || '');
                 setBrand(product.brand || '');
                 setShadeColor(product.shadeColor || '');
-                setFinish(product.finish || '');
                 setSkinType(product.skinType || '');
                 setSkinConcern(product.skinConcern || '');
                 setVolume(product.volume || '');
@@ -434,7 +432,6 @@ function UpdateProductPage() {
                 description: (description || '').trim() || null,
                 brand: (brand || '').trim(),
                 shadeColor: (shadeColor || '').trim() || null,
-                finish: (finish || '').trim() || null,
                 skinType: (skinType || '').trim() || null,
                 skinConcern: (skinConcern || '').trim() || null,
                 volume: (volume || '').trim() || null,
@@ -666,14 +663,6 @@ function UpdateProductPage() {
                                 placeholder="VD: #Nude, #Coral, #Rose"
                                 value={shadeColor}
                                 onChange={(e) => setShadeColor(e.target.value)}
-                            />
-                        </div>
-                        <div className={cx('row')}>
-                            <label>Độ hoàn thiện</label>
-                            <input
-                                placeholder="VD: Matte, Glossy, Satin"
-                                value={finish}
-                                onChange={(e) => setFinish(e.target.value)}
                             />
                         </div>
                     </div>

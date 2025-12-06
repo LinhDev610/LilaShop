@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import classNames from 'classnames';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './ProductDetail.module.scss';
 import { getApiBaseUrl, formatDateTime } from '../../../services/utils';
@@ -26,6 +27,7 @@ const ProductDetail = ({ productId }) => {
     const [error, setError] = useState('');
     const [selectedImage, setSelectedImage] = useState('');
     const [quantity, setQuantity] = useState(1);
+    const [selectedVariantId, setSelectedVariantId] = useState(null);
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState(0);
     const [userAddress, setUserAddress] = useState('');
@@ -107,7 +109,6 @@ const ProductDetail = ({ productId }) => {
         subtitle: 'Cấp ẩm sâu, làm mềm da, phù hợp cho da khô',
         brand: 'L\'Oreal',
         shadeColor: '#Nude',
-        finish: 'Matte',
         skinType: 'Da khô',
         skinConcern: 'Thiếu ẩm',
         volume: '50ml',
@@ -179,7 +180,21 @@ const ProductDetail = ({ productId }) => {
         setSelectedImage(heroFallback);
     }, [heroFallback]);
 
+    const variants = Array.isArray(product?.variants) ? product.variants : [];
+    useEffect(() => {
+        if (variants.length > 0) {
+            const defId = product?.defaultVariantId || variants[0].id;
+            setSelectedVariantId(defId);
+        }
+    }, [variants, product?.defaultVariantId]);
+
+    const selectedVariant = useMemo(
+        () => variants.find((v) => v.id === selectedVariantId),
+        [variants, selectedVariantId],
+    );
+
     const availableStock =
+        selectedVariant?.stockQuantity ??
         product?.availableQuantity ??
         product?.stock ??
         product?.stockQuantity ??
@@ -189,9 +204,16 @@ const ProductDetail = ({ productId }) => {
         displayProduct.stock ??
         0;
 
-    const currentPrice = displayProduct.price ?? displayProduct.unitPrice ?? 0;
+    const currentPrice =
+        selectedVariant?.price ??
+        displayProduct.price ??
+        displayProduct.unitPrice ??
+        0;
     const originalPrice =
-        displayProduct.originalPrice ?? displayProduct.unitPrice ?? currentPrice;
+        displayProduct.originalPrice ??
+        selectedVariant?.price ??
+        displayProduct.unitPrice ??
+        currentPrice;
     const discountPercent =
         displayProduct.discount ??
         (originalPrice > 0
@@ -240,7 +262,6 @@ const ProductDetail = ({ productId }) => {
         },
         { label: 'Thương hiệu', value: displayProduct.brand || '-' },
         { label: 'Màu sắc', value: displayProduct.shadeColor || '-' },
-        { label: 'Độ hoàn thiện', value: displayProduct.finish || '-' },
         { label: 'Loại da', value: displayProduct.skinType || '-' },
         { label: 'Dung tích', value: displayProduct.volume || '-' },
         { label: 'Xuất xứ', value: displayProduct.origin || '-' },
@@ -349,8 +370,7 @@ const ProductDetail = ({ productId }) => {
                 return;
             }
 
-            console.log('Adding to cart:', { productId, quantity, hasToken: !!token });
-            const { ok, status, data } = await addCartItem(productId, quantity, token);
+            const { ok, status, data } = await addCartItem(productId, quantity, token, selectedVariantId);
             console.log('Add to cart API response:', { ok, status, data });
 
             if (!ok) {
@@ -427,6 +447,7 @@ const ProductDetail = ({ productId }) => {
             state: {
                 directCheckout: true,
                 productId: productId,
+                variantId: selectedVariantId || null,
                 quantity: quantity,
             },
         });
@@ -781,6 +802,35 @@ const ProductDetail = ({ productId }) => {
                                 )}
                                 <div className={styles.taxNote}>(Giá đã gồm thuế)</div>
                             </div>
+
+                            {variants.length > 0 && (
+                                <div className={styles.variantSelector}>
+                                    <div className={styles.variantLabel}>Chọn lựa chọn</div>
+                                    <div className={styles.variantList}>
+                                        {variants.map((v) => (
+                                            <button
+                                                key={v.id}
+                                                type="button"
+                                                className={classNames(styles.variantPill, {
+                                                    [styles.active]: selectedVariantId === v.id,
+                                                })}
+                                                onClick={() => setSelectedVariantId(v.id)}
+                                            >
+                                                <div className={styles.variantName}>{v.name || 'Lựa chọn'}</div>
+                                                {v.volumeMl ? (
+                                                    <div className={styles.variantMeta}>{v.volumeMl} ml</div>
+                                                ) : null}
+                                                {v.shadeName ? (
+                                                    <div className={styles.variantMeta}>{v.shadeName}</div>
+                                                ) : null}
+                                                <div className={styles.variantPrice}>
+                                                    {formatPrice(v.price || 0)}
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className={styles.infoCard}>
@@ -896,21 +946,21 @@ const ProductDetail = ({ productId }) => {
                                 {displayProduct.longDescription && (
                                     <p>{displayProduct.longDescription}</p>
                                 )}
-                                
+
                                 {displayProduct.ingredients && (
                                     <div style={{ marginTop: '16px' }}>
                                         <strong>Thành phần:</strong>
                                         <p style={{ marginTop: '8px' }}>{displayProduct.ingredients}</p>
                                     </div>
                                 )}
-                                
+
                                 {displayProduct.usageInstructions && (
                                     <div style={{ marginTop: '16px' }}>
                                         <strong>Hướng dẫn sử dụng:</strong>
                                         <p style={{ marginTop: '8px' }}>{displayProduct.usageInstructions}</p>
                                     </div>
                                 )}
-                                
+
                                 {displayProduct.safetyNote && (
                                     <div style={{ marginTop: '16px' }}>
                                         <strong>Lưu ý an toàn:</strong>
