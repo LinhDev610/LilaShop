@@ -26,26 +26,27 @@
   }
 
   .headerBreadcrumb {
-    background: #dde9ff;
-    color: #143a7b;
-    border: 1px solid #cad9ff;
-    padding: 18px 24px;
+    background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+    color: #1A3C5A;
+    border: 1px solid #bfdbfe;
+    padding: 20px 28px;
     border-radius: 12px 12px 0 0;
     font-weight: 700;
-    font-size: 20px;
-    letter-spacing: 0.4px;
+    font-size: 18px;
+    letter-spacing: -0.2px;
   }
 
   .productContent {
     display: grid;
     grid-template-columns: 520px 1fr;
-    gap: 36px;
+    gap: 40px;
     background: #fff;
-    padding: 36px;
-    border: 1px solid #e3e7ef;
+    padding: 40px;
+    border: 1px solid #e5e7eb;
     border-top: none;
-    border-radius: 0 0 16px 16px;
-    margin-bottom: 28px;
+    border-radius: 0 0 12px 12px;
+    margin-bottom: 32px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
     @media (max-width: 768px) {
       grid-template-columns: 1fr;
@@ -209,105 +210,139 @@
     gap: 16px;
 
     .productName {
-      font-size: 30px;
+      font-size: 32px;
       font-weight: 700;
-      color: #000000;
-      margin-bottom: 12px;
+      color: #111827;
+      margin-bottom: 0;
       margin-top: 0;
-      line-height: 1.4;
+      line-height: 1.3;
+      letter-spacing: -0.5px;
     }
 
     .productMeta {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      font-size: 16px;
-      color: #4b5563;
-      margin-bottom: 12px;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
 
-      strong {
-        color: #1f2937;
+      .metaItem {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 15px;
+      }
+
+      .metaLabel {
+        font-weight: 600;
+        color: #6b7280;
+        min-width: 100px;
+      }
+
+      .metaValue {
+        color: #111827;
+        font-weight: 500;
+      }
+
+      .inStock {
+        color: #059669;
+        font-weight: 600;
+      }
+
+      .outOfStock {
+        color: #dc2626;
+        font-weight: 600;
       }
     }
 
     .ratingSection {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
+      gap: 12px;
+      margin: 16px 0 20px 0;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e5e7eb;
 
       .stars {
         display: flex;
-        gap: 3px;
+        gap: 4px;
 
         .star {
-          color: #ffc107;
-          font-size: 20px;
+          color: #f59e0b;
+          font-size: 22px;
         }
 
         .starEmpty {
           color: #e5e7eb;
-          font-size: 20px;
+          font-size: 22px;
         }
       }
 
       .ratingText {
         display: flex;
         align-items: center;
-        gap: 6px;
-        font-size: 14px;
+        gap: 8px;
+        font-size: 15px;
         color: #4b5563;
 
         .reviewCount {
-          color: #f59e0b;
+          color: #1A3C5A;
           font-weight: 600;
         }
 
-        .separator {
+        .dot {
           color: #9ca3af;
-          margin: 0 4px;
+          font-weight: 700;
         }
 
         .soldCount {
-          color: #4b5563;
+          color: #6b7280;
         }
       }
     }
 
     .priceSection {
-      margin: 0;
+      margin: 0 0 24px 0;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e5e7eb;
 
       .currentPrice {
-        font-size: 34px;
+        font-size: 38px;
         font-weight: 700;
         color: #d6002f;
-        margin-bottom: 5px;
+        margin-bottom: 8px;
+        line-height: 1.2;
       }
 
       .priceMeta {
         display: flex;
         align-items: center;
         gap: 12px;
+        margin-bottom: 8px;
       }
 
       .originalPrice {
-        font-size: 16px;
+        font-size: 18px;
         color: #9ca3af;
         text-decoration: line-through;
+        font-weight: 500;
       }
 
       .discount {
-        background: #fde4e8;
+        background: linear-gradient(135deg, #fee2e2 0%, #fde4e8 100%);
         color: #d6002f;
-        padding: 5px 12px;
-        border-radius: 24px;
+        padding: 6px 14px;
+        border-radius: 6px;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 700;
+        border: 1px solid #fecaca;
       }
 
       .taxNote {
-        font-size: 14px;
+        font-size: 13px;
         color: #6b7280;
+        font-style: italic;
       }
     }
 
@@ -369,29 +404,67 @@
 
     .infoCard {
       background: #fff;
-      border: 1px solid #e6e8ef;
-      border-radius: 16px;
-      padding: 18px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
       .cardTitle {
-        font-size: 16px;
-        font-weight: 600;
-        margin-bottom: 12px;
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 16px;
         color: #1A3C5A;
+        letter-spacing: -0.3px;
       }
 
       .description {
-        max-height: 220px;
+        max-height: 280px;
         overflow: hidden;
         position: relative;
-        font-size: 14px;
-        line-height: 1.6;
-        color: #111827;
-        white-space: pre-line; // giữ nguyên xuống dòng từ backend
+        font-size: 15px;
+        line-height: 1.8;
+        color: #374151;
+        white-space: pre-line;
 
-        & > p {
-          margin: 0 0 8px 0;
+        .descriptionText {
+          margin: 0 0 16px 0;
+          color: #111827;
+        }
+
+        .descriptionSection {
+          margin-top: 24px;
+          padding-top: 20px;
+          border-top: 1px solid #f3f4f6;
+
+          &:first-of-type {
+            margin-top: 0;
+            padding-top: 0;
+            border-top: none;
+          }
+        }
+
+        .sectionTitle {
+          font-size: 16px;
+          font-weight: 700;
+          color: #1A3C5A;
+          margin: 0 0 10px 0;
+        }
+
+        .sectionContent {
+          margin: 0;
+          color: #374151;
+          line-height: 1.7;
+        }
+
+        .safetyNote {
+          margin: 0;
+          color: #dc2626;
+          font-weight: 500;
+          line-height: 1.7;
+          padding: 12px;
+          background: #fef2f2;
+          border-left: 3px solid #dc2626;
+          border-radius: 4px;
         }
 
         &::after {
@@ -400,7 +473,7 @@
           left: 0;
           right: 0;
           bottom: 0;
-          height: 60px;
+          height: 80px;
           background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #ffffff);
           pointer-events: none;
         }
@@ -436,9 +509,13 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 8px;
-      font-size: 14px;
-      color: #4b5563;
+      margin-bottom: 12px;
+      font-size: 15px;
+      color: #374151;
+
+      &:last-of-type {
+        margin-bottom: 0;
+      }
 
       .shippingIcon {
         font-size: 16px;
@@ -446,15 +523,15 @@
       }
 
       .shipIcon {
-        width: 15px;
-        height: 15px;
+        width: 18px;
+        height: 18px;
         object-fit: contain;
         flex-shrink: 0;
       }
 
       .deliveryMethodBold {
         font-weight: 600;
-        color: #1f2937;
+        color: #111827;
       }
     }
 
@@ -552,28 +629,35 @@
     .infoTable {
       .infoRow {
         display: flex;
-        padding: 10px 0;
-        border-bottom: 1px solid #f1f3f8;
+        padding: 12px 0;
+        border-bottom: 1px solid #f3f4f6;
 
         &:last-child {
           border-bottom: none;
         }
 
+        &:first-child {
+          padding-top: 0;
+        }
+
         .infoLabel {
-          width: 180px;
+          width: 200px;
           font-weight: 600;
-          color: #1f2937;
+          color: #6b7280;
           font-size: 14px;
+          flex-shrink: 0;
         }
 
         .infoValue {
           flex: 1;
-          color: #4b5563;
-          font-size: 14px;
+          color: #111827;
+          font-size: 15px;
+          font-weight: 500;
 
           .bestSellerLink {
             color: #2563eb;
             text-decoration: none;
+            font-weight: 600;
 
             &:hover {
               text-decoration: underline;
@@ -584,16 +668,80 @@
     }
 
     .subtitle {
-      font-size: 14px;
+      font-size: 16px;
       color: #6b7280;
-      margin-bottom: 10px;
-      font-style: italic;
+      margin: 12px 0 20px 0;
+      font-weight: 500;
+      line-height: 1.5;
     }
 
     .infoCard p {
       line-height: 1.6;
       color: #374151;
       font-size: 14px;
+    }
+
+    .variantSelector {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e7eb;
+
+      .variantLabel {
+        font-size: 15px;
+        font-weight: 700;
+        color: #1A3C5A;
+        margin-bottom: 12px;
+      }
+
+      .variantList {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .variantPill {
+        flex: 1;
+        min-width: 140px;
+        padding: 14px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        background: #ffffff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        &:hover {
+          border-color: #1A3C5A;
+          box-shadow: 0 2px 8px rgba(26, 60, 90, 0.1);
+        }
+
+        &.active {
+          border-color: #1A3C5A;
+          background: #f0f7ff;
+          box-shadow: 0 2px 8px rgba(26, 60, 90, 0.15);
+        }
+
+        .variantName {
+          font-size: 15px;
+          font-weight: 600;
+          color: #111827;
+        }
+
+        .variantMeta {
+          font-size: 13px;
+          color: #6b7280;
+        }
+
+        .variantPrice {
+          font-size: 16px;
+          font-weight: 700;
+          color: #d6002f;
+          margin-top: 4px;
+        }
+      }
     }
   }
 

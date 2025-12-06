@@ -742,30 +742,6 @@ const ProductDetail = ({ productId }) => {
                         <div className={styles.infoCard}>
                             <h1 className={styles.productName}>{displayProduct.name}</h1>
 
-                            <div className={styles.productMeta}>
-                                <div>
-                                    <strong>Thương hiệu:</strong> {displayProduct.brand || '-'}
-                                </div>
-                                {displayProduct.skinType && (
-                                    <div>
-                                        <strong>Loại da:</strong> {displayProduct.skinType}
-                                    </div>
-                                )}
-                                {displayProduct.volume && (
-                                    <div>
-                                        <strong>Dung tích:</strong> {displayProduct.volume}
-                                    </div>
-                                )}
-                                <div>
-                                    <strong>Tồn kho:</strong>{' '}
-                                    {availableStock > 0
-                                        ? `${availableStock}`
-                                        : availableStock === 0
-                                            ? 'Hết hàng'
-                                            : '-'}
-                                </div>
-                            </div>
-
                             <div className={styles.ratingSection}>
                                 <div className={styles.stars}>
                                     {renderStars(
@@ -774,12 +750,11 @@ const ProductDetail = ({ productId }) => {
                                 </div>
                                 <div className={styles.ratingText}>
                                     <span className={styles.reviewCount}>
-                                        ({displayProduct.reviewCount || 0} đánh giá)
+                                        {displayProduct.reviewCount || 0} đánh giá
                                     </span>
                                     <span className={styles.dot}>·</span>
                                     <span className={styles.soldCount}>
-                                        Đã bán{' '}
-                                        {displayProduct.quantitySold ||
+                                        Đã bán {displayProduct.quantitySold ||
                                             displayProduct.soldCount ||
                                             0}
                                     </span>
@@ -800,7 +775,40 @@ const ProductDetail = ({ productId }) => {
                                         </span>
                                     </div>
                                 )}
-                                <div className={styles.taxNote}>(Giá đã gồm thuế)</div>
+                                <div className={styles.taxNote}>Giá đã gồm thuế</div>
+                            </div>
+
+                            <div className={styles.productMeta}>
+                                {displayProduct.brand && (
+                                    <div className={styles.metaItem}>
+                                        <span className={styles.metaLabel}>Thương hiệu:</span>
+                                        <span className={styles.metaValue}>{displayProduct.brand}</span>
+                                    </div>
+                                )}
+                                {displayProduct.skinType && (
+                                    <div className={styles.metaItem}>
+                                        <span className={styles.metaLabel}>Loại da:</span>
+                                        <span className={styles.metaValue}>{displayProduct.skinType}</span>
+                                    </div>
+                                )}
+                                {displayProduct.volume && (
+                                    <div className={styles.metaItem}>
+                                        <span className={styles.metaLabel}>Dung tích:</span>
+                                        <span className={styles.metaValue}>{displayProduct.volume}</span>
+                                    </div>
+                                )}
+                                <div className={styles.metaItem}>
+                                    <span className={styles.metaLabel}>Tồn kho:</span>
+                                    <span className={styles.metaValue}>
+                                        {availableStock > 0 ? (
+                                            <span className={styles.inStock}>{availableStock} sản phẩm</span>
+                                        ) : availableStock === 0 ? (
+                                            <span className={styles.outOfStock}>Hết hàng</span>
+                                        ) : (
+                                            '-'
+                                        )}
+                                    </span>
+                                </div>
                             </div>
 
                             {variants.length > 0 && (
@@ -929,7 +937,6 @@ const ProductDetail = ({ productId }) => {
 
                         <div className={styles.infoCard}>
                             <h3 className={styles.cardTitle}>Mô tả sản phẩm</h3>
-                            <h4>{displayProduct.name}</h4>
                             {displayProduct.subtitle && (
                                 <p className={styles.subtitle}>{displayProduct.subtitle}</p>
                             )}
@@ -942,29 +949,31 @@ const ProductDetail = ({ productId }) => {
                                         : styles.description
                                 }
                             >
-                                <p>{displayProduct.description || '-'}</p>
+                                {displayProduct.description && (
+                                    <p className={styles.descriptionText}>{displayProduct.description}</p>
+                                )}
                                 {displayProduct.longDescription && (
-                                    <p>{displayProduct.longDescription}</p>
+                                    <p className={styles.descriptionText}>{displayProduct.longDescription}</p>
                                 )}
 
                                 {displayProduct.ingredients && (
-                                    <div style={{ marginTop: '16px' }}>
-                                        <strong>Thành phần:</strong>
-                                        <p style={{ marginTop: '8px' }}>{displayProduct.ingredients}</p>
+                                    <div className={styles.descriptionSection}>
+                                        <h5 className={styles.sectionTitle}>Thành phần</h5>
+                                        <p className={styles.sectionContent}>{displayProduct.ingredients}</p>
                                     </div>
                                 )}
 
                                 {displayProduct.usageInstructions && (
-                                    <div style={{ marginTop: '16px' }}>
-                                        <strong>Hướng dẫn sử dụng:</strong>
-                                        <p style={{ marginTop: '8px' }}>{displayProduct.usageInstructions}</p>
+                                    <div className={styles.descriptionSection}>
+                                        <h5 className={styles.sectionTitle}>Hướng dẫn sử dụng</h5>
+                                        <p className={styles.sectionContent}>{displayProduct.usageInstructions}</p>
                                     </div>
                                 )}
 
                                 {displayProduct.safetyNote && (
-                                    <div style={{ marginTop: '16px' }}>
-                                        <strong>Lưu ý an toàn:</strong>
-                                        <p style={{ marginTop: '8px', color: '#d32f2f' }}>{displayProduct.safetyNote}</p>
+                                    <div className={styles.descriptionSection}>
+                                        <h5 className={styles.sectionTitle}>Lưu ý an toàn</h5>
+                                        <p className={styles.safetyNote}>{displayProduct.safetyNote}</p>
                                     </div>
                                 )}
                             </div>
