@@ -233,12 +233,19 @@ function NavBar() {
     // Category selection handler
     const handleCategorySelect = (category) => {
         const categoryId = category?.id;
-        const categoryName = category?.name;
 
         if (categoryId) {
-            navigate(`/products?categoryId=${categoryId}`);
-        } else if (categoryName) {
-            navigate(`/products?categoryName=${encodeURIComponent(categoryName)}`);
+            navigate(`/category/${categoryId}`);
+        } else {
+            // Fallback: nếu không có ID, thử tìm bằng name
+            const categoryName = category?.name;
+            if (categoryName) {
+                // Tìm category trong danh sách đã load
+                const foundCategory = categories.find(c => c.name === categoryName);
+                if (foundCategory?.id) {
+                    navigate(`/category/${foundCategory.id}`);
+                }
+            }
         }
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -297,8 +304,8 @@ function NavBar() {
                     type="button"
                     className={cx('mobile-dropdown-item')}
                     variants={mobileItemVariants}
-                    whileHover={{ 
-                        scale: 1.02, 
+                    whileHover={{
+                        scale: 1.02,
                         x: 8,
                         backgroundColor: '#f3f4f6',
                     }}
@@ -324,14 +331,14 @@ function NavBar() {
 
         const parentColumnVariants = {
             open: {
-                transition: { 
-                    staggerChildren: 0.03, 
+                transition: {
+                    staggerChildren: 0.03,
                     delayChildren: 0.05,
                 },
             },
             closed: {
-                transition: { 
-                    staggerChildren: 0.02, 
+                transition: {
+                    staggerChildren: 0.02,
                     staggerDirection: -1,
                 },
             },
@@ -342,11 +349,11 @@ function NavBar() {
                 opacity: 1,
                 x: 0,
                 scale: 1,
-                transition: { 
+                transition: {
                     type: 'spring',
                     stiffness: 300,
                     damping: 25,
-                    staggerChildren: 0.02, 
+                    staggerChildren: 0.02,
                     delayChildren: 0.05,
                 },
             },
@@ -354,11 +361,11 @@ function NavBar() {
                 opacity: 0,
                 x: -20,
                 scale: 0.95,
-                transition: { 
+                transition: {
                     type: 'spring',
                     stiffness: 300,
                     damping: 25,
-                    staggerChildren: 0.01, 
+                    staggerChildren: 0.01,
                     staggerDirection: -1,
                 },
             },
@@ -366,8 +373,8 @@ function NavBar() {
 
         return (
             <div className={cx('dropdown-main')}>
-                <motion.div 
-                    className={cx('dropdown-parent-column')} 
+                <motion.div
+                    className={cx('dropdown-parent-column')}
                     variants={parentColumnVariants}
                     initial="closed"
                     animate="open"
@@ -383,8 +390,8 @@ function NavBar() {
                                     hasChildren: hasChildren,
                                 })}
                                 variants={categoryItemVariants}
-                                whileHover={{ 
-                                    scale: 1.02, 
+                                whileHover={{
+                                    scale: 1.02,
                                     x: 6,
                                     backgroundColor: '#f3f4f6',
                                 }}
@@ -399,7 +406,7 @@ function NavBar() {
                                 {hasChildren && (
                                     <motion.span
                                         className={cx('arrow-icon')}
-                                        animate={{ 
+                                        animate={{
                                             rotate: activeParentId === category.id ? 0 : -90,
                                             opacity: activeParentId === category.id ? 1 : 0.5,
                                         }}
@@ -412,7 +419,7 @@ function NavBar() {
                         );
                     })}
                 </motion.div>
-                <motion.div 
+                <motion.div
                     className={cx('submenu-panel')}
                     variants={submenuPanelVariants}
                     initial="closed"
@@ -423,14 +430,14 @@ function NavBar() {
                         <motion.div
                             variants={{
                                 open: {
-                                    transition: { 
-                                        staggerChildren: 0.02, 
+                                    transition: {
+                                        staggerChildren: 0.02,
                                         delayChildren: 0.05,
                                     },
                                 },
                                 closed: {
-                                    transition: { 
-                                        staggerChildren: 0.01, 
+                                    transition: {
+                                        staggerChildren: 0.01,
                                         staggerDirection: -1,
                                     },
                                 },
@@ -444,8 +451,8 @@ function NavBar() {
                                     type="button"
                                     className={cx('submenu-item')}
                                     variants={submenuItemVariants}
-                                    whileHover={{ 
-                                        scale: 1.05, 
+                                    whileHover={{
+                                        scale: 1.05,
                                         x: 8,
                                         backgroundColor: '#f3f4f6',
                                     }}
@@ -458,7 +465,7 @@ function NavBar() {
                             ))}
                         </motion.div>
                     ) : (
-                        <motion.div 
+                        <motion.div
                             className={cx('submenu-empty')}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -473,34 +480,34 @@ function NavBar() {
     };
 
     return (
-        <motion.nav 
+        <motion.nav
             className={cx('navbar')}
             initial={{ y: -100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         >
             <div className={cx('navbar-content')}>
-                <motion.div 
+                <motion.div
                     className={cx('dropdown-container')}
                     onMouseEnter={openDropdown}
                     onMouseLeave={closeDropdown}
                 >
                     <motion.button
                         className={cx('nav-trigger', { active: isHome || isDropdownOpen })}
-                        whileHover={{ 
+                        whileHover={{
                             scale: 1.05,
                             backgroundColor: 'rgba(255, 255, 255, 0.15)',
                         }}
                         whileTap={{ scale: 0.98 }}
                         animate={{
-                            backgroundColor: isHome || isDropdownOpen 
-                                ? '#d6002f' 
+                            backgroundColor: isHome || isDropdownOpen
+                                ? '#d6002f'
                                 : 'transparent',
                         }}
                         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                     >
                         <motion.span
-                            animate={{ 
+                            animate={{
                                 rotate: isDropdownOpen ? 90 : 0,
                             }}
                             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
@@ -509,7 +516,7 @@ function NavBar() {
                         </motion.span>
                         <span>TẤT CẢ DANH MỤC</span>
                         <motion.span
-                            animate={{ 
+                            animate={{
                                 rotate: isDropdownOpen ? 180 : 0,
                             }}
                             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
@@ -538,8 +545,8 @@ function NavBar() {
                     whileHover="hover"
                     whileTap="tap"
                 >
-                    <Link 
-                        to={routes.promotion} 
+                    <Link
+                        to={routes.promotion}
                         className={cx('nav-link', { active: isPromotion })}
                     >
                         <motion.span variants={navLinkVariants}>
@@ -564,8 +571,8 @@ function NavBar() {
                     whileHover="hover"
                     whileTap="tap"
                 >
-                    <Link 
-                        to={routes.newproduct} 
+                    <Link
+                        to={routes.newproduct}
                         className={cx('nav-link', { active: isNewProduct })}
                     >
                         <motion.span variants={navLinkVariants}>

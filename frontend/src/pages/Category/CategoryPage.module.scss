@@ -36,6 +36,20 @@
         }
     }
 
+    .breadcrumb-link {
+        border: none;
+        background: none;
+        color: inherit;
+        cursor: pointer;
+        padding: 0;
+        font-weight: 500;
+
+        &:hover {
+            color: #1a3c5a;
+            text-decoration: underline;
+        }
+    }
+
     strong {
         color: #12263c;
     }

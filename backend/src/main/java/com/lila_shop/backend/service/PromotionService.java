@@ -798,16 +798,14 @@ public class PromotionService {
             if (nextPromotion != null) {
                 // Áp dụng promotion kế tiếp
                 double discountAmount = calculateDiscountAmount(nextPromotion, unitPrice);
-                double finalPrice = Math.max(0, unitPrice + (tax * unitPrice) - discountAmount);
+                double finalPrice = Math.max(0, unitPrice * (1 + tax) - discountAmount);
 
                 product.setDiscountValue(discountAmount);
                 product.setPrice(finalPrice);
                 product.setPromotion(nextPromotion);
             } else {
-                // Không có promotion kế tiếp, khôi phục về giá gốc
-                // price = unitPrice + tax * unitPrice (không có discount)
                 product.setDiscountValue(0.0);
-                product.setPrice(unitPrice + (tax * unitPrice));
+                product.setPrice(unitPrice * (1 + tax));
                 product.setPromotion(null);
             }
         }

@@ -120,9 +120,6 @@ function PromotionDetailPage() {
     const getConditionText = () => {
         if (!promotion) return '';
         const conditions = [];
-        if (promotion.minOrderValue && promotion.minOrderValue > 0) {
-            conditions.push(`Đơn hàng từ ${formatPrice(promotion.minOrderValue)} trở lên`);
-        }
         return conditions.join(', ') || '-';
     };
 
@@ -254,21 +251,7 @@ function PromotionDetailPage() {
                         </div>
                     </div>
 
-                    {/* 4. Điều kiện áp dụng - Giá trị đơn từ */}
-                    <div className={cx('form-group')}>
-                        <label className={cx('form-label')}>Điều kiện áp dụng</label>
-                        <div className={cx('condition-row')}>
-                            <label className={cx('condition-label')}>Giá trị đơn từ (VNĐ):</label>
-                            <input
-                                type="text"
-                                className={cx('form-input', 'condition-input')}
-                                value={promotion.minOrderValue ? formatPrice(promotion.minOrderValue) : ''}
-                                readOnly
-                            />
-                        </div>
-                    </div>
-
-                    {/* 5. Radio buttons: Theo danh mục mỹ phẩm / Theo sản phẩm cụ thể */}
+                    {/* 4. Radio buttons: Theo danh mục mỹ phẩm / Theo sản phẩm cụ thể */}
                     <div className={cx('form-group')}>
                         <div className={cx('radio-group')}>
                             <label className={cx('radio-label')}>

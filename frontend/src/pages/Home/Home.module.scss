@@ -1,282 +1,929 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&display=swap');
 
+// Modern Color Palette with Vibrant Gradients
+$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+$accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+$warm-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+$dark-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+$neon-gradient: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+
+$bg-primary: #0a0e27;
+$bg-secondary: #1a1f3a;
+$bg-card: #ffffff;
+$bg-light: #f8f9fa;
+$text-primary: #1a1f3a;
+$text-secondary: #6c757d;
+$text-light: #ffffff;
+$accent-pink: #ff6b9d;
+$accent-purple: #9d4edd;
+$accent-blue: #4cc9f0;
+$border-light: rgba(255, 255, 255, 0.1);
+$shadow-soft: 0 10px 40px rgba(0, 0, 0, 0.08);
+$shadow-medium: 0 15px 50px rgba(0, 0, 0, 0.12);
+$shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.18);
+$shadow-glow: 0 0 30px rgba(102, 126, 234, 0.3);
+
+// Border Radius
+$radius-xs: 12px;
+$radius-sm: 20px;
+$radius-md: 28px;
+$radius-lg: 40px;
+$radius-xl: 60px;
+$radius-full: 9999px;
+
+// Main Layout
 .home-wrapper {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 50%, #f0f4ff 100%);
+    position: relative;
+    overflow-x: hidden;
+
+    &::before {
+        content: '';
+        position: fixed;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: 
+            radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.08) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.08) 0%, transparent 50%);
+        z-index: 0;
+        pointer-events: none;
+        animation: float 20s ease-in-out infinite;
+        will-change: transform;
+    }
+}
+
+@keyframes float {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    33% { transform: translate(30px, -30px) rotate(120deg); }
+    66% { transform: translate(-20px, 20px) rotate(240deg); }
 }
 
 .home-content {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 15px;
-    gap: 22px;
+    padding: 0;
+    gap: 0;
+    width: 100%;
+    position: relative;
+    z-index: 1;
 }
 
-.api-notice {
-    border-radius: 10px;
-    padding: 12px 16px;
+// Hero Section - Full Width
+.hero-section {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    position: relative;
+}
+
+.hero-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+// Voucher & Promotion Section - New Grid Layout
+.voucher-promo-section {
+    width: 100%;
+    padding: 60px 40px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.9) 100%);
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.4) 50%, transparent 100%);
+    }
+}
+
+.voucher-promo-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    position: relative;
+    z-index: 1;
+}
+
+.voucher-column,
+.promotion-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.voucher-column .section-header,
+.promotion-column .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 0;
+    background: transparent;
+    border-bottom: none;
+}
+
+.voucher-column .section-title,
+.promotion-column .section-title {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: $text-primary;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0;
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: $text-primary;
+    background-clip: unset;
+
+    .title-icon {
+        font-size: 2rem;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    }
+
+    &::after {
+        display: none;
+    }
+}
+
+.view-all-link {
+    font-size: 0.95rem;
     font-weight: 600;
-    background: #f8fafc;
-    color: #0f172a;
-    border: 1px solid #e2e8f0;
+    color: $accent-purple;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    padding: 8px 16px;
+    border-radius: $radius-sm;
+    background: rgba(157, 78, 221, 0.1);
+
+    &:hover {
+        color: $text-light;
+        background: $accent-purple;
+        transform: translateX(4px);
+    }
+}
+
+// Voucher Grid
+.voucher-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.voucher-card {
+    background: $primary-gradient;
+    border-radius: $radius-md;
+    overflow: hidden;
+    box-shadow: $shadow-medium;
+    cursor: pointer;
+    position: relative;
+    will-change: transform;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    &:hover::before {
+        opacity: 1;
+    }
+}
+
+.voucher-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    height: 100%;
+}
+
+.voucher-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 120px;
+    justify-content: space-between;
+}
+
+.voucher-discount {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.discount-value {
+    font-size: 2rem;
+    font-weight: 900;
+    color: $text-light;
+    line-height: 1;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.discount-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.voucher-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.voucher-code {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.code-label {
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.code-value {
+    font-weight: 700;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 10px;
+    border-radius: $radius-xs;
+    backdrop-filter: blur(4px);
+}
+
+.voucher-condition {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 500;
+}
+
+// Promotion Grid
+.promotion-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.promotion-card {
+    background: $bg-card;
+    border-radius: $radius-md;
+    overflow: hidden;
+    box-shadow: $shadow-soft;
+    cursor: pointer;
+    position: relative;
+    will-change: transform;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+
+    &:hover {
+        border-color: rgba(102, 126, 234, 0.3);
+        box-shadow: $shadow-medium;
+    }
+}
+
+.promotion-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    height: 100%;
+}
+
+.promotion-image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 160px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.promotion-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.promotion-card:hover .promotion-image {
+    transform: scale(1.1);
+}
+
+.promotion-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+    display: flex;
+    align-items: flex-end;
+    padding: 20px;
+}
+
+.promotion-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: $text-light;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.promotion-content {
+    padding: 20px;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+}
+
+.promotion-desc {
+    margin: 0;
+    font-size: 0.9rem;
+    color: $text-secondary;
+    line-height: 1.5;
+}
+
+// Skeleton Cards
+.skeleton-card {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s ease-in-out infinite;
+    border-radius: $radius-md;
+    min-height: 120px;
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 20px;
+    color: $text-secondary;
+    font-size: 0.95rem;
+}
+
+// Skeleton loaders
+.skeleton-banner {
+    height: 400px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s ease-in-out infinite;
+    border-radius: $radius-md;
+    margin: 20px 0;
+}
+
+.skeleton-product-list {
+    height: 300px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s ease-in-out infinite;
+    border-radius: $radius-sm;
+    margin: 20px 0;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+// Status Messages with Glass Morphism
+.status-message {
+    padding: 20px 28px;
+    border-radius: $radius-md;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    color: $text-primary;
+    border: 2px solid rgba(102, 126, 234, 0.2);
+    box-shadow: $shadow-soft;
+    text-align: center;
+    margin: 32px 40px;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+        animation: shimmer 2s infinite;
+    }
 
     &.error {
-        background: #fef2f2;
-        border-color: #fecaca;
-        color: #b91c1c;
+        background: linear-gradient(135deg, rgba(254, 226, 226, 0.95) 0%, rgba(254, 202, 202, 0.95) 100%);
+        border-color: rgba(248, 113, 113, 0.4);
+        color: #991b1c;
     }
 }
 
-/* Banner1 layout moved to components/Common/Banner/Banner1 */
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
 
-/* Hero banner styles moved to Banner1 */
-
-
-
-/* .hero-link moved to Banner1 */
-
-/* .hero-image moved to Banner1 */
-
-/* Promo column moved to Banner1 */
-
-/* .promo-block moved to Banner1 */
-
-/* .promo-block-1 moved to Banner1 */
-
-/* .promo-block-2 moved to Banner1 */
-
-/* .promo-block-3 moved to Banner1 */
-
-/* .promo-author removed */
-
-/* .promo-title removed */
-
-/* .promo-link moved to Banner1 */
-
-/* .promo-image moved to Banner1 */
-
-.promo-button {
-    background: #8B4513;
-    color: white;
+// Product Sections - Modern Glass Cards
+.product-section {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 0;
     border: none;
-    padding: 7px 15px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    align-self: flex-start;
-    
-    &:hover {
-        background: #A0522D;
-        transform: translateY(-1px);
-    }
-}
-
-/* Banner2 moved to components/Common/Banner/Banner2 */
-
-/* .banner-card moved to Banner2 */
-
-/* .banner-1 moved to Banner2 */
-
-/* .banner-2 moved to Banner2 */
-
-/* .banner-3 moved to Banner2 */
-
-/* .banner-content removed */
-
-/* .banner-title removed */
-
-/* banner text helpers removed */
-
-/* .banner-link moved to Banner2 */
-
-/* .banner-image moved to Banner2 */
-
-.sale-tag {
-    position: absolute;
-    top: 11px;
-    right: 11px;
-    background: #FF4444;
-    color: white;
-    padding: 3px 7px;
-    border-radius: 15px;
-    font-size: 0.6rem;
-    font-weight: 700;
-    z-index: 3;
-}
-
-.sale-tag-large {
-    font-size: 0.5rem;
-    padding: 3px 6px;
-}
-
-/* Responsive Design */
-@media (max-width: 1200px) {
-    .main-content {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
-    .hero-banner {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .hero-book-cover {
-        margin-left: 0;
-        margin-top: 20px;
-    }
-    
-    .bottom-banners {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-}
-
-@media (max-width: 768px) {
-    .home-content {
-        padding: 15px;
-        gap: 20px;
-    }
-    
-    .hero-title {
-        font-size: 2.5rem;
-    }
-    
-    .hero-subtitle {
-        font-size: 1rem;
-    }
-    
-    .promo-block {
-        padding: 20px;
-        min-height: 120px;
-    }
-    
-    .banner-card {
-        padding: 20px;
-        min-height: 150px;
-    }
-}
-
-/* Mid-Autumn background section */
-.mid-autumn-section {
-    position: relative;
-    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    margin: 0;
+    position: relative;
+    padding: 64px 0;
+    border-top: 3px solid transparent;
+    border-image: $primary-gradient 1;
+    contain: layout style paint;
+
+    &:nth-child(even) {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 249, 250, 0.6) 100%);
+        border-image: $secondary-gradient 1;
+    }
+
+    &:nth-child(3n) {
+        background: linear-gradient(180deg, rgba(248, 249, 250, 0.6) 0%, rgba(255, 255, 255, 0.8) 100%);
+        border-image: $accent-gradient 1;
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3), transparent);
+    }
+}
+
+.section-header {
+    background: transparent;
+    padding: 0 40px 40px;
+    border-bottom: none;
+    position: relative;
+}
+
+.section-title {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    text-transform: none;
+    color: $text-primary;
+    position: relative;
+    display: inline-block;
+    padding-bottom: 16px;
+    background: $primary-gradient;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    will-change: transform;
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 80px;
+        height: 5px;
+        background: $primary-gradient;
+        border-radius: $radius-full;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    &::before {
+        content: '';
+        position: absolute;
+        bottom: -12px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.2) 50%, transparent 100%);
+    }
+}
+
+// Featured Section - Animated Hero
+.featured-section {
+    position: relative;
+    border-radius: 0;
+    overflow: hidden;
+    box-shadow: none;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    padding: 350px 16px 0; /* space for banner area on top */
-    margin-bottom: 24px;
+    padding: 100px 40px;
+    margin: 0;
+    width: 100%;
+    min-height: 600px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    will-change: transform;
+    contain: layout style paint;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.88) 0%, rgba(118, 75, 162, 0.88) 100%);
+        backdrop-filter: blur(3px);
+    }
 }
 
-.mid-autumn-overlay {
+.featured-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.12);
+    background: radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+    pointer-events: none;
+    will-change: background;
 }
 
-.mid-autumn-header {
-    padding: 26px 20px 10px;
-    text-align: center;
+.featured-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-.mid-autumn-title {
-    color: #fff;
-    font-size: 1.6rem;
-    font-weight: 800;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin: 0;
-}
-/* Trending section */
-.trending-section {
-    margin-top: 32px;
-    background: #fff;
-    border-radius: 10px;
-    border: 1px solid #e5e7eb; /* subtle frame */
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.16), 0 8px 24px rgba(0, 0, 0, 0.12);
-    overflow: hidden;
-}
-
-.trending-header {
-    background: linear-gradient(#f3f4f6, #ededed);
-    padding: 14px 70px;
-    border-bottom: 1px solid #dadde2;
-    box-shadow: 0 2px 6px rgba(0,0,0,.12), inset 0 -1px 0 rgba(0,0,0,.04);/* hairline */
-}
-
-.trending-title {
-    margin: 0;
-    font-size: 1.05rem;
-    font-weight: 800;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-}
-
-/* Service highlights row */
-.service-row {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+// Services Section - Interactive Cards
+.services {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(15px);
+    border: none;
     border-radius: 0;
-    margin-top: 16px;
+    box-shadow: none;
+    overflow: hidden;
+    margin: 0;
+    width: 100%;
+    padding: 80px 0;
+    position: relative;
+    contain: layout style paint;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.4) 50%, transparent 100%);
+    }
 }
 
-.service-grid {
+.services-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 40px;
 }
 
 .service-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
-    padding: 50px 18px;
-    border-right: 1px solid #e5e7eb;
-}
+    text-align: center;
+    gap: 20px;
+    padding: 40px 28px;
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    background: transparent;
+    cursor: pointer;
+    will-change: transform;
 
-.service-item:last-child {
-    border-right: none;
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: $primary-gradient;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        border-radius: $radius-md;
+        z-index: 0;
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 3px;
+        background: $primary-gradient;
+        border-radius: $radius-full;
+        transition: width 0.4s ease;
+    }
+
+    &:last-child {
+        border-right: none;
+    }
+
+    &:hover {
+        &::before {
+            opacity: 0.08;
+        }
+
+        &::after {
+            width: 60%;
+        }
+
+        .service-icon {
+            filter: drop-shadow(0 8px 20px rgba(102, 126, 234, 0.4));
+        }
+    }
 }
 
 .service-icon {
-    width: 40px;
-    height: 40px;
+    width: 72px;
+    height: 72px;
     object-fit: contain;
+    flex-shrink: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
+    position: relative;
+    z-index: 1;
+    will-change: transform;
 }
 
 .service-text {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
+    position: relative;
+    z-index: 1;
 }
 
 .service-title {
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 1.1rem;
+    color: $text-primary;
+    letter-spacing: -0.3px;
+    transition: color 0.3s ease;
 }
 
 .service-desc {
-    font-size: 0.8rem;
-    color: #555;
+    font-size: 0.9rem;
+    color: $text-secondary;
+    line-height: 1.6;
+    font-weight: 400;
 }
 
-/* Container below background for products */
-.mid-autumn-products {
-    padding: 0 16px 20px;
+// Bottom Bar - Animated Gradient
+.bottom-bar {
+    height: 80px;
+    background: $primary-gradient;
+    border-radius: 0;
+    margin: 0;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    will-change: height;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
+    }
 }
 
-/* Hot Promotions styles moved into component-scoped styles */
+// Responsive Design
+@media (max-width: 1200px) {
+    .section-header {
+        padding: 0 32px 36px;
+    }
 
-/* Solid blue bar like header navbar at page bottom */
-.home-bottom-bar {
-    height: 56px;
-    background: #173a55;
+    .section-title {
+        font-size: 2rem;
+    }
+
+    .services-grid {
+        padding: 0 32px;
+    }
+
+    .featured-section {
+        padding: 80px 32px;
+        min-height: 500px;
+    }
+
+    .status-message {
+        margin: 28px 32px;
+    }
 }
 
+@media (max-width: 768px) {
+    .voucher-promo-section {
+        padding: 40px 24px;
+    }
+
+    .voucher-promo-container {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .voucher-column .section-title,
+    .promotion-column .section-title {
+        font-size: 1.5rem;
+    }
+
+    .voucher-grid,
+    .promotion-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .voucher-content {
+        min-height: 100px;
+        padding: 16px;
+    }
+
+    .discount-value {
+        font-size: 1.75rem;
+    }
+
+    .promotion-image-wrapper {
+        height: 140px;
+    }
+
+    .status-message {
+        margin: 24px 20px;
+        padding: 16px 24px;
+        border-radius: $radius-sm;
+    }
+
+    .product-section {
+        padding: 48px 0;
+    }
+
+    .section-header {
+        padding: 0 24px 32px;
+    }
+
+    .section-title {
+        font-size: 1.75rem;
+
+        &::after {
+            width: 60px;
+            height: 4px;
+        }
+    }
+
+    .services {
+        padding: 64px 0;
+    }
+
+    .services-grid {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 0 24px;
+        gap: 0;
+    }
+
+    .service-item {
+        padding: 32px 20px;
+        border-right: 1px solid rgba(0, 0, 0, 0.06);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+
+        &:nth-child(2n) {
+            border-right: none;
+        }
+
+        &:nth-last-child(-n + 2) {
+            border-bottom: none;
+        }
+    }
+
+    .service-icon {
+        width: 64px;
+        height: 64px;
+    }
+
+    .featured-section {
+        padding: 60px 24px;
+        min-height: 450px;
+    }
+
+    .bottom-bar {
+        height: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .voucher-promo-section {
+        padding: 32px 20px;
+    }
+
+    .voucher-column .section-title,
+    .promotion-column .section-title {
+        font-size: 1.25rem;
+
+        .title-icon {
+            font-size: 1.5rem;
+        }
+    }
+
+    .view-all-link {
+        font-size: 0.85rem;
+        padding: 6px 12px;
+    }
+
+    .voucher-content {
+        min-height: 90px;
+        padding: 14px;
+        gap: 8px;
+    }
+
+    .discount-value {
+        font-size: 1.5rem;
+    }
+
+    .promotion-image-wrapper {
+        height: 120px;
+    }
+
+    .status-message {
+        margin: 20px 16px;
+        padding: 14px 20px;
+        font-size: 0.9rem;
+    }
+
+    .product-section {
+        padding: 40px 0;
+    }
+
+    .section-header {
+        padding: 0 20px 28px;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+    }
+
+    .services {
+        padding: 48px 0;
+    }
+
+    .services-grid {
+        grid-template-columns: 1fr;
+        padding: 0 20px;
+    }
+
+    .service-item {
+        padding: 28px 20px;
+        border-right: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    .service-icon {
+        width: 56px;
+        height: 56px;
+    }
+
+    .featured-section {
+        padding: 48px 20px;
+        min-height: 400px;
+    }
+}

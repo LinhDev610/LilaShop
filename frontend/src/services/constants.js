@@ -1,6 +1,13 @@
 // Constants
 // Hằng số của ứng dụng
 
+// Import icons for Home page service items
+import iconGiaoHang from '../assets/icons/icon_giaohangtannoi.png';
+import iconDoiTra from '../assets/icons/icon_doitrahang.png';
+import iconThanhToan from '../assets/icons/icon_thanhtoanantoan.png';
+import iconHoTro from '../assets/icons/icon_hotro247.png';
+import iconKhuyenMai from '../assets/icons/icon_khuyenmaihapdan.png';
+
 // =========== API Configuration ===========
 // API Base URL fallback - được cấu hình trong backend/application.yaml: app.frontend.base-url
 export const API_BASE_URL_FALLBACK = 'http://localhost:8080/lila_shop';
@@ -413,3 +420,44 @@ export const INITIAL_FORM_STATE_ADDRESS_DETAIL = {
 // =========== Staff Product Update Constants ===========
 // Giới hạn số lượng tồn kho nhân viên có thể thêm mà không cần duyệt
 export const STAFF_STOCK_ADD_LIMIT = 100;
+
+// =========== Home Page Constants ===========
+// Product limits for Home page
+export const PRODUCT_LIMITS = {
+    PROMOTIONAL: 10,
+    FAVORITE: 10,
+    BEST_SELLER: 10,
+    NEWEST: 10,
+};
+
+// Rating threshold for favorite products
+export const RATING_THRESHOLD = 4.9;
+
+// Service items for Home page
+export const SERVICE_ITEMS = [
+    {
+        icon: iconGiaoHang,
+        title: 'Giao hàng tận nơi',
+        desc: 'Dành cho tất cả đơn hàng',
+    },
+    {
+        icon: iconDoiTra,
+        title: 'Đổi trả hàng 90 ngày',
+        desc: 'Nếu hàng hóa có vấn đề',
+    },
+    {
+        icon: iconThanhToan,
+        title: 'Thanh toán an toàn',
+        desc: '100% thanh toán an toàn',
+    },
+    {
+        icon: iconHoTro,
+        title: 'Hỗ trợ 24/7',
+        desc: 'Hỗ trợ khách hàng 24/7',
+    },
+    {
+        icon: iconKhuyenMai,
+        title: 'Khuyến mãi hấp dẫn',
+        desc: 'Chương trình khuyến mãi hấp dẫn',
+    },
+];

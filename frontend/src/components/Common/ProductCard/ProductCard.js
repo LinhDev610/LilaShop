@@ -27,24 +27,58 @@ export default function ProductCard({ product = {} }) {
     const parsePrice = (value) =>
         typeof value === 'number' && Number.isFinite(value) ? value : null;
 
-    let resolvedOriginalPrice =
-        parsePrice(originalPrice) ?? parsePrice(unitPrice) ?? parsePrice(price) ?? 0;
-    let resolvedCurrentPrice =
-        parsePrice(currentPrice) ?? parsePrice(price) ?? resolvedOriginalPrice ?? 0;
+    // Get tax from product (default 0)
+    const tax = typeof product?.tax === 'number' ? product.tax : 0;
 
+    // Calculate originalPrice (giá gốc đã có tax nhưng chưa có promotion discount)
+    let resolvedOriginalPrice = 0;
+    const parsedUnitPrice = parsePrice(unitPrice);
+    const parsedPrice = parsePrice(price);
+    const parsedCurrentPrice = parsePrice(currentPrice);
+    const parsedOriginalPrice = parsePrice(originalPrice);
+
+    if (parsedOriginalPrice != null && parsedOriginalPrice > 0) {
+        resolvedOriginalPrice = parsedOriginalPrice;
+    } else if (parsedUnitPrice != null && parsedUnitPrice > 0) {
+        resolvedOriginalPrice = parsedUnitPrice * (1 + tax);
+    } else if (parsedPrice != null && parsePrice(discountValue) > 0) {
+        // Nếu không có unitPrice, tính ngược lại từ price và discountValue
+        resolvedOriginalPrice = parsedPrice + parsePrice(discountValue);
+    } else if (parsedPrice != null) {
+        resolvedOriginalPrice = parsedPrice;
+    }
+
+    // currentPrice là giá cuối cùng (đã có promotion discount)
+    let resolvedCurrentPrice = 0;
+    if (parsedCurrentPrice != null && parsedCurrentPrice > 0) {
+        resolvedCurrentPrice = parsedCurrentPrice;
+    } else if (parsedPrice != null && parsedPrice > 0) {
+        // Backend đã tính: price = unitPrice * (1 + tax) - discountValue
+        resolvedCurrentPrice = parsedPrice;
+    } else if (parsedUnitPrice != null && parsedUnitPrice > 0) {
+        // Tính từ unitPrice, tax và discountValue
+        const parsedDiscountValue = parsePrice(discountValue) || 0;
+        resolvedCurrentPrice = Math.max(0, parsedUnitPrice * (1 + tax) - parsedDiscountValue);
+    } else {
+        resolvedCurrentPrice = resolvedOriginalPrice;
+    }
+
+    // Ensure originalPrice >= currentPrice
     if (resolvedOriginalPrice < resolvedCurrentPrice) {
         resolvedOriginalPrice = resolvedCurrentPrice;
     }
 
-    const computedDiscountAmount =
-        parsePrice(discountValue) ?? Math.max(resolvedOriginalPrice - resolvedCurrentPrice, 0);
-
+    // Calculate discount percentage
+    const parsedDiscountValue = parsePrice(discountValue) || 0;
     let resolvedDiscount = Number.isFinite(discount) ? Math.max(0, discount) : null;
     if (resolvedDiscount === null) {
-        resolvedDiscount =
-            resolvedOriginalPrice > 0 && computedDiscountAmount > 0
-                ? Math.min(99, Math.round((computedDiscountAmount / resolvedOriginalPrice) * 100))
-                : 0;
+        if (parsedDiscountValue > 0 && resolvedOriginalPrice > 0) {
+            resolvedDiscount = Math.min(99, Math.round((parsedDiscountValue / resolvedOriginalPrice) * 100));
+        } else if (resolvedOriginalPrice > resolvedCurrentPrice && resolvedOriginalPrice > 0) {
+            resolvedDiscount = Math.min(99, Math.round(((resolvedOriginalPrice - resolvedCurrentPrice) / resolvedOriginalPrice) * 100));
+        } else {
+            resolvedDiscount = 0;
+        }
     }
 
     const resolvedTitle = title || name || 'Sản phẩm';

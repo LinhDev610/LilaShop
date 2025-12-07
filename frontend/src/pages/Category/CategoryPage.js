@@ -21,6 +21,7 @@ export default function CategoryPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const [categoryInfo, setCategoryInfo] = useState(null);
+    const [parentCategoryInfo, setParentCategoryInfo] = useState(null);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -32,9 +33,9 @@ export default function CategoryPage() {
     // Sắp xếp sản phẩm dựa trên sortBy
     const sortedProducts = useMemo(() => {
         if (!products.length) return [];
-        
+
         const sorted = [...products];
-        
+
         switch (sortBy) {
             case 'price-high':
                 sorted.sort((a, b) => {
@@ -73,7 +74,7 @@ export default function CategoryPage() {
                 });
                 break;
         }
-        
+
         return sorted;
     }, [products, sortBy]);
 
@@ -107,13 +108,31 @@ export default function CategoryPage() {
             try {
                 setLoading(true);
                 setError('');
+                setParentCategoryInfo(null); // Reset parent category
+
                 const [categoryData, productData] = await Promise.all([
                     getCategoryById(id).catch(() => null),
                     getProductsByCategory(id).catch(() => []),
                 ]);
+
                 if (ignore) return;
+
                 setCategoryInfo(categoryData);
                 setProducts(Array.isArray(productData) ? productData : []);
+
+                // Nếu category có parentId, fetch thông tin parent category
+                if (categoryData?.parentId) {
+                    try {
+                        const parentData = await getCategoryById(categoryData.parentId).catch(() => null);
+                        if (!ignore && parentData) {
+                            setParentCategoryInfo(parentData);
+                        }
+                    } catch (err) {
+                        // Ignore error khi fetch parent category
+                        console.warn('Failed to fetch parent category:', err);
+                    }
+                }
+
                 if (!categoryData) {
                     setError('Danh mục không tồn tại hoặc đã bị ẩn.');
                 } else if (!productData?.length) {
@@ -139,6 +158,13 @@ export default function CategoryPage() {
 
     const handleBackHome = () => {
         navigate('/');
+    };
+
+    const handleNavigateToCategory = (categoryId) => {
+        if (categoryId) {
+            navigate(`/category/${categoryId}`);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     };
 
     const handleReload = () => {
@@ -257,6 +283,18 @@ export default function CategoryPage() {
                         </button>
                         <span>/</span>
                         <span>Danh mục</span>
+                        {parentCategoryInfo && (
+                            <>
+                                <span>/</span>
+                                <button
+                                    type="button"
+                                    onClick={() => handleNavigateToCategory(parentCategoryInfo.id)}
+                                    className={cxCategory('breadcrumb-link')}
+                                >
+                                    {parentCategoryInfo.name}
+                                </button>
+                            </>
+                        )}
                         {categoryName && (
                             <>
                                 <span>/</span>

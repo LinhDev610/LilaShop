@@ -73,7 +73,7 @@ export default function UpdatePromotionPage() {
                         description: promotion.description || '',
                         discountValue: promotion.discountValue ? String(promotion.discountValue) : '',
                         discountValueType: promotion.discountValueType || 'PERCENTAGE',
-                        minOrderValue: promotion.minOrderValue ? String(promotion.minOrderValue) : '',
+                        minOrderValue: '',
                         maxDiscountValue: promotion.maxDiscountValue ? String(promotion.maxDiscountValue) : '',
                         startDate: promotion.startDate ? promotion.startDate.split('T')[0] : '',
                         expiryDate: promotion.expiryDate ? promotion.expiryDate.split('T')[0] : '',
@@ -344,7 +344,7 @@ export default function UpdatePromotionPage() {
             description: formState.description.trim() || null,
             discountValue: discountValueNum,
             discountValueType: formState.discountValueType,
-            minOrderValue: formState.minOrderValue ? Number(formState.minOrderValue) : null,
+            minOrderValue: null,
             maxDiscountValue:
                 formState.discountValueType === 'PERCENTAGE' && formState.maxDiscountValue
                     ? Number(formState.maxDiscountValue)
@@ -605,22 +605,7 @@ export default function UpdatePromotionPage() {
                             </div>
                         </div>
 
-                        {/* 4. Điều kiện áp dụng - Giá trị đơn từ */}
-                        <div className={cx('form-group')}>
-                            <label className={cx('form-label')}>Điều kiện áp dụng</label>
-                            <div className={cx('condition-row')}>
-                                <label className={cx('condition-label')}>Giá trị đơn từ (VNĐ):</label>
-                                <input
-                                    type="text"
-                                    className={cx('form-input', 'condition-input')}
-                                    placeholder="VD: 400000"
-                                    value={formState.minOrderValue}
-                                    onChange={(e) => handleChange('minOrderValue', e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        {/* 5. Radio buttons: Theo danh mục mỹ phẩm / Theo sản phẩm cụ thể */}
+                        {/* 4. Radio buttons: Theo danh mục mỹ phẩm / Theo sản phẩm cụ thể */}
                         <div className={cx('form-group')}>
                             <div className={cx('radio-group')}>
                                 <label className={cx('radio-label')}>
@@ -657,7 +642,7 @@ export default function UpdatePromotionPage() {
                                         <input
                                             type="text"
                                             className={cx('form-input')}
-                                            placeholder="VD: Tối đa 50.000₫ /đơn"
+                                            placeholder="VD: Tối đa 50.000₫ /sản phẩm"
                                             value={formState.maxDiscountValue}
                                             onChange={(e) => handleChange('maxDiscountValue', e.target.value)}
                                         />
@@ -688,7 +673,7 @@ export default function UpdatePromotionPage() {
                                         <input
                                             type="text"
                                             className={cx('form-input')}
-                                            placeholder="VD: Tối đa 50.000₫ /đơn"
+                                            placeholder="VD: Tối đa 50.000₫ /sản phẩm"
                                             value={formState.maxDiscountValue}
                                             onChange={(e) => handleChange('maxDiscountValue', e.target.value)}
                                         />

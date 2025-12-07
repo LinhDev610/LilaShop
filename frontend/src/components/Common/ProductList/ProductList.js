@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback, memo } from 'react';
 import classNames from 'classnames/bind';
 import ProductCard from '../ProductCard/ProductCard';
 import styles from './ProductList.module.scss';
@@ -9,9 +9,20 @@ import iconRightArrow from '../../../assets/icons/icon_rightarrow.png';
 
 const cx = classNames.bind(styles);
 
-// ProductList Component
-// Danh sách sản phẩm với filter, sort, pagination
-export default function ProductList({
+// Throttle function for scroll events
+const throttle = (func, limit) => {
+    let inThrottle;
+    return function (...args) {
+        if (!inThrottle) {
+            func.apply(this, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+};
+
+// ProductList Component - Memoized for performance
+const ProductList = memo(function ProductList({
     products = [],
     title = "SẢN PHẨM",
     showNavigation = true,
@@ -24,54 +35,78 @@ export default function ProductList({
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
 
-    const checkScrollPosition = () => {
+    const checkScrollPosition = useCallback(() => {
         if (productsRef.current) {
             const { scrollLeft, scrollWidth, clientWidth } = productsRef.current;
-            
-            // Kiểm tra nút trái: hiện khi scrollLeft > 0
-            setCanScrollLeft(scrollLeft > 0);
-            
-            // Kiểm tra nút phải: ẩn khi đã scroll gần hết
+
+            // Nút trái: hiện khi scrollLeft > 10 (có thể scroll)
+            setCanScrollLeft(scrollLeft > 10);
+
+            // Nút phải: ẩn khi đã scroll gần hết (còn ít nhất 50px)
             const maxScrollLeft = scrollWidth - clientWidth;
-            const canScrollRightValue = scrollLeft < maxScrollLeft - 100;
-            
-            setCanScrollRight(canScrollRightValue);
+            setCanScrollRight(scrollLeft < maxScrollLeft - 50);
         }
-    };
+    }, []);
 
-    const scrollLeft = () => {
+    // Throttled scroll handler for better performance
+    const throttledCheckScroll = useCallback(
+        throttle(checkScrollPosition, 100),
+        [checkScrollPosition]
+    );
+
+    const scrollLeft = useCallback(() => {
         if (productsRef.current) {
-            productsRef.current.scrollBy({
-                left: -300,
+            const container = productsRef.current;
+            const cardWidth = container.querySelector('.product-card')?.offsetWidth || 280;
+            const gap = 65; // gap giữa các card
+            const scrollAmount = cardWidth + gap;
+
+            container.scrollBy({
+                left: -scrollAmount,
                 behavior: 'smooth'
             });
         }
-    };
+    }, []);
 
-    const scrollRight = () => {
+    const scrollRight = useCallback(() => {
         if (productsRef.current) {
-            productsRef.current.scrollBy({
-                left: 300,
+            const container = productsRef.current;
+            const cardWidth = container.querySelector('.product-card')?.offsetWidth || 280;
+            const gap = 65; // gap giữa các card
+            const scrollAmount = cardWidth + gap;
+
+            container.scrollBy({
+                left: scrollAmount,
                 behavior: 'smooth'
             });
         }
-    };
+    }, []);
 
     useEffect(() => {
         const container = productsRef.current;
         if (container) {
-            // Kiểm tra vị trí ban đầu
-            checkScrollPosition();
-            
-            // Lắng nghe sự kiện scroll
-            container.addEventListener('scroll', checkScrollPosition);
-            
+            // Kiểm tra vị trí ban đầu sau khi render
+            const timeout = setTimeout(() => {
+                checkScrollPosition();
+            }, 100);
+
+            // Lắng nghe sự kiện scroll với throttle
+            container.addEventListener('scroll', throttledCheckScroll, { passive: true });
+
+            // Lắng nghe resize với throttle
+            const handleResize = throttle(() => {
+                checkScrollPosition();
+            }, 200);
+            window.addEventListener('resize', handleResize, { passive: true });
+
             // Cleanup
             return () => {
-                container.removeEventListener('scroll', checkScrollPosition);
+                clearTimeout(timeout);
+                container.removeEventListener('scroll', throttledCheckScroll);
+                window.removeEventListener('resize', handleResize);
             };
         }
-    }, [products]);
+    }, [products, checkScrollPosition, throttledCheckScroll]);
 
     if (!products || products.length === 0) {
         return (
@@ -103,16 +138,18 @@ export default function ProductList({
                             onClick={scrollLeft}
                             disabled={!canScrollLeft}
                             aria-hidden={!canScrollLeft}
+                            aria-label="Scroll left"
                         >
-                            <img src={iconLeftArrow} alt="Previous" className={cx('nav-icon')} />
+                            <img src={iconLeftArrow} alt="Previous" className={cx('nav-icon')} loading="lazy" />
                         </button>
                         <button
                             className={cx('nav-button', 'nav-right', { disabled: !canScrollRight })}
                             onClick={scrollRight}
                             disabled={!canScrollRight}
                             aria-hidden={!canScrollRight}
+                            aria-label="Scroll right"
                         >
-                            <img src={iconRightArrow} alt="Next" className={cx('nav-icon')} />
+                            <img src={iconRightArrow} alt="Next" className={cx('nav-icon')} loading="lazy" />
                         </button>
                     </>
                 )}
@@ -128,4 +165,8 @@ export default function ProductList({
             </div>
         </section>
     );
-}
+});
+
+ProductList.displayName = 'ProductList';
+
+export default ProductList;
