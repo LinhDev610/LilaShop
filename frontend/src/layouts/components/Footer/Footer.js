@@ -100,7 +100,7 @@ function Footer() {
                     <button
                         type="button"
                         className={cx('footer-link-btn')}
-                        onClick={() => handleNavigateAndScrollTop('/support/user')}
+                        onClick={() => handleNavigateAndScrollTop('/support')}
                     >
                         Hỗ trợ khách hàng
                     </button>
