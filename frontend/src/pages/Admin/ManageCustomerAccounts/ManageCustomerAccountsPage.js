@@ -5,7 +5,7 @@ import styles from './ManageCustomerAccountsPage.module.scss';
 import SearchAndSort from '../../../components/Common/SearchAndSort';
 import ConfirmDialog from '../../../components/Common/ConfirmDialog/DeleteAccountDialog';
 import Notification from '../../../components/Common/Notification/Notification';
-import { getAllUsers, updateUser, deleteUser } from '../../../services';
+import { getAllUsers, updateUser } from '../../../services';
 
 const cx = classNames.bind(styles);
 
@@ -247,57 +247,6 @@ function ManageCustomerAccountsPage() {
                 title: 'Thất bại',
                 message: `Không thể ${action} tài khoản: ${err.message || 'Vui lòng thử lại sau.'}`,
                 duration: 4000
-            });
-        }
-    };
-
-    // Handle delete customer account
-    const handleDelete = (customerId) => {
-        const customer = allCustomers.find((c) => c.id === customerId);
-        const customerName = customer?.fullName || customer?.email || `#${customerId}`;
-        setConfirmDialog({
-            open: true,
-            title: 'Xác nhận xóa tài khoản',
-            message: `Bạn có chắc chắn muốn xóa tài khoản ${customerName}? Hành động này không thể hoàn tác.`,
-            onConfirm: () => performDelete(customerId),
-        });
-    };
-
-    const performDelete = async (customerId) => {
-        setConfirmDialog(initialConfirmState);
-
-        try {
-            const token = getStoredToken();
-            if (!token) {
-                setNotif({
-                    open: true,
-                    type: 'error',
-                    title: 'Chưa đăng nhập',
-                    message: 'Vui lòng đăng nhập để tiếp tục',
-                    duration: 3000,
-                });
-                return;
-            }
-
-            await deleteUser(customerId, token);
-
-            // Sau khi xóa thành công, fetch lại dữ liệu từ backend để đảm bảo hiển thị đúng
-            await fetchCustomers();
-            setNotif({
-                open: true,
-                type: 'success',
-                title: 'Thành công',
-                message: 'Đã xóa tài khoản thành công',
-                duration: 3000,
-            });
-        } catch (err) {
-            console.error('Error deleting customer:', err);
-            setNotif({
-                open: true,
-                type: 'error',
-                title: 'Thất bại',
-                message: 'Không thể xóa tài khoản. Vui lòng thử lại sau.',
-                duration: 4000,
             });
         }
     };

@@ -257,7 +257,7 @@ export default function AddBannerPage() {
     };
 
     const handleAddProduct = () => {
-        setProductSearchTerm(''); // Reset search when opening modal
+        setProductSearchTerm('');
         setShowProductModal(true);
     };
 
