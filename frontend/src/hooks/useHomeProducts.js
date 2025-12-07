@@ -82,26 +82,29 @@ export const useHomeProducts = () => {
  */
 export const useCategorizedProducts = (allProducts) => {
     return useMemo(() => {
+        // Ensure allProducts is an array
+        const products = Array.isArray(allProducts) ? allProducts : [];
+        
         const promotional = sortAndSlice(
-            allProducts.filter((p) => (p.discount ?? 0) > 0),
+            products.filter((p) => p && (p.discount ?? 0) > 0),
             (p) => p.discount || 0,
             PRODUCT_LIMITS.PROMOTIONAL,
         );
 
         const favorite = sortAndSlice(
-            allProducts.filter((p) => (p.averageRating ?? 0) >= RATING_THRESHOLD),
+            products.filter((p) => p && (p.averageRating ?? 0) >= RATING_THRESHOLD),
             (p) => p.quantitySold || 0,
             PRODUCT_LIMITS.FAVORITE,
         );
 
         const bestSeller = sortAndSlice(
-            allProducts,
+            products.filter((p) => p), // Filter out null/undefined
             (p) => p.quantitySold || 0,
             PRODUCT_LIMITS.BEST_SELLER,
         );
 
         const newest = sortAndSlice(
-            allProducts,
+            products.filter((p) => p), // Filter out null/undefined
             (p) => (p.updatedAt ? new Date(p.updatedAt).getTime() : 0),
             PRODUCT_LIMITS.NEWEST,
         );

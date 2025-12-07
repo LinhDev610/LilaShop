@@ -574,13 +574,13 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
     // Nếu user chưa được load hoặc không có role, vẫn hiển thị (cho phép user chưa đăng nhập)
     const shouldHide = user && userRole && (userRole === 'ADMIN' || userRole === 'STAFF' || userRole === 'CUSTOMER_SUPPORT');
     
-    // Debug: Log để kiểm tra
-    console.log('[Chat Component] Render check:', {
-        hasUser: !!user,
-        userRole,
-        shouldHide,
-        willRender: !shouldHide
-    });
+    // Debug: Log để kiểm tra (commented out to reduce console spam)
+    // console.log('[Chat Component] Render check:', {
+    //     hasUser: !!user,
+    //     userRole,
+    //     shouldHide,
+    //     willRender: !shouldHide
+    // });
     
     if (shouldHide) {
         return null;

@@ -62,37 +62,45 @@ export const useBanners = () => {
 
 export const useCategorizedBanners = (allBanners) => {
     return useMemo(() => {
-        const hero = allBanners
-            .filter((b) => (b.orderIndex ?? 0) < 100)
+        // Ensure allBanners is an array
+        const banners = Array.isArray(allBanners) ? allBanners : [];
+        
+        const hero = banners
+            .filter((b) => b && (b.orderIndex ?? 0) < 100)
             .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
-            .map((b) => b.imageUrl);
+            .map((b) => b.imageUrl)
+            .filter(Boolean); // Remove any undefined/null imageUrls
 
-        const promo = allBanners
+        const promo = banners
             .filter((b) => {
+                if (!b) return false;
                 const idx = b.orderIndex ?? 0;
                 return idx >= 100 && idx < 200;
             })
             .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
             .slice(0, 3)
             .map((b) => ({
-                image: b.imageUrl,
+                image: b.imageUrl || '',
                 alt: b.title || 'Promo banner',
                 href: b.linkUrl || '#',
-            }));
+            }))
+            .filter((p) => p.image); // Only include promos with images
 
-        const bottom = allBanners
+        const bottom = banners
             .filter((b) => {
+                if (!b) return false;
                 const idx = b.orderIndex ?? 0;
                 return idx >= 200 && idx < 300;
             })
             .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
             .slice(0, 3)
             .map((b, idx) => ({
-                image: b.imageUrl,
+                image: b.imageUrl || '',
                 alt: b.title || `Banner ${idx + 1}`,
                 href: b.linkUrl || '#',
                 variant: (idx % 3) + 1, // 1, 2, or 3
-            }));
+            }))
+            .filter((b) => b.image); // Only include banners with images
 
         return { hero, promo, bottom };
     }, [allBanners]);
