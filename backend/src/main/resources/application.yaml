@@ -51,7 +51,7 @@ app:
 ghn:
   token: ${GHN_TOKEN}
   shop-id: ${GHN_SHOP_ID}
-  base-url: https://online-gateway.ghn.vn
+  base-url: https://dev-online-gateway.ghn.vn
 
 # Layer1 - Controller: Quan ly cac mapping, endpoint
 # Layer2 - Service: Xu ly cac logic lien quan toi subdomain

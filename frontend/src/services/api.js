@@ -84,7 +84,8 @@ function saveTokenToStorage(token) {
         // Dispatch event to notify other components
         window.dispatchEvent(new Event('tokenUpdated'));
     } catch (error) {
-        console.error('Error saving token:', error);
+        const errorMsg = error?.message || error?.toString() || 'Unknown error';
+        console.error('Error saving token:', errorMsg);
     }
 }
 
@@ -118,8 +119,9 @@ async function attemptTokenRefresh(currentToken) {
                 return { success: false, error: refreshData?.message || 'Token refresh failed' };
             }
         } catch (error) {
-            console.error('Error refreshing token:', error);
-            return { success: false, error: error.message };
+            const errorMsg = error?.message || error?.toString() || 'Unknown error';
+            console.error('Error refreshing token:', errorMsg);
+            return { success: false, error: errorMsg };
         } finally {
             isRefreshing = false;
             refreshPromise = null;
@@ -161,7 +163,8 @@ function clearTokensAndLogout() {
             }
         }
     } catch (error) {
-        console.error('Error clearing tokens:', error);
+        const errorMsg = error?.message || error?.toString() || 'Unknown error';
+        console.error('Error clearing tokens:', errorMsg);
     } finally {
         // Reset flag after a delay to allow redirect
         setTimeout(() => {
@@ -288,9 +291,11 @@ async function apiRequest(endpoint, options = {}) {
         }
 
         return { ok: resp.ok, status: resp.status, data };
-    } catch (error) {
-        console.error(`API Error [${method} ${endpoint}]:`, error);
-        return { ok: false, status: 0, data: {}, error };
+        } catch (error) {
+        const errorMsg = error?.message || error?.toString() || 'Unknown error';
+        const errorStack = error?.stack || '';
+        console.error(`API Error [${method} ${endpoint}]:`, errorMsg, errorStack ? '\nStack:' : '', errorStack);
+        return { ok: false, status: 0, data: {}, error: errorMsg };
     }
 }
 
@@ -308,7 +313,8 @@ export async function getMyInfo(token = null) {
         const { data } = await apiRequest(users.myInfo, { token });
         return extractResult(data);
     } catch (error) {
-        console.error('Error fetching user info:', error);
+        const errorMsg = error?.message || error?.toString() || 'Unknown error';
+        console.error('Error fetching user info:', errorMsg);
         return null;
     }
 }
@@ -453,7 +459,8 @@ export async function getActiveCategories(token = null) {
         const { data } = await apiRequest(categories.active, { token });
         return extractResult(data, true);
     } catch (error) {
-        console.error('Error fetching active categories:', error);
+        const errorMsg = error?.message || error?.toString() || 'Unknown error';
+        console.error('Error fetching active categories:', errorMsg);
         return [];
     }
 }
@@ -463,7 +470,8 @@ export async function getRootCategories(token = null) {
         const { data } = await apiRequest(categories.rootOnly, { token });
         return extractResult(data, true);
     } catch (error) {
-        console.error('Error fetching root categories:', error);
+        const errorMsg = error?.message || error?.toString() || 'Unknown error';
+        console.error('Error fetching root categories:', errorMsg);
         return [];
     }
 }
@@ -656,7 +664,8 @@ export async function getActiveVouchers(token = null) {
         const { data } = await apiRequest(vouchers.active, { token });
         return extractResult(data, true);
     } catch (error) {
-        console.error('Error fetching active vouchers:', error);
+        const errorMsg = error?.message || error?.toString() || 'Unknown error';
+        console.error('Error fetching active vouchers:', errorMsg);
         return [];
     }
 }
@@ -707,7 +716,8 @@ export async function getActivePromotions(token = null) {
         const { data } = await apiRequest(promotions.active, { token });
         return extractResult(data, true);
     } catch (error) {
-        console.error('Error fetching active promotions:', error);
+        const errorMsg = error?.message || error?.toString() || 'Unknown error';
+        console.error('Error fetching active promotions:', errorMsg);
         return [];
     }
 }
@@ -964,7 +974,8 @@ export async function notifyStaffOnApproval(itemType, itemName, token = null) {
     } catch (error) {
         // Không throw error để không ảnh hưởng đến flow chính
         // Chỉ log để debug
-        console.error('Error sending notification to staff:', error);
+        const errorMsg = error?.message || error?.toString() || 'Unknown error';
+        console.error('Error sending notification to staff:', errorMsg);
     }
 }
 
@@ -995,7 +1006,8 @@ export async function notifyStaffOnRejection(itemType, itemName, reason, token =
 
         await sendNotificationToStaff(notificationData, token);
     } catch (error) {
-        console.error('Error sending notification to staff:', error);
+        const errorMsg = error?.message || error?.toString() || 'Unknown error';
+        console.error('Error sending notification to staff:', errorMsg);
     }
 }
 
@@ -1025,7 +1037,8 @@ export async function notifyStaffOnDelete(itemType, itemName, token = null) {
 
         await sendNotificationToStaff(notificationData, token);
     } catch (error) {
-        console.error('Error sending notification to staff:', error);
+        const errorMsg = error?.message || error?.toString() || 'Unknown error';
+        console.error('Error sending notification to staff:', errorMsg);
     }
 }
 
@@ -1055,7 +1068,8 @@ export async function notifyStaffOnUpdate(itemType, itemName, token = null) {
 
         await sendNotificationToStaff(notificationData, token);
     } catch (error) {
-        console.error('Error sending notification to staff:', error);
+        const errorMsg = error?.message || error?.toString() || 'Unknown error';
+        console.error('Error sending notification to staff:', errorMsg);
     }
 }
 

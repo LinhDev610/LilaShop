@@ -1,13 +1,7 @@
 package com.lila_shop.backend.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lila_shop.backend.dto.response.GhnApiResponse;
-import com.lila_shop.backend.exception.AppException;
-import com.lila_shop.backend.exception.ErrorCode;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
+import java.util.function.Consumer;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
@@ -16,9 +10,17 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
-import java.util.function.Consumer;
+import com.lila_shop.backend.dto.response.GhnApiResponse;
+import com.lila_shop.backend.exception.AppException;
+import com.lila_shop.backend.exception.ErrorCode;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
@@ -65,7 +67,7 @@ public class ApiUtil {
             ParameterizedTypeReference<GhnApiResponse<T>> responseType,
             String token,
             Integer shopId) {
- 
+
         WebClient.RequestBodySpec requestSpec = ghnWebClient
                 .method(method)
                 .uri(path)
@@ -81,13 +83,15 @@ public class ApiUtil {
                     .onStatus(HttpStatusCode::isError, clientResponse -> {
                         return clientResponse.bodyToMono(String.class)
                                 .flatMap(body -> {
-                                    
+
                                     // Thử parse response body để lấy error message từ GHN
                                     String errorMessage = "Lỗi kết nối dịch vụ vận chuyển";
                                     try {
-                                        GhnApiResponse<?> errorResponse = objectMapper.readValue(body, 
-                                                new com.fasterxml.jackson.core.type.TypeReference<GhnApiResponse<Object>>() {});
-                                        if (errorResponse != null && errorResponse.getMessage() != null && !errorResponse.getMessage().isEmpty()) {
+                                        GhnApiResponse<?> errorResponse = objectMapper.readValue(body,
+                                                new com.fasterxml.jackson.core.type.TypeReference<GhnApiResponse<Object>>() {
+                                                });
+                                        if (errorResponse != null && errorResponse.getMessage() != null
+                                                && !errorResponse.getMessage().isEmpty()) {
                                             errorMessage = errorResponse.getMessage();
                                         }
                                     } catch (Exception e) {
@@ -97,7 +101,7 @@ public class ApiUtil {
                                             errorMessage = "Lỗi từ GHN: " + body;
                                         }
                                     }
-                                    
+
                                     return Mono.error(new AppException(ErrorCode.EXTERNAL_SERVICE_ERROR, errorMessage));
                                 });
                     })
@@ -110,7 +114,8 @@ public class ApiUtil {
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error calling GHN API [{} {}]: {}", method, path, e.getMessage(), e);
-            throw new AppException(ErrorCode.EXTERNAL_SERVICE_ERROR, "Lỗi kết nối dịch vụ vận chuyển: " + e.getMessage());
+            throw new AppException(ErrorCode.EXTERNAL_SERVICE_ERROR,
+                    "Lỗi kết nối dịch vụ vận chuyển: " + e.getMessage());
         }
     }
 
@@ -120,7 +125,8 @@ public class ApiUtil {
         headers.set("ShopId", String.valueOf(shopId));
     }
 
-    // =============================== Generic API (for future use) ===============================
+    // =============================== Generic API (for future use)
+    // ===============================
 
     public <T> T callApi(
             String path,

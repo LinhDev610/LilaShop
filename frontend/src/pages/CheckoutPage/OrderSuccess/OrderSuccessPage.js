@@ -208,10 +208,9 @@ export default function OrderSuccessPage() {
                 <div className={cx('icon-wrapper')}>
                     <span className={cx('icon-check')}>✓</span>
                 </div>
-                <h1 className={cx('title')}>Cảm ơn bạn đã đặt hàng tại Lumina Book!</h1>
+                <h1 className={cx('title')}>Cảm ơn bạn đã đặt hàng tại Lila Shop!</h1>
                 <p className={cx('subtitle')}>
-                    Đơn hàng của bạn đã được xác nhận. Chúng tôi sẽ sớm xử lý và giao hàng qua GHN
-                    đến địa chỉ của bạn.
+                    Đơn hàng của bạn đã được xác nhận. Chúng tôi sẽ sớm xử lý và giao hàng qua GHN đến địa chỉ của bạn.
                 </p>
 
                 <div className={cx('order-box')}>

@@ -502,7 +502,7 @@ function NavBar() {
                         animate={{
                             backgroundColor: isHome || isDropdownOpen
                                 ? '#d6002f'
-                                : 'transparent',
+                                : 'rgba(0, 0, 0, 0)',
                         }}
                         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                     >

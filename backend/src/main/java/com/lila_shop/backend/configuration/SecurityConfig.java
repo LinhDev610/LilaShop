@@ -48,9 +48,9 @@ public class SecurityConfig {
         "/assets/**",
         "/static/**",
         "/banners/active",
-        "/ghn/provinces",
-        "/ghn/districts",
-        "/ghn/wards",
+        "/shipments/ghn/provinces",
+        "/shipments/ghn/districts",
+        "/shipments/ghn/wards",
         "/error"  // Allow error endpoint to be accessed without authentication
     };
 
