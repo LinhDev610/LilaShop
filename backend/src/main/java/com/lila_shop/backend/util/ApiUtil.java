@@ -125,8 +125,7 @@ public class ApiUtil {
         headers.set("ShopId", String.valueOf(shopId));
     }
 
-    // =============================== Generic API (for future use)
-    // ===============================
+    // =============================== Generic API (for future use) ===============================
 
     public <T> T callApi(
             String path,

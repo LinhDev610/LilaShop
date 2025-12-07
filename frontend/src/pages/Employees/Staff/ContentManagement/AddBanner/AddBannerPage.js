@@ -42,7 +42,7 @@ export default function AddBannerPage() {
                 if (!token) {
                     token = getStoredToken();
                 }
-                
+
                 if (!token) {
                     setIsAdmin(false);
                     return;
@@ -71,7 +71,7 @@ export default function AddBannerPage() {
                 }
 
                 const data = await resp.json().catch(() => ({}));
-                const role = 
+                const role =
                     data?.result?.role?.name ||
                     data?.role?.name ||
                     data?.result?.role ||
@@ -139,7 +139,7 @@ export default function AddBannerPage() {
                 const data = await response.json();
                 if (response.ok && data?.result) {
                     const banner = data.result;
-                    
+
                     // Format dates
                     const formatLocalDate = (value) => {
                         if (!value) return '';
@@ -181,7 +181,7 @@ export default function AddBannerPage() {
                         startDate: formatLocalDate(banner.startDate),
                         endDate: formatLocalDate(banner.endDate),
                     });
-                    
+
                     // Set selected products with IDs first, names will be updated when products load
                     const selected = (banner.productIds || []).map((pid) => ({
                         id: pid,
@@ -202,7 +202,7 @@ export default function AddBannerPage() {
     // Update selected products names when availableProducts are loaded
     useEffect(() => {
         if (!isEditMode || availableProducts.length === 0 || selectedProducts.length === 0) return;
-        
+
         // Check if any product has "Đang tải..." name
         const needsUpdate = selectedProducts.some((p) => p.name === 'Đang tải...');
         if (needsUpdate) {
@@ -360,11 +360,11 @@ export default function AddBannerPage() {
                     throw new Error(updateData?.message || 'Không thể cập nhật banner');
                 }
 
-                notifySuccess('Banner đã được cập nhật và gửi lại để duyệt!');
+                notifySuccess('Banner đã được cập nhật thành công!');
             } else {
                 // Create banner
                 bannerPayload.createdDate = formData.createdDate || new Date().toISOString().split('T')[0];
-                
+
                 const createResponse = await fetch(`${API_BASE_URL}/banners`, {
                     method: 'POST',
                     headers: {
@@ -380,7 +380,7 @@ export default function AddBannerPage() {
                     throw new Error(createData?.message || 'Không thể tạo banner');
                 }
 
-                notifySuccess('Banner đã được gửi duyệt thành công!');
+                notifySuccess('Banner đã được tạo thành công!');
             }
 
             setTimeout(() => {
@@ -444,8 +444,8 @@ export default function AddBannerPage() {
                                 {formData.imageFile
                                     ? formData.imageFile.name
                                     : isEditMode && formData.imageUrl
-                                    ? 'Ảnh hiện tại (có thể thay đổi)'
-                                    : 'Chưa có tệp nào được chọn'}
+                                        ? 'Ảnh hiện tại (có thể thay đổi)'
+                                        : 'Chưa có tệp nào được chọn'}
                             </span>
                         </div>
                         {(formData.imageFile || (isEditMode && formData.imageUrl)) && (
@@ -625,8 +625,8 @@ export default function AddBannerPage() {
                             {availableProducts.filter(
                                 (p) => !selectedProducts.find((sp) => sp.id === p.id),
                             ).length === 0 && (
-                                <p className={cx('no-products')}>Không còn sách nào để thêm</p>
-                            )}
+                                    <p className={cx('no-products')}>Không còn sách nào để thêm</p>
+                                )}
                         </div>
                     </div>
                 </div>

@@ -291,7 +291,7 @@ async function apiRequest(endpoint, options = {}) {
         }
 
         return { ok: resp.ok, status: resp.status, data };
-        } catch (error) {
+    } catch (error) {
         const errorMsg = error?.message || error?.toString() || 'Unknown error';
         const errorStack = error?.stack || '';
         console.error(`API Error [${method} ${endpoint}]:`, errorMsg, errorStack ? '\nStack:' : '', errorStack);

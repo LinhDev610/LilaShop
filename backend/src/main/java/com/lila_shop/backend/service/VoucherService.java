@@ -68,7 +68,6 @@ public class VoucherService {
         applyScopeTargets(request.getApplyScope(), request.getCategoryIds(), request.getProductIds(), voucher);
 
         Voucher savedVoucher = voucherRepository.save(voucher);
-        // log.info("Voucher created with ID: {} by staff: {}", savedVoucher.getId(), staff.getId());
 
         return voucherMapper.toResponse(savedVoucher);
     }

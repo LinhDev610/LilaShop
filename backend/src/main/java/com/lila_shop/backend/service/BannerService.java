@@ -51,8 +51,9 @@ public class BannerService {
         banner.setCreatedBy(user);
         banner.setCreatedAt(LocalDateTime.now());
         banner.setUpdatedAt(LocalDateTime.now());
-        banner.setStatus(Boolean.FALSE);
-        banner.setPendingReview(Boolean.TRUE);
+        // Staff tạo banner không cần admin duyệt, active ngay
+        banner.setStatus(Boolean.TRUE);
+        banner.setPendingReview(Boolean.FALSE);
 
         // Set order index if not provided
         if (banner.getOrderIndex() == null) {
@@ -126,13 +127,13 @@ public class BannerService {
         if (request.getLinkUrl() != null) {
             banner.setLinkUrl(request.getLinkUrl());
         }
-        // Nếu là staff (không phải admin), luôn set status về false (chờ duyệt) khi gửi lại
-        // và giữ nguyên rejectionReason
+        // Staff update banner không cần admin duyệt, active ngay
         if (!isAdmin) {
-            // Staff gửi lại banner -> luôn set về chờ duyệt
-            banner.setStatus(false);
-            banner.setPendingReview(true);
-            // Giữ nguyên rejectionReason (không xóa)
+            // Staff update banner -> active ngay, không cần duyệt
+            banner.setStatus(true);
+            banner.setPendingReview(false);
+            // Xóa rejectionReason khi staff update thành công
+            banner.setRejectionReason(null);
         } else {
             // Admin có thể thay đổi status
             if (request.getStatus() != null) {
