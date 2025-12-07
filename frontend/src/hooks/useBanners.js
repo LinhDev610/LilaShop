@@ -9,9 +9,7 @@ const bannersCache = {
     TTL: 10 * 60 * 1000, // 10 minutes
 };
 
-/**
- * Hook to fetch active banners with full banner objects
- */
+// Hook to fetch active banners with full banner objects
 export const useBanners = () => {
     const [banners, setBanners] = useState([]);
     const API_BASE_URL = getApiBaseUrl();
@@ -64,12 +62,12 @@ export const useCategorizedBanners = (allBanners) => {
     return useMemo(() => {
         // Ensure allBanners is an array
         const banners = Array.isArray(allBanners) ? allBanners : [];
-        
+
         const hero = banners
             .filter((b) => b && (b.orderIndex ?? 0) < 100)
             .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
             .map((b) => b.imageUrl)
-            .filter(Boolean); // Remove any undefined/null imageUrls
+            .filter(Boolean);
 
         const promo = banners
             .filter((b) => {
@@ -84,7 +82,7 @@ export const useCategorizedBanners = (allBanners) => {
                 alt: b.title || 'Promo banner',
                 href: b.linkUrl || '#',
             }))
-            .filter((p) => p.image); // Only include promos with images
+            .filter((p) => p.image);
 
         const bottom = banners
             .filter((b) => {
@@ -98,9 +96,9 @@ export const useCategorizedBanners = (allBanners) => {
                 image: b.imageUrl || '',
                 alt: b.title || `Banner ${idx + 1}`,
                 href: b.linkUrl || '#',
-                variant: (idx % 3) + 1, // 1, 2, or 3
+                variant: (idx % 3) + 1,
             }))
-            .filter((b) => b.image); // Only include banners with images
+            .filter((b) => b.image);
 
         return { hero, promo, bottom };
     }, [allBanners]);

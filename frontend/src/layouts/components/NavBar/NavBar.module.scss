@@ -3,7 +3,7 @@
     background-color: #1A3C5A;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
-    z-index: 50; // Giảm z-index để không đè lên content
+    z-index: 50;
     border-radius: 0 0 16px 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     // Không dùng overflow: hidden để dropdown có thể hiển thị

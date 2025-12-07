@@ -84,7 +84,7 @@ export const useCategorizedProducts = (allProducts) => {
     return useMemo(() => {
         // Ensure allProducts is an array
         const products = Array.isArray(allProducts) ? allProducts : [];
-        
+
         const promotional = sortAndSlice(
             products.filter((p) => p && (p.discount ?? 0) > 0),
             (p) => p.discount || 0,
