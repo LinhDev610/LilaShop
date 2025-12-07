@@ -12,21 +12,25 @@ const dropdownVariants = {
     open: {
         opacity: 1,
         y: 0,
+        scale: 1,
         transition: {
-            staggerChildren: 0.05,
-            delayChildren: 0.1,
-            duration: 0.3,
-            ease: 'easeOut',
+            type: 'spring',
+            stiffness: 300,
+            damping: 30,
+            staggerChildren: 0.04,
+            delayChildren: 0.05,
         },
     },
     closed: {
         opacity: 0,
-        y: -10,
+        y: -15,
+        scale: 0.95,
         transition: {
-            staggerChildren: 0.03,
+            type: 'spring',
+            stiffness: 300,
+            damping: 30,
+            staggerChildren: 0.02,
             staggerDirection: -1,
-            duration: 0.2,
-            ease: 'easeIn',
         },
     },
 };
@@ -35,15 +39,21 @@ const categoryItemVariants = {
     open: {
         y: 0,
         opacity: 1,
+        x: 0,
         transition: {
-            y: { stiffness: 1000, velocity: -100 },
+            type: 'spring',
+            stiffness: 500,
+            damping: 30,
         },
     },
     closed: {
-        y: 20,
+        y: 10,
         opacity: 0,
+        x: -10,
         transition: {
-            y: { stiffness: 1000 },
+            type: 'spring',
+            stiffness: 500,
+            damping: 30,
         },
     },
 };
@@ -52,17 +62,21 @@ const submenuItemVariants = {
     open: {
         x: 0,
         opacity: 1,
+        scale: 1,
         transition: {
-            x: { stiffness: 1000, velocity: -100, duration: 0.1 },
-            opacity: { duration: 0.1 },
+            type: 'spring',
+            stiffness: 400,
+            damping: 25,
         },
     },
     closed: {
-        x: -20,
+        x: -15,
         opacity: 0,
+        scale: 0.95,
         transition: {
-            x: { stiffness: 1000, duration: 0.08 },
-            opacity: { duration: 0.08 },
+            type: 'spring',
+            stiffness: 400,
+            damping: 25,
         },
     },
 };
@@ -72,20 +86,22 @@ const mobileMenuVariants = {
         opacity: 1,
         x: 0,
         transition: {
-            staggerChildren: 0.05,
-            delayChildren: 0.1,
-            duration: 0.3,
-            ease: 'easeOut',
+            type: 'spring',
+            stiffness: 300,
+            damping: 30,
+            staggerChildren: 0.03,
+            delayChildren: 0.05,
         },
     },
     closed: {
         opacity: 0,
         x: '-100%',
         transition: {
-            staggerChildren: 0.03,
+            type: 'spring',
+            stiffness: 300,
+            damping: 30,
+            staggerChildren: 0.02,
             staggerDirection: -1,
-            duration: 0.2,
-            ease: 'easeIn',
         },
     },
 };
@@ -95,14 +111,49 @@ const mobileItemVariants = {
         x: 0,
         opacity: 1,
         transition: {
-            x: { stiffness: 1000, velocity: -100 },
+            type: 'spring',
+            stiffness: 500,
+            damping: 30,
         },
     },
     closed: {
-        x: -30,
+        x: -20,
         opacity: 0,
         transition: {
-            x: { stiffness: 1000 },
+            type: 'spring',
+            stiffness: 500,
+            damping: 30,
+        },
+    },
+};
+
+// Nav link underline animation
+const navLinkVariants = {
+    hover: {
+        scale: 1.05,
+        transition: {
+            type: 'spring',
+            stiffness: 400,
+            damping: 17,
+        },
+    },
+    tap: {
+        scale: 0.98,
+    },
+};
+
+const underlineVariants = {
+    hidden: {
+        width: 0,
+        opacity: 0,
+    },
+    visible: {
+        width: '100%',
+        opacity: 1,
+        transition: {
+            type: 'spring',
+            stiffness: 400,
+            damping: 25,
         },
     },
 };
@@ -198,30 +249,62 @@ function NavBar() {
     const renderCategoryItems = (variant = 'desktop') => {
         if (categoriesLoading) {
             const statusClass = variant === 'mobile' ? 'mobile-dropdown-status' : 'dropdown-status';
-            return <div className={cx(statusClass)}>Đang tải...</div>;
+            return (
+                <motion.div
+                    className={cx(statusClass)}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                >
+                    Đang tải...
+                </motion.div>
+            );
         }
 
         if (categoriesError) {
             const statusClass = variant === 'mobile' ? 'mobile-dropdown-status' : 'dropdown-status';
-            return <div className={cx(statusClass)}>Lỗi tải danh mục</div>;
+            return (
+                <motion.div
+                    className={cx(statusClass, 'error')}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                >
+                    Lỗi tải danh mục
+                </motion.div>
+            );
         }
 
         if (categories.length === 0) {
             const statusClass = variant === 'mobile' ? 'mobile-dropdown-status' : 'dropdown-status';
-            return <div className={cx(statusClass)}>Không có danh mục</div>;
+            return (
+                <motion.div
+                    className={cx(statusClass)}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                >
+                    Không có danh mục
+                </motion.div>
+            );
         }
 
         // Mobile: hiển thị tất cả categories trong một danh sách
         if (variant === 'mobile') {
-            return categories.slice(0, 12).map((category) => (
+            return categories.slice(0, 12).map((category, index) => (
                 <motion.button
                     key={category.id || category.name}
                     type="button"
                     className={cx('mobile-dropdown-item')}
                     variants={mobileItemVariants}
-                    whileHover={{ scale: 1.02, x: 5 }}
+                    whileHover={{ 
+                        scale: 1.02, 
+                        x: 8,
+                        backgroundColor: '#f3f4f6',
+                    }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleCategorySelect(category)}
+                    style={{ originX: 0 }}
                 >
                     {category.name}
                 </motion.button>
@@ -241,10 +324,16 @@ function NavBar() {
 
         const parentColumnVariants = {
             open: {
-                transition: { staggerChildren: 0.05, delayChildren: 0.1 },
+                transition: { 
+                    staggerChildren: 0.03, 
+                    delayChildren: 0.05,
+                },
             },
             closed: {
-                transition: { staggerChildren: 0.03, staggerDirection: -1 },
+                transition: { 
+                    staggerChildren: 0.02, 
+                    staggerDirection: -1,
+                },
             },
         };
 
@@ -252,21 +341,25 @@ function NavBar() {
             open: {
                 opacity: 1,
                 x: 0,
+                scale: 1,
                 transition: { 
-                    staggerChildren: 0.01, 
-                    delayChildren: 0,
-                    opacity: { duration: 0.08, ease: 'easeOut' },
-                    x: { duration: 0.08, ease: 'easeOut' },
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 25,
+                    staggerChildren: 0.02, 
+                    delayChildren: 0.05,
                 },
             },
             closed: {
                 opacity: 0,
-                x: -10,
+                x: -20,
+                scale: 0.95,
                 transition: { 
-                    staggerChildren: 0.005, 
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 25,
+                    staggerChildren: 0.01, 
                     staggerDirection: -1,
-                    opacity: { duration: 0.06, ease: 'easeIn' },
-                    x: { duration: 0.06, ease: 'easeIn' },
                 },
             },
         };
@@ -290,15 +383,31 @@ function NavBar() {
                                     hasChildren: hasChildren,
                                 })}
                                 variants={categoryItemVariants}
-                                whileHover={{ scale: 1.02, x: 5 }}
+                                whileHover={{ 
+                                    scale: 1.02, 
+                                    x: 6,
+                                    backgroundColor: '#f3f4f6',
+                                }}
                                 whileTap={{ scale: 0.98 }}
                                 onMouseEnter={() => {
-                                    // Set ngay lập tức khi hover
                                     setActiveParentId(category.id);
                                 }}
                                 onClick={() => handleCategorySelect(category)}
+                                style={{ originX: 0 }}
                             >
                                 {category.name}
+                                {hasChildren && (
+                                    <motion.span
+                                        className={cx('arrow-icon')}
+                                        animate={{ 
+                                            rotate: activeParentId === category.id ? 0 : -90,
+                                            opacity: activeParentId === category.id ? 1 : 0.5,
+                                        }}
+                                        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                                    >
+                                        →
+                                    </motion.span>
+                                )}
                             </motion.button>
                         );
                     })}
@@ -314,10 +423,16 @@ function NavBar() {
                         <motion.div
                             variants={{
                                 open: {
-                                    transition: { staggerChildren: 0.01, delayChildren: 0 },
+                                    transition: { 
+                                        staggerChildren: 0.02, 
+                                        delayChildren: 0.05,
+                                    },
                                 },
                                 closed: {
-                                    transition: { staggerChildren: 0.005, staggerDirection: -1 },
+                                    transition: { 
+                                        staggerChildren: 0.01, 
+                                        staggerDirection: -1,
+                                    },
                                 },
                             }}
                             initial="closed"
@@ -329,16 +444,28 @@ function NavBar() {
                                     type="button"
                                     className={cx('submenu-item')}
                                     variants={submenuItemVariants}
-                                    whileHover={{ scale: 1.05, x: 5 }}
+                                    whileHover={{ 
+                                        scale: 1.05, 
+                                        x: 8,
+                                        backgroundColor: '#f3f4f6',
+                                    }}
                                     whileTap={{ scale: 0.95 }}
                                     onClick={() => handleCategorySelect(child)}
+                                    style={{ originX: 0 }}
                                 >
                                     {child.name}
                                 </motion.button>
                             ))}
                         </motion.div>
                     ) : (
-                        <div className={cx('submenu-empty')}>Chọn danh mục để xem</div>
+                        <motion.div 
+                            className={cx('submenu-empty')}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            Chọn danh mục để xem
+                        </motion.div>
                     )}
                 </motion.div>
             </div>
@@ -346,47 +473,175 @@ function NavBar() {
     };
 
     return (
-        <nav className={cx('navbar')}>
+        <motion.nav 
+            className={cx('navbar')}
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        >
             <div className={cx('navbar-content')}>
-                <div 
+                <motion.div 
                     className={cx('dropdown-container')}
                     onMouseEnter={openDropdown}
                     onMouseLeave={closeDropdown}
                 >
-                    <button
+                    <motion.button
                         className={cx('nav-trigger', { active: isHome || isDropdownOpen })}
+                        whileHover={{ 
+                            scale: 1.05,
+                            backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                        animate={{
+                            backgroundColor: isHome || isDropdownOpen 
+                                ? '#d6002f' 
+                                : 'transparent',
+                        }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                     >
-                        TẤT CẢ DANH MỤC
-                    </button>
+                        <motion.span
+                            animate={{ 
+                                rotate: isDropdownOpen ? 90 : 0,
+                            }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                        >
+                            ☰
+                        </motion.span>
+                        <span>TẤT CẢ DANH MỤC</span>
+                        <motion.span
+                            animate={{ 
+                                rotate: isDropdownOpen ? 180 : 0,
+                            }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                        >
+                            ▼
+                        </motion.span>
+                    </motion.button>
 
-                    <AnimatePresence>
+                    <AnimatePresence mode="wait">
                         {isDropdownOpen && (
                             <motion.div
                                 className={cx('dropdown-menu')}
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                transition={{ duration: 0.2 }}
+                                variants={dropdownVariants}
+                                initial="closed"
+                                animate="open"
+                                exit="closed"
                             >
                                 {renderCategoryItems()}
                             </motion.div>
                         )}
                     </AnimatePresence>
-                </div>
+                </motion.div>
 
-                <Link to={routes.promotion} className={cx('nav-link', { active: isPromotion })}>
-                    KHUYẾN MÃI
-                </Link>
-                <Link to={routes.newproduct} className={cx('nav-link', { active: isNewProduct })}>
-                    SẢN PHẨM MỚI
-                </Link>
-                <Link
-                    to={routes.customerSupport}
-                    className={cx('nav-link', { active: isCustomerSupport })}
+                <motion.div
+                    className={cx('nav-link-wrapper')}
+                    whileHover="hover"
+                    whileTap="tap"
                 >
-                    HỖ TRỢ KHÁCH HÀNG
-                </Link>
+                    <Link 
+                        to={routes.promotion} 
+                        className={cx('nav-link', { active: isPromotion })}
+                    >
+                        <motion.span variants={navLinkVariants}>
+                            KHUYẾN MÃI
+                        </motion.span>
+                        <AnimatePresence>
+                            {isPromotion && (
+                                <motion.div
+                                    className={cx('nav-link-underline')}
+                                    variants={underlineVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="hidden"
+                                />
+                            )}
+                        </AnimatePresence>
+                    </Link>
+                </motion.div>
+
+                <motion.div
+                    className={cx('nav-link-wrapper')}
+                    whileHover="hover"
+                    whileTap="tap"
+                >
+                    <Link 
+                        to={routes.newproduct} 
+                        className={cx('nav-link', { active: isNewProduct })}
+                    >
+                        <motion.span variants={navLinkVariants}>
+                            SẢN PHẨM MỚI
+                        </motion.span>
+                        <AnimatePresence>
+                            {isNewProduct && (
+                                <motion.div
+                                    className={cx('nav-link-underline')}
+                                    variants={underlineVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="hidden"
+                                />
+                            )}
+                        </AnimatePresence>
+                    </Link>
+                </motion.div>
+
+                <motion.div
+                    className={cx('nav-link-wrapper')}
+                    whileHover="hover"
+                    whileTap="tap"
+                >
+                    <Link
+                        to={routes.customerSupport}
+                        className={cx('nav-link', { active: isCustomerSupport })}
+                    >
+                        <motion.span variants={navLinkVariants}>
+                            HỖ TRỢ KHÁCH HÀNG
+                        </motion.span>
+                        <AnimatePresence>
+                            {isCustomerSupport && (
+                                <motion.div
+                                    className={cx('nav-link-underline')}
+                                    variants={underlineVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="hidden"
+                                />
+                            )}
+                        </AnimatePresence>
+                    </Link>
+                </motion.div>
             </div>
+
+            {/* Mobile menu button - only show on mobile */}
+            <motion.button
+                className={cx('mobile-hamburger', { active: isMobileMenuOpen })}
+                onClick={toggleMobileMenu}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                initial={false}
+            >
+                <motion.span
+                    animate={{
+                        rotate: isMobileMenuOpen ? 45 : 0,
+                        y: isMobileMenuOpen ? 8 : 0,
+                    }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                />
+                <motion.span
+                    animate={{
+                        opacity: isMobileMenuOpen ? 0 : 1,
+                        x: isMobileMenuOpen ? -20 : 0,
+                    }}
+                    transition={{ duration: 0.2 }}
+                />
+                <motion.span
+                    animate={{
+                        rotate: isMobileMenuOpen ? -45 : 0,
+                        y: isMobileMenuOpen ? -8 : 0,
+                    }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                />
+            </motion.button>
 
             <AnimatePresence>
                 {isMobileMenuOpen && (
@@ -401,7 +656,7 @@ function NavBar() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </nav>
+        </motion.nav>
     );
 }
 
