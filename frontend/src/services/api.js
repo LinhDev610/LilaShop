@@ -304,8 +304,13 @@ const extractResult = (data, isArray = false) => {
 
 // ========== USER API ==========
 export async function getMyInfo(token = null) {
-    const { data } = await apiRequest(users.myInfo, { token });
-    return extractResult(data);
+    try {
+        const { data } = await apiRequest(users.myInfo, { token });
+        return extractResult(data);
+    } catch (error) {
+        console.error('Error fetching user info:', error);
+        return null;
+    }
 }
 
 export async function getAllUsers(token = null) {
@@ -444,13 +449,23 @@ export async function getAllCategories(token = null) {
 }
 
 export async function getActiveCategories(token = null) {
-    const { data } = await apiRequest(categories.active, { token });
-    return extractResult(data, true);
+    try {
+        const { data } = await apiRequest(categories.active, { token });
+        return extractResult(data, true);
+    } catch (error) {
+        console.error('Error fetching active categories:', error);
+        return [];
+    }
 }
 
 export async function getRootCategories(token = null) {
-    const { data } = await apiRequest(categories.rootOnly, { token });
-    return extractResult(data, true);
+    try {
+        const { data } = await apiRequest(categories.rootOnly, { token });
+        return extractResult(data, true);
+    } catch (error) {
+        console.error('Error fetching root categories:', error);
+        return [];
+    }
 }
 
 export async function getSubCategories(parentId, token = null) {
@@ -637,8 +652,13 @@ export async function getStaffVouchers(token = null) {
 }
 
 export async function getActiveVouchers(token = null) {
-    const { data } = await apiRequest(vouchers.active, { token });
-    return extractResult(data, true);
+    try {
+        const { data } = await apiRequest(vouchers.active, { token });
+        return extractResult(data, true);
+    } catch (error) {
+        console.error('Error fetching active vouchers:', error);
+        return [];
+    }
 }
 
 export async function getVoucherById(voucherId, token = null) {
@@ -683,8 +703,13 @@ export async function getStaffPromotions(token = null) {
 }
 
 export async function getActivePromotions(token = null) {
-    const { data } = await apiRequest(promotions.active, { token });
-    return extractResult(data, true);
+    try {
+        const { data } = await apiRequest(promotions.active, { token });
+        return extractResult(data, true);
+    } catch (error) {
+        console.error('Error fetching active promotions:', error);
+        return [];
+    }
 }
 
 export async function getPromotionById(promotionId, token = null) {

@@ -15,7 +15,6 @@ import bgChristmas from '../../assets/images/img_christmas.png';
 // Lazy load heavy components
 const ProductList = lazy(() => import('../../components/Common/ProductList/ProductList'));
 const Banner1 = lazy(() => import('../../components/Common/Banner/Banner1'));
-const Banner2 = lazy(() => import('../../components/Common/Banner/Banner2'));
 
 const cx = classNames.bind(styles);
 
@@ -118,17 +117,20 @@ function Home() {
 
     // Fetch data
     const allBanners = useBanners();
-    const { hero: heroBanners } = useCategorizedBanners(allBanners);
-    const { products, loading: productLoading, error: productError } = useHomeProducts();
-    const { promotional, favorite, bestSeller, newest } = useCategorizedProducts(products);
-    const { vouchers, loading: vouchersLoading, error: vouchersError } = useVouchers(4);
-    const { promotions, loading: promotionsLoading, error: promotionsError } = usePromotions(4);
+    const { hero: heroBanners = [] } = useCategorizedBanners(allBanners || []);
+    const { products = [], loading: productLoading, error: productError } = useHomeProducts();
+    const { promotional = [], favorite = [], bestSeller = [], newest = [] } = useCategorizedProducts(products);
+    const { vouchers = [], loading: vouchersLoading, error: vouchersError } = useVouchers(4);
+    const { promotions = [], loading: promotionsLoading, error: promotionsError } = usePromotions(4);
 
     // Memoize banner images with fallback
-    const heroImages = useMemo(() =>
-        heroBanners.length > 0 ? heroBanners : [heroImage],
-        [heroBanners]
-    );
+    // heroBanners is already an array of imageUrl strings from useCategorizedBanners
+    const heroImages = useMemo(() => {
+        if (Array.isArray(heroBanners) && heroBanners.length > 0) {
+            return heroBanners;
+        }
+        return [heroImage];
+    }, [heroBanners]);
 
     // Admin redirect handling - optimized
     useLayoutEffect(() => {
@@ -198,7 +200,7 @@ function Home() {
                     className={cx('home-content')}
                     variants={containerVariants}
                 >
-                    {/* Hero Banner */}
+                    {/* Hero Banner - Full Width */}
                     <motion.section
                         className={cx('hero-section')}
                         variants={sectionVariants}
@@ -208,6 +210,7 @@ function Home() {
                                 <Banner1
                                     heroImages={heroImages}
                                     promos={[]}
+                                    fullWidth={true}
                                 />
                             </div>
                         </Suspense>

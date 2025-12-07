@@ -34,8 +34,8 @@ export const useBanners = () => {
                         'Cache-Control': 'max-age=600', // 10 minutes
                     },
                 });
-                const data = await resp.json();
                 if (!resp.ok || canceled) return;
+                const data = await resp.json().catch(() => ({}));
 
                 const bannerObjects = (data?.result || [])
                     .filter((b) => b?.imageUrl)
