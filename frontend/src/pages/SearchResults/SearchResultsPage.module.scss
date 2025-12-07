@@ -2,6 +2,9 @@
     padding: 40px 60px;
     min-height: 70vh;
     background: #f5f7fb;
+    position: relative;
+    z-index: 0; // Đảm bảo content không bị đè bởi navbar
+    margin-top: 0; // Đảm bảo không có margin-top làm lệch
 }
 
 .search-header {
