@@ -3,8 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './AddBannerPage.module.scss';
 import { getApiBaseUrl, getStoredToken, getUserRole } from '../../../../../services/utils';
-import { normalizeMediaUrl } from '../../../../../services/productUtils';
+import { normalizeMediaUrl, filterByKeyword } from '../../../../../services/productUtils';
 import { useNotification } from '../../../../../components/Common/Notification';
+import useDebounce from '../../../../../hooks/useDebounce';
 
 const cx = classNames.bind(styles);
 
@@ -29,9 +30,13 @@ export default function AddBannerPage() {
     const [selectedProducts, setSelectedProducts] = useState([]); // Array of {id, name}
     const [availableProducts, setAvailableProducts] = useState([]); // All products for selection
     const [showProductModal, setShowProductModal] = useState(false);
+    const [productSearchTerm, setProductSearchTerm] = useState(''); // Search term for products in modal
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [bannerLoaded, setBannerLoaded] = useState(false); // Track if banner data has been loaded
+
+    // Debounce search term for better performance
+    const debouncedSearchTerm = useDebounce(productSearchTerm, 300);
 
     // Fetch user role to check if admin
     useEffect(() => {
@@ -252,8 +257,17 @@ export default function AddBannerPage() {
     };
 
     const handleAddProduct = () => {
+        setProductSearchTerm(''); // Reset search when opening modal
         setShowProductModal(true);
     };
+
+    // Filter products based on search term
+    const filteredAvailableProducts = useMemo(() => {
+        const unselectedProducts = availableProducts.filter(
+            (p) => !selectedProducts.find((sp) => sp.id === p.id),
+        );
+        return filterByKeyword(unselectedProducts, debouncedSearchTerm);
+    }, [availableProducts, selectedProducts, debouncedSearchTerm]);
 
     const handleSelectProduct = (product) => {
         if (!selectedProducts.find((p) => p.id === product.id)) {
@@ -611,22 +625,35 @@ export default function AddBannerPage() {
                             </button>
                         </div>
                         <div className={cx('modal-content')}>
-                            {availableProducts
-                                .filter((p) => !selectedProducts.find((sp) => sp.id === p.id))
-                                .map((product) => (
-                                    <div
-                                        key={product.id}
-                                        className={cx('product-option')}
-                                        onClick={() => handleSelectProduct(product)}
-                                    >
-                                        {product.name}
-                                    </div>
-                                ))}
-                            {availableProducts.filter(
-                                (p) => !selectedProducts.find((sp) => sp.id === p.id),
-                            ).length === 0 && (
-                                    <p className={cx('no-products')}>Không còn sách nào để thêm</p>
+                            <div className={cx('search-container')}>
+                                <input
+                                    type="text"
+                                    className={cx('search-input')}
+                                    placeholder="Tìm kiếm sách theo tên..."
+                                    value={productSearchTerm}
+                                    onChange={(e) => setProductSearchTerm(e.target.value)}
+                                    autoFocus
+                                />
+                            </div>
+                            <div className={cx('product-list-container')}>
+                                {filteredAvailableProducts.length > 0 ? (
+                                    filteredAvailableProducts.map((product) => (
+                                        <div
+                                            key={product.id}
+                                            className={cx('product-option')}
+                                            onClick={() => handleSelectProduct(product)}
+                                        >
+                                            {product.name}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className={cx('no-products')}>
+                                        {productSearchTerm.trim()
+                                            ? 'Không tìm thấy sách nào phù hợp'
+                                            : 'Không còn sách nào để thêm'}
+                                    </p>
                                 )}
+                            </div>
                         </div>
                     </div>
                 </div>

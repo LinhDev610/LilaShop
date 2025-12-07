@@ -44,7 +44,8 @@ public class BannerService {
         String userEmail = SecurityUtil.getCurrentUserEmail();
 
         // Get user by email (getName() returns email, not ID)
-        User user = userRepository.findByEmail(userEmail).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         // Create banner entity using mapper
         Banner banner = bannerMapper.toBanner(request);
@@ -78,8 +79,8 @@ public class BannerService {
     }
 
     public BannerResponse getBannerById(String bannerId) {
-        Banner banner =
-                bannerRepository.findById(bannerId).orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
+        Banner banner = bannerRepository.findById(bannerId)
+                .orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
 
         return bannerMapper.toResponse(banner);
     }
@@ -103,8 +104,8 @@ public class BannerService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        Banner banner =
-                bannerRepository.findById(bannerId).orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
+        Banner banner = bannerRepository.findById(bannerId)
+                .orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
 
         // Kiểm tra quyền: Admin hoặc chủ sở hữu banner
         boolean isAdmin = authentication.getAuthorities().stream()
@@ -185,8 +186,8 @@ public class BannerService {
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public void deleteBanner(String bannerId) {
-        Banner banner =
-                bannerRepository.findById(bannerId).orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
+        Banner banner = bannerRepository.findById(bannerId)
+                .orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
 
         bannerRepository.delete(banner);
         log.info(
@@ -198,8 +199,8 @@ public class BannerService {
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public BannerResponse updateBannerOrder(String bannerId, Integer newOrderIndex) {
-        Banner banner =
-                bannerRepository.findById(bannerId).orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
+        Banner banner = bannerRepository.findById(bannerId)
+                .orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
 
         banner.setOrderIndex(newOrderIndex);
         banner.setUpdatedAt(LocalDateTime.now());
