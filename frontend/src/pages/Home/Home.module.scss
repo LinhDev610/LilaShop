@@ -98,12 +98,16 @@ $radius-full: 9999px;
 }
 
 // Voucher & Promotion Section - New Grid Layout
-.voucher-promo-section {
+.voucher-promo-section,
+.vouchers-promotions-section {
     width: 100%;
-    padding: 60px 40px;
+    padding: 40px 32px;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.9) 100%);
     position: relative;
     overflow: hidden;
+    display: block;
+    visibility: visible;
+    opacity: 1;
 
     &::before {
         content: '';
@@ -111,17 +115,18 @@ $radius-full: 9999px;
         top: 0;
         left: 0;
         right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.4) 50%, transparent 100%);
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.3) 50%, transparent 100%);
     }
 }
 
-.voucher-promo-container {
-    max-width: 1400px;
+.voucher-promo-container,
+.vouchers-promotions-container {
+    max-width: 1200px;
     margin: 0 auto;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 40px;
+    gap: 32px;
     position: relative;
     z-index: 1;
 }
@@ -130,7 +135,7 @@ $radius-full: 9999px;
 .promotion-column {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 16px;
 }
 
 .voucher-column .section-header,
@@ -147,13 +152,13 @@ $radius-full: 9999px;
 .voucher-column .section-title,
 .promotion-column .section-title {
     margin: 0;
-    font-size: 1.75rem;
-    font-weight: 800;
-    letter-spacing: -0.5px;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
     color: $text-primary;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     padding: 0;
     background: none;
     -webkit-background-clip: unset;
@@ -161,8 +166,8 @@ $radius-full: 9999px;
     background-clip: unset;
 
     .title-icon {
-        font-size: 2rem;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        font-size: 1.5rem;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
     }
 
     &::after {
@@ -171,19 +176,19 @@ $radius-full: 9999px;
 }
 
 .view-all-link {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: $accent-purple;
     text-decoration: none;
     transition: all 0.3s ease;
-    padding: 8px 16px;
-    border-radius: $radius-sm;
-    background: rgba(157, 78, 221, 0.1);
+    padding: 6px 12px;
+    border-radius: $radius-xs;
+    background: rgba(157, 78, 221, 0.08);
 
     &:hover {
         color: $text-light;
         background: $accent-purple;
-        transform: translateX(4px);
+        transform: translateX(2px);
     }
 }
 
@@ -191,25 +196,31 @@ $radius-full: 9999px;
 .voucher-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 12px;
 }
 
 .voucher-card {
     background: $primary-gradient;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     overflow: hidden;
-    box-shadow: $shadow-medium;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     cursor: pointer;
     position: relative;
     will-change: transform;
+    transition: all 0.2s ease;
 
     &::before {
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
         opacity: 0;
-        transition: opacity 0.3s ease;
+        transition: opacity 0.2s ease;
+    }
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
 
     &:hover::before {
@@ -225,12 +236,108 @@ $radius-full: 9999px;
 }
 
 .voucher-content {
-    padding: 20px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    min-height: 120px;
+    gap: 10px;
+    min-height: 100px;
     justify-content: space-between;
+}
+
+// Voucher Card Home - Compact version
+.voucher-card-home {
+    .voucher-content-home {
+        padding: 14px;
+        gap: 8px;
+        min-height: auto;
+        flex-direction: row;
+        align-items: flex-start;
+    }
+
+    .voucher-discount-badge-home {
+        flex-shrink: 0;
+        width: 80px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        padding: 8px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: $radius-xs;
+        backdrop-filter: blur(4px);
+
+        .discount-value {
+            font-size: 1.4rem;
+            line-height: 1;
+        }
+
+        .discount-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.5px;
+        }
+    }
+
+    .voucher-details-home {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .voucher-code-main-home {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+
+    .code-label-main-home {
+        font-size: 0.75rem;
+        font-weight: 500;
+        opacity: 0.9;
+    }
+
+    .code-value-main-home {
+        font-size: 0.85rem;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.25);
+        padding: 3px 8px;
+        border-radius: $radius-xs;
+        backdrop-filter: blur(4px);
+    }
+
+    .voucher-name-main-home {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.95);
+        margin-bottom: 4px;
+    }
+
+    .voucher-conditions-home {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .voucher-condition-item-home {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.85);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        line-height: 1.3;
+
+        .condition-icon-home {
+            font-size: 0.75rem;
+        }
+
+        &.no-condition-home {
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+    }
 }
 
 .voucher-discount {
@@ -241,19 +348,19 @@ $radius-full: 9999px;
 }
 
 .discount-value {
-    font-size: 2rem;
-    font-weight: 900;
+    font-size: 1.6rem;
+    font-weight: 800;
     color: $text-light;
     line-height: 1;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
 .discount-label {
-    font-size: 0.85rem;
-    font-weight: 700;
+    font-size: 0.75rem;
+    font-weight: 600;
     color: rgba(255, 255, 255, 0.9);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .voucher-info {
@@ -294,23 +401,136 @@ $radius-full: 9999px;
 .promotion-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 12px;
 }
 
 .promotion-card {
     background: $bg-card;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     overflow: hidden;
-    box-shadow: $shadow-soft;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     cursor: pointer;
     position: relative;
     will-change: transform;
-    border: 2px solid transparent;
-    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    transition: all 0.2s ease;
 
     &:hover {
-        border-color: rgba(102, 126, 234, 0.3);
-        box-shadow: $shadow-medium;
+        border-color: rgba(102, 126, 234, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+}
+
+// Promotion Card Home - Compact version
+.promotion-card-home {
+    .promotion-content-home {
+        padding: 12px;
+        gap: 10px;
+        flex-direction: row;
+        align-items: flex-start;
+        min-height: auto;
+    }
+
+    .promotion-image-wrapper-home {
+        width: 80px;
+        height: 80px;
+        flex-shrink: 0;
+        border-radius: $radius-xs;
+        overflow: hidden;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+
+    .promotion-image-home {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .promotion-discount-badge-home {
+        width: 80px;
+        height: 80px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border-radius: $radius-xs;
+
+        .discount-value {
+            font-size: 1.3rem;
+            line-height: 1;
+        }
+
+        .discount-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.5px;
+        }
+    }
+
+    .promotion-details-home {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .promotion-name-home {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: $text-primary;
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .promotion-code-main {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        margin-top: 2px;
+    }
+
+    .code-label-main {
+        font-weight: 500;
+        color: $text-secondary;
+    }
+
+    .code-value-main {
+        font-weight: 700;
+        color: $accent-purple;
+        background: rgba(157, 78, 221, 0.1);
+        padding: 2px 6px;
+        border-radius: $radius-xs;
+    }
+
+    .promotion-description {
+        font-size: 0.75rem;
+        color: $text-secondary;
+        line-height: 1.4;
+        margin-top: 2px;
+    }
+
+    .promotion-conditions {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 4px;
+    }
+
+    .promotion-condition-item {
+        font-size: 0.7rem;
+        color: $text-secondary;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        line-height: 1.3;
+
+        .condition-icon {
+            font-size: 0.75rem;
+        }
     }
 }
 
@@ -485,6 +705,297 @@ $radius-full: 9999px;
         right: 0;
         height: 1px;
         background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3), transparent);
+    }
+}
+
+// Vouchers and Promotions Sections for Promotion Page
+.vouchers-section,
+.promotions-section {
+    margin: 32px 0;
+    padding: 0 20px;
+}
+
+.vouchers-section .section-header,
+.promotions-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0;
+    background: transparent;
+    border-bottom: none;
+}
+
+.vouchers-section .section-title,
+.promotions-section .section-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: $text-primary;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: $text-primary;
+    background-clip: unset;
+
+    .title-icon {
+        font-size: 1.6rem;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+    }
+
+    &::after {
+        display: none;
+    }
+}
+
+// Compact Grid for Promotion Page
+.voucher-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+
+    @media (min-width: 1200px) {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    @media (max-width: 768px) {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    @media (max-width: 480px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.promotion-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+
+    @media (min-width: 1200px) {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    @media (max-width: 768px) {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    @media (max-width: 480px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+// Compact Voucher Card for Promotion Page
+.voucher-card-compact {
+    .voucher-content-compact {
+        padding: 14px;
+        gap: 10px;
+        min-height: auto;
+        flex-direction: row;
+        align-items: flex-start;
+    }
+
+    .voucher-discount-badge {
+        flex-shrink: 0;
+        width: 70px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        padding: 8px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: $radius-xs;
+        backdrop-filter: blur(4px);
+
+        .discount-value-compact {
+            font-size: 1.3rem;
+            line-height: 1;
+        }
+
+        .discount-label-compact {
+            font-size: 0.65rem;
+            letter-spacing: 0.5px;
+        }
+    }
+
+    .voucher-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .voucher-code-main {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+
+    .code-label-main {
+        font-size: 0.75rem;
+        font-weight: 500;
+        opacity: 0.9;
+    }
+
+    .code-value-main {
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.25);
+        padding: 3px 8px;
+        border-radius: $radius-xs;
+        backdrop-filter: blur(4px);
+    }
+
+    .voucher-name-main {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.95);
+        margin-bottom: 4px;
+    }
+
+    .voucher-conditions {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .voucher-condition-item {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.85);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        line-height: 1.3;
+
+        .condition-icon {
+            font-size: 0.75rem;
+        }
+
+        &.no-condition {
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+    }
+}
+
+// Compact Promotion Card for Promotion Page
+.promotion-card-compact {
+    .promotion-content-compact {
+        padding: 12px;
+        gap: 10px;
+        flex-direction: row;
+        align-items: flex-start;
+        min-height: auto;
+    }
+
+    .promotion-image-wrapper {
+        width: 70px;
+        height: 70px;
+        flex-shrink: 0;
+        border-radius: $radius-xs;
+        overflow: hidden;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+
+    .promotion-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .promotion-discount-badge-compact {
+        width: 70px;
+        height: 70px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border-radius: $radius-xs;
+
+        .discount-value-promotion {
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
+        .discount-label-promotion {
+            font-size: 0.65rem;
+            letter-spacing: 0.5px;
+        }
+    }
+
+    .promotion-details-compact {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .promotion-name-compact {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: $text-primary;
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .promotion-code-main {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        margin-top: 2px;
+    }
+
+    .code-label-main {
+        font-weight: 500;
+        color: $text-secondary;
+    }
+
+    .code-value-main-promotion {
+        font-weight: 700;
+        color: $accent-purple;
+        background: rgba(157, 78, 221, 0.1);
+        padding: 2px 6px;
+        border-radius: $radius-xs;
+    }
+
+    .promotion-description-compact {
+        font-size: 0.7rem;
+        color: $text-secondary;
+        line-height: 1.4;
+        margin-top: 2px;
+    }
+
+    .promotion-conditions-compact {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 4px;
+    }
+
+    .promotion-condition-item {
+        font-size: 0.7rem;
+        color: $text-secondary;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        line-height: 1.3;
+
+        .condition-icon {
+            font-size: 0.75rem;
+        }
     }
 }
 
@@ -758,37 +1269,55 @@ $radius-full: 9999px;
 }
 
 @media (max-width: 768px) {
-    .voucher-promo-section {
-        padding: 40px 24px;
+    .voucher-promo-section,
+    .vouchers-promotions-section {
+        padding: 32px 20px;
     }
 
-    .voucher-promo-container {
+    .voucher-promo-container,
+    .vouchers-promotions-container {
         grid-template-columns: 1fr;
-        gap: 40px;
+        gap: 28px;
+    }
+
+    .voucher-column,
+    .promotion-column {
+        gap: 12px;
     }
 
     .voucher-column .section-title,
     .promotion-column .section-title {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
     }
 
     .voucher-grid,
     .promotion-grid {
         grid-template-columns: 1fr;
-        gap: 12px;
+        gap: 10px;
     }
 
     .voucher-content {
-        min-height: 100px;
-        padding: 16px;
+        min-height: auto;
+        padding: 14px;
     }
 
     .discount-value {
-        font-size: 1.75rem;
+        font-size: 1.4rem;
     }
 
     .promotion-image-wrapper {
-        height: 140px;
+        height: 120px;
+    }
+
+    .vouchers-section,
+    .promotions-section {
+        margin: 24px 0;
+        padding: 0 16px;
+    }
+
+    .vouchers-section .section-title,
+    .promotions-section .section-title {
+        font-size: 1.3rem;
     }
 
     .status-message {
@@ -854,36 +1383,67 @@ $radius-full: 9999px;
 }
 
 @media (max-width: 480px) {
-    .voucher-promo-section {
-        padding: 32px 20px;
+    .voucher-promo-section,
+    .vouchers-promotions-section {
+        padding: 24px 16px;
+    }
+
+    .voucher-promo-container,
+    .vouchers-promotions-container {
+        gap: 24px;
     }
 
     .voucher-column .section-title,
     .promotion-column .section-title {
-        font-size: 1.25rem;
+        font-size: 1.2rem;
 
         .title-icon {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
         }
     }
 
     .view-all-link {
-        font-size: 0.85rem;
-        padding: 6px 12px;
+        font-size: 0.8rem;
+        padding: 5px 10px;
     }
 
     .voucher-content {
-        min-height: 90px;
-        padding: 14px;
+        min-height: auto;
+        padding: 12px;
         gap: 8px;
     }
 
     .discount-value {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
     }
 
     .promotion-image-wrapper {
-        height: 120px;
+        height: 100px;
+    }
+
+    .voucher-card-home .voucher-discount-badge-home {
+        width: 70px;
+    }
+
+    .promotion-card-home .promotion-image-wrapper-home,
+    .promotion-card-home .promotion-discount-badge-home {
+        width: 70px;
+        height: 70px;
+    }
+
+    .vouchers-section,
+    .promotions-section {
+        margin: 20px 0;
+        padding: 0 12px;
+    }
+
+    .vouchers-section .section-title,
+    .promotions-section .section-title {
+        font-size: 1.2rem;
+
+        .title-icon {
+            font-size: 1.3rem;
+        }
     }
 
     .status-message {

@@ -1,18 +1,19 @@
-import { useState, useEffect, useRef, useLayoutEffect, useMemo, memo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef, useMemo, memo } from 'react';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import AdminRedirectHandler from '../../components/AdminRedirectHandler';
 import { SERVICE_ITEMS } from '../../services/constants';
-import { getApiBaseUrl } from '../../services/utils';
+import { getApiBaseUrl, formatCurrency } from '../../services/utils';
 import { normalizeMediaUrl } from '../../services/productUtils';
+import { normalizePromotionImageUrl } from '../../services/voucherPromotionUtils';
+import { useVouchers, usePromotions } from '../../hooks/useVouchersPromotions';
 import styles from './Home.module.scss';
-// Fallback images - preload critical ones
+
 import heroImage from '../../assets/images/img_qc.png';
 import bgChristmas from '../../assets/images/img_christmas.png';
 
-// Import components directly (no lazy loading)
 import ProductList from '../../components/Common/ProductList/ProductList';
 import Banner1 from '../../components/Common/Banner/Banner1';
 
@@ -20,7 +21,7 @@ const cx = classNames.bind(styles);
 
 const PRODUCT_IMAGE_FALLBACK = heroImage;
 
-// Map product data to card format (similar to LuminaBook)
+// Map product data to card format
 const mapProductToCard = (product, apiBaseUrl) => {
     if (!product) return null;
     const rawMedia =
@@ -165,6 +166,10 @@ function Home() {
     const [productLoading, setProductLoading] = useState(true);
     const [productError, setProductError] = useState('');
 
+    // Fetch vouchers and promotions
+    const { vouchers, loading: vouchersLoading } = useVouchers();
+    const { promotions, loading: promotionsLoading } = usePromotions();
+
     // Fetch banners - direct fetch like LuminaBook
     useEffect(() => {
         let canceled = false;
@@ -286,6 +291,168 @@ function Home() {
         return [heroImage];
     }, [activeBannerImages]);
 
+    // Format discount value
+    const formatDiscountValue = (item) => {
+        if (!item) return '';
+        if (item.discountValueType === 'PERCENTAGE') {
+            return `${item.discountValue || 0}%`;
+        }
+        const value = item.discountValue ?? 0;
+        if (!value) return '0đ';
+        return formatCurrency(value);
+    };
+
+    // Format date
+    const formatDate = (date) => {
+        if (!date) return '';
+        try {
+            const d = new Date(date);
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            return `${dd}/${mm}/${yyyy}`;
+        } catch {
+            return '';
+        }
+    };
+
+    // Get limited vouchers and promotions for home page
+    const displayedVouchers = useMemo(() => {
+        return vouchers.slice(0, 5);
+    }, [vouchers]);
+
+    const displayedPromotions = useMemo(() => {
+        return promotions.slice(0, 5);
+    }, [promotions]);
+
+    // Voucher Card Component
+    const VoucherCard = ({ voucher }) => {
+        const discountText = formatDiscountValue(voucher);
+        const hasMinOrder = voucher.minOrderValue && voucher.minOrderValue > 0;
+        const hasMaxOrder = voucher.maxOrderValue && voucher.maxOrderValue > 0;
+        const hasMaxDiscount = voucher.maxDiscountValue && voucher.maxDiscountValue > 0;
+
+        return (
+            <div className={cx('voucher-card', 'voucher-card-home')}>
+                <div className={cx('voucher-content', 'voucher-content-home')}>
+                    <div className={cx('voucher-discount-badge-home')}>
+                        <div className={cx('discount-value')}>{discountText}</div>
+                        <div className={cx('discount-label')}>
+                            {voucher.discountValueType === 'PERCENTAGE' ? 'Giảm' : 'Giảm giá'}
+                        </div>
+                    </div>
+                    <div className={cx('voucher-details-home')}>
+                        <div className={cx('voucher-code-main-home')}>
+                            <span className={cx('code-label-main-home')}>Mã:</span>
+                            <span className={cx('code-value-main-home')}>{voucher.code || '--'}</span>
+                        </div>
+                        {voucher.name && (
+                            <div className={cx('voucher-name-main-home')}>{voucher.name}</div>
+                        )}
+                        <div className={cx('voucher-conditions-home')}>
+                            {hasMinOrder && (
+                                <div className={cx('voucher-condition-item-home')}>
+                                    <span className={cx('condition-icon-home')}>💰</span>
+                                    <span>Đơn tối thiểu: {formatCurrency(voucher.minOrderValue)}</span>
+                                </div>
+                            )}
+                            {hasMaxOrder && (
+                                <div className={cx('voucher-condition-item-home')}>
+                                    <span className={cx('condition-icon-home')}>📊</span>
+                                    <span>Đơn tối đa: {formatCurrency(voucher.maxOrderValue)}</span>
+                                </div>
+                            )}
+                            {hasMaxDiscount && (
+                                <div className={cx('voucher-condition-item-home')}>
+                                    <span className={cx('condition-icon-home')}>🎯</span>
+                                    <span>Giảm tối đa: {formatCurrency(voucher.maxDiscountValue)}</span>
+                                </div>
+                            )}
+                            {!hasMinOrder && !hasMaxOrder && !hasMaxDiscount && (
+                                <div className={cx('voucher-condition-item-home', 'no-condition-home')}>
+                                    Áp dụng cho mọi đơn hàng
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // Promotion Card Component
+    const PromotionCard = ({ promotion }) => {
+        const discountText = formatDiscountValue(promotion);
+        const hasMinOrder = promotion.minOrderValue && promotion.minOrderValue > 0;
+        const hasMaxDiscount = promotion.maxDiscountValue && promotion.maxDiscountValue > 0;
+        const promotionImageUrl = promotion.imageUrl
+            ? normalizePromotionImageUrl(promotion.imageUrl, API_BASE_URL)
+            : null;
+
+        return (
+            <div className={cx('promotion-card', 'promotion-card-home')}>
+                <div className={cx('promotion-content', 'promotion-content-home')}>
+                    {promotionImageUrl ? (
+                        <div className={cx('promotion-image-wrapper-home')}>
+                            <img
+                                src={promotionImageUrl}
+                                alt={promotion.name}
+                                className={cx('promotion-image-home')}
+                            />
+                        </div>
+                    ) : (
+                        <div className={cx('promotion-discount-badge-home')}>
+                            <div className={cx('discount-value')}>{discountText}</div>
+                            <div className={cx('discount-label')}>
+                                {promotion.discountValueType === 'PERCENTAGE' ? 'Giảm' : 'Giảm giá'}
+                            </div>
+                        </div>
+                    )}
+                    <div className={cx('promotion-details-home')}>
+                        <h4 className={cx('promotion-name-home')}>{promotion.name || 'Khuyến mãi'}</h4>
+                        {promotion.code && (
+                            <div className={cx('promotion-code-main')}>
+                                <span className={cx('code-label-main')}>Mã:</span>
+                                <span className={cx('code-value-main')}>{promotion.code}</span>
+                            </div>
+                        )}
+                        {promotion.description && (
+                            <div className={cx('promotion-description')}>
+                                {promotion.description.length > 100
+                                    ? `${promotion.description.substring(0, 100)}...`
+                                    : promotion.description}
+                            </div>
+                        )}
+                        <div className={cx('promotion-conditions')}>
+                            {hasMinOrder && (
+                                <div className={cx('promotion-condition-item')}>
+                                    <span className={cx('condition-icon')}>💰</span>
+                                    <span>Đơn tối thiểu: {formatCurrency(promotion.minOrderValue)}</span>
+                                </div>
+                            )}
+                            {hasMaxDiscount && (
+                                <div className={cx('promotion-condition-item')}>
+                                    <span className={cx('condition-icon')}>🎯</span>
+                                    <span>Giảm tối đa: {formatCurrency(promotion.maxDiscountValue)}</span>
+                                </div>
+                            )}
+                            {(promotion.startDate || promotion.expiryDate) && (
+                                <div className={cx('promotion-condition-item')}>
+                                    <span className={cx('condition-icon')}>📅</span>
+                                    <span>
+                                        {promotion.startDate && formatDate(promotion.startDate)}
+                                        {promotion.startDate && promotion.expiryDate && ' - '}
+                                        {promotion.expiryDate && formatDate(promotion.expiryDate)}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <motion.div
             className={cx('home-wrapper')}
@@ -311,6 +478,58 @@ function Home() {
                         />
                     </div>
                 </motion.section>
+
+                {/* Vouchers and Promotions Section */}
+                {!vouchersLoading && !promotionsLoading && (displayedVouchers.length > 0 || displayedPromotions.length > 0) && (
+                    <motion.section
+                        className={cx('vouchers-promotions-section')}
+                        variants={sectionVariants}
+                        initial="hidden"
+                        animate="visible"
+                    >
+                        <div className={cx('vouchers-promotions-container')}>
+                            {/* Vouchers Column */}
+                            {displayedVouchers.length > 0 && (
+                                <div className={cx('voucher-column')}>
+                                    <div className={cx('section-header')}>
+                                        <h3 className={cx('section-title')}>
+                                            <span className={cx('title-icon')}>🎫</span>
+                                            VOUCHER
+                                        </h3>
+                                        <Link to="/promotion#vouchers" className={cx('view-all-link')}>
+                                            Xem tất cả →
+                                        </Link>
+                                    </div>
+                                    <div className={cx('voucher-grid')}>
+                                        {displayedVouchers.map((voucher) => (
+                                            <VoucherCard key={voucher.id} voucher={voucher} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Promotions Column */}
+                            {displayedPromotions.length > 0 && (
+                                <div className={cx('promotion-column')}>
+                                    <div className={cx('section-header')}>
+                                        <h3 className={cx('section-title')}>
+                                            <span className={cx('title-icon')}>🔥</span>
+                                            KHUYẾN MÃI
+                                        </h3>
+                                        <Link to="/promotion#promotions" className={cx('view-all-link')}>
+                                            Xem tất cả →
+                                        </Link>
+                                    </div>
+                                    <div className={cx('promotion-grid')}>
+                                        {displayedPromotions.map((promotion) => (
+                                            <PromotionCard key={promotion.id} promotion={promotion} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </motion.section>
+                )}
 
                 {/* Loading & Error States */}
                 {productLoading && (
