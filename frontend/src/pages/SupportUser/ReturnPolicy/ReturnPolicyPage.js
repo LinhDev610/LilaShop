@@ -11,7 +11,7 @@ export default function ReturnPolicyPage() {
     return (
         <div className={cx('wrapper')}>
             <div className={cx('container')}>
-                <button className={cx('back-button')} onClick={() => navigate('/support/user')}>
+                <button className={cx('back-button')} onClick={() => navigate('/support')}>
                     ← Quay lại
                 </button>
 

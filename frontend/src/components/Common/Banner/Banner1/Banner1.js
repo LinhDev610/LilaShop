@@ -14,7 +14,7 @@ const cx = classNames.bind(styles);
   - heroImages?: string[]
   - promos?: Array<{ image: string, alt?: string, href?: string }>
 */
-export default function Banner1({ heroImage, heroImages = [], promos = [] }) {
+export default function Banner1({ heroImage, heroImages = [], promos = [], fullWidth = false }) {
     const [current, setCurrent] = useState(0);
     const slides = useMemo(() => (heroImages && heroImages.length > 0 ? heroImages : heroImage ? [heroImage] : []), [heroImages, heroImage]);
     const isCarousel = slides.length > 1;
@@ -40,6 +40,50 @@ export default function Banner1({ heroImage, heroImages = [], promos = [] }) {
         setCurrent((c) => (c + 1) % slides.length);
     }, [isCarousel, slides.length]);
 
+    // Full width layout - no promo column
+    if (fullWidth) {
+        return (
+            <section className={cx('main-content', 'full-width')}>
+                <div className={cx('hero-banner', 'full-width')}>
+                    <div className={cx('slides-viewport')}>
+                        <div
+                            ref={trackRef}
+                            className={cx('slides-track')}
+                            style={{ transform: `translateX(-${current * 100}%)` }}
+                        >
+                            {slides.map((src, idx) => (
+                                <Link to="#" className={cx('hero-link')} key={idx}>
+                                    <img src={src} alt={`Banner ${idx + 1}`} className={cx('hero-image')} />
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                    {isCarousel && (
+                        <>
+                            <button className={cx('nav-btn', 'nav-prev')} onClick={prev} aria-label="Prev slide">
+                                ‹
+                            </button>
+                            <button className={cx('nav-btn', 'nav-next')} onClick={next} aria-label="Next slide">
+                                ›
+                            </button>
+                            <div className={cx('dots')}>
+                                {slides.map((_, idx) => (
+                                    <button
+                                        key={idx}
+                                        className={cx('dot', { active: idx === current })}
+                                        onClick={() => setCurrent(idx)}
+                                        aria-label={`Go to slide ${idx + 1}`}
+                                    />
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </div>
+            </section>
+        );
+    }
+
+    // Original two-column layout
     return (
         <section className={cx('main-content')}>
             {/* Left Column - Hero Banner */}

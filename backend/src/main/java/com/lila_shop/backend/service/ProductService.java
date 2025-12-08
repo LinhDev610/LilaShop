@@ -568,11 +568,40 @@ public class ProductService {
     }
 
     public List<ProductResponse> getProductsByCategory(String categoryId) {
-        List<Product> products = productRepository.findByCategoryId(categoryId);
+        // Lấy tất cả category IDs bao gồm cả danh mục con
+        List<String> categoryIds = new ArrayList<>();
+        categoryIds.add(categoryId);
+
+        // Lấy tất cả danh mục con (recursive)
+        List<Category> subCategories = categoryRepository.findByParentCategoryId(categoryId);
+        collectAllSubCategoryIds(subCategories, categoryIds);
+
+        // Lấy tất cả sản phẩm thuộc category và các sub-categories
+        List<Product> products = new ArrayList<>();
+        for (String id : categoryIds) {
+            products.addAll(productRepository.findByCategoryId(id));
+        }
+
         return products.stream()
                 .filter(p -> p.getStatus() == ProductStatus.APPROVED)
+                .distinct() // Loại bỏ trùng lặp nếu có
                 .map(productMapper::toResponse)
                 .toList();
+    }
+
+    // Thu thập tất cả category IDs từ danh sách categories và các sub-categories
+    // của chúng
+    private void collectAllSubCategoryIds(List<Category> categories, List<String> categoryIds) {
+        for (Category category : categories) {
+            if (category.getId() != null && !categoryIds.contains(category.getId())) {
+                categoryIds.add(category.getId());
+                // Lấy sub-categories của category này
+                List<Category> subCategories = categoryRepository.findByParentCategoryId(category.getId());
+                if (!subCategories.isEmpty()) {
+                    collectAllSubCategoryIds(subCategories, categoryIds);
+                }
+            }
+        }
     }
 
     public List<ProductResponse> searchProducts(String keyword) {

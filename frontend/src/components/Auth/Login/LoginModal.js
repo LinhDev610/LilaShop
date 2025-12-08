@@ -46,7 +46,8 @@ export default function LoginModal({ open = false, onClose }) {
                 return true;
             }
         } catch (err) {
-            console.log('Token refresh failed:', err);
+            const errorMsg = err?.message || err?.toString() || 'Unknown error';
+            console.log('Token refresh failed:', errorMsg);
         }
         return false;
     };
@@ -195,14 +196,14 @@ export default function LoginModal({ open = false, onClose }) {
                     // Kiểm tra nếu là admin thì chuyển hướng đến trang admin
                     const userRole = await getUserRole(getApiBaseUrl(), loginData.token);
 
-                    // console.log('User Role:', userRole);
-                    // console.log('Full meData structure:', JSON.stringify(meData, null, 2));
+                    // Ensure userRole is a string before comparison
+                    const roleString = typeof userRole === 'string' ? userRole : String(userRole || '');
 
-                    if (userRole === 'ADMIN') {
+                    if (roleString === 'ADMIN') {
                         roleRedirectPath = '/admin';
-                    } else if (userRole === 'CUSTOMER_SUPPORT') {
+                    } else if (roleString === 'CUSTOMER_SUPPORT') {
                         roleRedirectPath = '/customer-support';
-                    } else if (userRole === 'STAFF') {
+                    } else if (roleString === 'STAFF') {
                         roleRedirectPath = '/staff';
                     }
 
@@ -216,10 +217,35 @@ export default function LoginModal({ open = false, onClose }) {
                     window.dispatchEvent(new CustomEvent('displayNameUpdated'));
                 }
 
-                const fallbackRedirect = authRedirectPath || '/';
-                const finalRedirect = roleRedirectPath || fallbackRedirect;
+                // Ensure redirect path is a valid string
+                let fallbackRedirect = '/';
+                try {
+                    // Safely get authRedirectPath, ensuring it's a string
+                    if (authRedirectPath && typeof authRedirectPath === 'string') {
+                        fallbackRedirect = authRedirectPath.trim() || '/';
+                    }
+                } catch (e) {
+                    // If authRedirectPath has circular reference, use default
+                    fallbackRedirect = '/';
+                }
+
+                const finalRedirect = (typeof roleRedirectPath === 'string' && roleRedirectPath.trim())
+                    ? roleRedirectPath.trim()
+                    : fallbackRedirect;
+
+                // Final validation - ensure it's a valid string path
+                const safeRedirect = (typeof finalRedirect === 'string' && finalRedirect.trim() && finalRedirect.startsWith('/'))
+                    ? finalRedirect.trim()
+                    : '/';
+
                 onClose?.();
-                navigate(finalRedirect, { replace: true });
+                try {
+                    navigate(safeRedirect, { replace: true });
+                } catch (navError) {
+                    // If navigate fails, fallback to home
+                    console.error('Navigation error:', navError?.message || 'Invalid path');
+                    navigate('/', { replace: true });
+                }
                 setAuthRedirectPath(null);
             } else {
                 // Xử lý các trường hợp lỗi đăng nhập
@@ -245,7 +271,10 @@ export default function LoginModal({ open = false, onClose }) {
                 }
             }
         } catch (err) {
-            console.error('Login error:', err);
+            // Safely log error without circular reference issues
+            const errorMessage = err?.message || err?.toString() || 'Unknown error';
+            const errorStack = err?.stack || '';
+            console.error('Login error:', errorMessage, errorStack ? '\nStack:' : '', errorStack);
             setError('Không thể kết nối máy chủ. Vui lòng thử lại.');
         } finally {
             setIsLoading(false);

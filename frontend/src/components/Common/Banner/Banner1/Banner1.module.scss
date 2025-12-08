@@ -5,6 +5,15 @@
     grid-template-columns: 2fr 1fr;
     gap: 15px;
     min-height: 375px;
+
+    &.full-width {
+        display: block !important;
+        grid-template-columns: none !important;
+        gap: 0 !important;
+        min-height: auto;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
 }
 
 .hero-banner {
@@ -17,6 +26,35 @@
     position: relative;
     overflow: hidden;
     border: 1px solid #ddd;
+
+    &.full-width {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0;
+        border-radius: 0;
+        border: none;
+        height: 500px; // Fixed height for desktop
+        position: relative;
+        display: block;
+        margin: 0;
+        flex: none;
+
+        @media (max-width: 1200px) {
+            height: 450px;
+        }
+
+        @media (max-width: 992px) {
+            height: 400px;
+        }
+
+        @media (max-width: 768px) {
+            height: 300px;
+        }
+
+        @media (max-width: 576px) {
+            height: 250px;
+        }
+    }
 }
 
 .slides-viewport {
@@ -25,6 +63,14 @@
     height: 100%;
     overflow: hidden; /* keep frame fixed */
     background: #fff;
+
+    .full-width & {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
 }
 
 .slides-track {
@@ -32,6 +78,12 @@
     width: 100%;
     height: 100%;
     transition: transform 600ms ease-in-out; /* smooth slide */
+
+    .full-width & {
+        width: 100%;
+        height: 100%;
+        display: flex;
+    }
 }
 
 .hero-link {
@@ -39,8 +91,16 @@
     width: 100%;
     height: 100%;
     text-decoration: none;
-    position: relative; /* keep image absolutely positioned inside without changing frame */
-    flex: 0 0 100%; /* each slide takes full frame width */
+    position: relative; 
+    min-width: 0;
+
+    .full-width & {
+        flex: 0 0 100%;
+        width: 100%;
+        height: 100%;
+        position: relative;
+        display: block;
+    }
 }
 
 .hero-image {
@@ -52,6 +112,18 @@
     object-position: center center;
     border-radius: 2px;
     transition: opacity 0.4s ease;
+    display: block;
+
+    .full-width & {
+        border-radius: 0;
+        object-fit: cover;
+        object-position: center center;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
 }
 
 .nav-btn {

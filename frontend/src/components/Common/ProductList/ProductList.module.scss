@@ -65,42 +65,52 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: transparent;
-    border: none;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid rgba(102, 126, 234, 0.2);
+    border-radius: 50%;
     cursor: pointer;
     z-index: 20;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    width: 48px;
+    height: 48px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
 
-    &:hover {
+    &:hover:not(:disabled) {
         transform: translateY(-50%) scale(1.1);
+        background: rgba(255, 255, 255, 1);
+        border-color: rgba(102, 126, 234, 0.4);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
     }
 
-    &:active {
+    &:active:not(:disabled) {
         transform: translateY(-50%) scale(0.95);
     }
 
     &.disabled,
     &:disabled {
-        opacity: 0.3;
-        cursor: default;
+        opacity: 0.4;
+        cursor: not-allowed;
         pointer-events: none;
         transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.6);
     }
 }
 
 .nav-left {
-    left: 10px;
+    left: 16px;
 }
 
 .nav-right {
-    right: 10px;
+    right: 16px;
 }
 
 .nav-icon {
-    width: 30px;
-    height: 30px;
+    width: 24px;
+    height: 24px;
     object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }

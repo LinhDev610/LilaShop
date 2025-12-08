@@ -204,21 +204,45 @@ const ProductDetail = ({ productId }) => {
         displayProduct.stock ??
         0;
 
+    // Get tax from product or variant (default 0)
+    const tax = selectedVariant?.tax ?? displayProduct.tax ?? 0;
+    const discountValue = selectedVariant?.discountValue ?? displayProduct.discountValue ?? 0;
+
+    // currentPrice là giá cuối cùng (đã có promotion discount)
     const currentPrice =
         selectedVariant?.price ??
         displayProduct.price ??
-        displayProduct.unitPrice ??
         0;
-    const originalPrice =
-        displayProduct.originalPrice ??
-        selectedVariant?.price ??
-        displayProduct.unitPrice ??
-        currentPrice;
+
+    // originalPrice là giá gốc đã có tax nhưng chưa có promotion discount
+    let originalPrice = 0;
+    if (displayProduct.originalPrice != null && displayProduct.originalPrice > 0) {
+        originalPrice = displayProduct.originalPrice;
+    } else {
+        const unitPrice = selectedVariant?.unitPrice ?? displayProduct.unitPrice ?? 0;
+        if (unitPrice > 0) {
+            originalPrice = unitPrice * (1 + tax);
+        } else if (currentPrice > 0 && discountValue > 0) {
+            // Nếu không có unitPrice, tính ngược lại từ price và discountValue
+            originalPrice = currentPrice + discountValue;
+        } else {
+            originalPrice = currentPrice;
+        }
+    }
+
+    // Ensure originalPrice >= currentPrice
+    if (originalPrice < currentPrice) {
+        originalPrice = currentPrice;
+    }
+
+    // Calculate discount percentage
     const discountPercent =
         displayProduct.discount ??
-        (originalPrice > 0
-            ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
-            : 0);
+        (originalPrice > 0 && discountValue > 0
+            ? Math.round((discountValue / originalPrice) * 100)
+            : originalPrice > currentPrice && currentPrice > 0
+                ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
+                : 0);
 
     // Rating data dùng chung cho phần đầu và khối đánh giá toàn trang
     const reviewCount =

@@ -3,8 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './AddBannerPage.module.scss';
 import { getApiBaseUrl, getStoredToken, getUserRole } from '../../../../../services/utils';
-import { normalizeMediaUrl } from '../../../../../services/productUtils';
+import { normalizeMediaUrl, filterByKeyword } from '../../../../../services/productUtils';
 import { useNotification } from '../../../../../components/Common/Notification';
+import useDebounce from '../../../../../hooks/useDebounce';
 
 const cx = classNames.bind(styles);
 
@@ -29,9 +30,13 @@ export default function AddBannerPage() {
     const [selectedProducts, setSelectedProducts] = useState([]); // Array of {id, name}
     const [availableProducts, setAvailableProducts] = useState([]); // All products for selection
     const [showProductModal, setShowProductModal] = useState(false);
+    const [productSearchTerm, setProductSearchTerm] = useState(''); // Search term for products in modal
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [bannerLoaded, setBannerLoaded] = useState(false); // Track if banner data has been loaded
+
+    // Debounce search term for better performance
+    const debouncedSearchTerm = useDebounce(productSearchTerm, 300);
 
     // Fetch user role to check if admin
     useEffect(() => {
@@ -42,7 +47,7 @@ export default function AddBannerPage() {
                 if (!token) {
                     token = getStoredToken();
                 }
-                
+
                 if (!token) {
                     setIsAdmin(false);
                     return;
@@ -71,7 +76,7 @@ export default function AddBannerPage() {
                 }
 
                 const data = await resp.json().catch(() => ({}));
-                const role = 
+                const role =
                     data?.result?.role?.name ||
                     data?.role?.name ||
                     data?.result?.role ||
@@ -139,7 +144,7 @@ export default function AddBannerPage() {
                 const data = await response.json();
                 if (response.ok && data?.result) {
                     const banner = data.result;
-                    
+
                     // Format dates
                     const formatLocalDate = (value) => {
                         if (!value) return '';
@@ -181,7 +186,7 @@ export default function AddBannerPage() {
                         startDate: formatLocalDate(banner.startDate),
                         endDate: formatLocalDate(banner.endDate),
                     });
-                    
+
                     // Set selected products with IDs first, names will be updated when products load
                     const selected = (banner.productIds || []).map((pid) => ({
                         id: pid,
@@ -202,7 +207,7 @@ export default function AddBannerPage() {
     // Update selected products names when availableProducts are loaded
     useEffect(() => {
         if (!isEditMode || availableProducts.length === 0 || selectedProducts.length === 0) return;
-        
+
         // Check if any product has "Đang tải..." name
         const needsUpdate = selectedProducts.some((p) => p.name === 'Đang tải...');
         if (needsUpdate) {
@@ -252,8 +257,17 @@ export default function AddBannerPage() {
     };
 
     const handleAddProduct = () => {
+        setProductSearchTerm('');
         setShowProductModal(true);
     };
+
+    // Filter products based on search term
+    const filteredAvailableProducts = useMemo(() => {
+        const unselectedProducts = availableProducts.filter(
+            (p) => !selectedProducts.find((sp) => sp.id === p.id),
+        );
+        return filterByKeyword(unselectedProducts, debouncedSearchTerm);
+    }, [availableProducts, selectedProducts, debouncedSearchTerm]);
 
     const handleSelectProduct = (product) => {
         if (!selectedProducts.find((p) => p.id === product.id)) {
@@ -360,11 +374,11 @@ export default function AddBannerPage() {
                     throw new Error(updateData?.message || 'Không thể cập nhật banner');
                 }
 
-                notifySuccess('Banner đã được cập nhật và gửi lại để duyệt!');
+                notifySuccess('Banner đã được cập nhật thành công!');
             } else {
                 // Create banner
                 bannerPayload.createdDate = formData.createdDate || new Date().toISOString().split('T')[0];
-                
+
                 const createResponse = await fetch(`${API_BASE_URL}/banners`, {
                     method: 'POST',
                     headers: {
@@ -380,7 +394,7 @@ export default function AddBannerPage() {
                     throw new Error(createData?.message || 'Không thể tạo banner');
                 }
 
-                notifySuccess('Banner đã được gửi duyệt thành công!');
+                notifySuccess('Banner đã được tạo thành công!');
             }
 
             setTimeout(() => {
@@ -444,8 +458,8 @@ export default function AddBannerPage() {
                                 {formData.imageFile
                                     ? formData.imageFile.name
                                     : isEditMode && formData.imageUrl
-                                    ? 'Ảnh hiện tại (có thể thay đổi)'
-                                    : 'Chưa có tệp nào được chọn'}
+                                        ? 'Ảnh hiện tại (có thể thay đổi)'
+                                        : 'Chưa có tệp nào được chọn'}
                             </span>
                         </div>
                         {(formData.imageFile || (isEditMode && formData.imageUrl)) && (
@@ -611,22 +625,35 @@ export default function AddBannerPage() {
                             </button>
                         </div>
                         <div className={cx('modal-content')}>
-                            {availableProducts
-                                .filter((p) => !selectedProducts.find((sp) => sp.id === p.id))
-                                .map((product) => (
-                                    <div
-                                        key={product.id}
-                                        className={cx('product-option')}
-                                        onClick={() => handleSelectProduct(product)}
-                                    >
-                                        {product.name}
-                                    </div>
-                                ))}
-                            {availableProducts.filter(
-                                (p) => !selectedProducts.find((sp) => sp.id === p.id),
-                            ).length === 0 && (
-                                <p className={cx('no-products')}>Không còn sách nào để thêm</p>
-                            )}
+                            <div className={cx('search-container')}>
+                                <input
+                                    type="text"
+                                    className={cx('search-input')}
+                                    placeholder="Tìm kiếm sách theo tên..."
+                                    value={productSearchTerm}
+                                    onChange={(e) => setProductSearchTerm(e.target.value)}
+                                    autoFocus
+                                />
+                            </div>
+                            <div className={cx('product-list-container')}>
+                                {filteredAvailableProducts.length > 0 ? (
+                                    filteredAvailableProducts.map((product) => (
+                                        <div
+                                            key={product.id}
+                                            className={cx('product-option')}
+                                            onClick={() => handleSelectProduct(product)}
+                                        >
+                                            {product.name}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className={cx('no-products')}>
+                                        {productSearchTerm.trim()
+                                            ? 'Không tìm thấy sách nào phù hợp'
+                                            : 'Không còn sách nào để thêm'}
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

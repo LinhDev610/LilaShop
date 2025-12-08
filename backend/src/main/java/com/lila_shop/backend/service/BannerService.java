@@ -44,15 +44,17 @@ public class BannerService {
         String userEmail = SecurityUtil.getCurrentUserEmail();
 
         // Get user by email (getName() returns email, not ID)
-        User user = userRepository.findByEmail(userEmail).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         // Create banner entity using mapper
         Banner banner = bannerMapper.toBanner(request);
         banner.setCreatedBy(user);
         banner.setCreatedAt(LocalDateTime.now());
         banner.setUpdatedAt(LocalDateTime.now());
-        banner.setStatus(Boolean.FALSE);
-        banner.setPendingReview(Boolean.TRUE);
+        // Staff tạo banner không cần admin duyệt, active ngay
+        banner.setStatus(Boolean.TRUE);
+        banner.setPendingReview(Boolean.FALSE);
 
         // Set order index if not provided
         if (banner.getOrderIndex() == null) {
@@ -77,8 +79,8 @@ public class BannerService {
     }
 
     public BannerResponse getBannerById(String bannerId) {
-        Banner banner =
-                bannerRepository.findById(bannerId).orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
+        Banner banner = bannerRepository.findById(bannerId)
+                .orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
 
         return bannerMapper.toResponse(banner);
     }
@@ -102,8 +104,8 @@ public class BannerService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        Banner banner =
-                bannerRepository.findById(bannerId).orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
+        Banner banner = bannerRepository.findById(bannerId)
+                .orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
 
         // Kiểm tra quyền: Admin hoặc chủ sở hữu banner
         boolean isAdmin = authentication.getAuthorities().stream()
@@ -126,13 +128,13 @@ public class BannerService {
         if (request.getLinkUrl() != null) {
             banner.setLinkUrl(request.getLinkUrl());
         }
-        // Nếu là staff (không phải admin), luôn set status về false (chờ duyệt) khi gửi lại
-        // và giữ nguyên rejectionReason
+        // Staff update banner không cần admin duyệt, active ngay
         if (!isAdmin) {
-            // Staff gửi lại banner -> luôn set về chờ duyệt
-            banner.setStatus(false);
-            banner.setPendingReview(true);
-            // Giữ nguyên rejectionReason (không xóa)
+            // Staff update banner -> active ngay, không cần duyệt
+            banner.setStatus(true);
+            banner.setPendingReview(false);
+            // Xóa rejectionReason khi staff update thành công
+            banner.setRejectionReason(null);
         } else {
             // Admin có thể thay đổi status
             if (request.getStatus() != null) {
@@ -184,8 +186,8 @@ public class BannerService {
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public void deleteBanner(String bannerId) {
-        Banner banner =
-                bannerRepository.findById(bannerId).orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
+        Banner banner = bannerRepository.findById(bannerId)
+                .orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
 
         bannerRepository.delete(banner);
         log.info(
@@ -197,8 +199,8 @@ public class BannerService {
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public BannerResponse updateBannerOrder(String bannerId, Integer newOrderIndex) {
-        Banner banner =
-                bannerRepository.findById(bannerId).orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
+        Banner banner = bannerRepository.findById(bannerId)
+                .orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
 
         banner.setOrderIndex(newOrderIndex);
         banner.setUpdatedAt(LocalDateTime.now());

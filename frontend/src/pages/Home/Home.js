@@ -1,38 +1,27 @@
+import { useState, useEffect, useRef, useMemo, memo } from 'react';
+import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import classNames from 'classnames/bind';
-import { useState, useEffect, useLayoutEffect } from 'react';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import AdminRedirectHandler from '../../components/AdminRedirectHandler';
-
-
-import styles from './Home.module.scss';
-import ProductList from '../../components/Common/ProductList/ProductList';
-import { getApiBaseUrl } from '../../services/utils';
+import { SERVICE_ITEMS } from '../../services/constants';
+import { getApiBaseUrl, formatCurrency } from '../../services/utils';
 import { normalizeMediaUrl } from '../../services/productUtils';
+import { normalizePromotionImageUrl } from '../../services/voucherPromotionUtils';
+import { useVouchers, usePromotions } from '../../hooks/useVouchersPromotions';
+import styles from './Home.module.scss';
 
-// Import images
 import heroImage from '../../assets/images/img_qc.png';
-import Banner1 from '../../components/Common/Banner/Banner1';
-// Promotional images - TODO: Replace with cosmetic product images
-import promoImage2 from '../../assets/images/img_qc1.png';
-import promoImage3 from '../../assets/images/img_qc2.png';
-import bannerImage1 from '../../assets/images/img_qc1.png';
-import bannerImage2 from '../../assets/images/img_qc2.png';
-import bannerImage3 from '../../assets/images/img_qc.png';
-import Banner2 from '../../components/Common/Banner/Banner2';
-// Fallback image for products - TODO: Replace with cosmetic product placeholder image
-import imgsach_test from '../../assets/images/img_qc.png';
 import bgChristmas from '../../assets/images/img_christmas.png';
-// service icons
-import iconGiaoHang from '../../assets/icons/icon_giaohangtannoi.png';
-import iconDoiTra from '../../assets/icons/icon_doitrahang.png';
-import iconThanhToan from '../../assets/icons/icon_thanhtoanantoan.png';
-import iconHoTro from '../../assets/icons/icon_hotro247.png';
-import iconKhuyenMai from '../../assets/icons/icon_khuyenmaihapdan.png';
+
+import ProductList from '../../components/Common/ProductList/ProductList';
+import Banner1 from '../../components/Common/Banner/Banner1';
 
 const cx = classNames.bind(styles);
 
-const PRODUCT_IMAGE_FALLBACK = imgsach_test;
+const PRODUCT_IMAGE_FALLBACK = heroImage;
 
+// Map product data to card format
 const mapProductToCard = (product, apiBaseUrl) => {
     if (!product) return null;
     const rawMedia =
@@ -41,61 +30,125 @@ const mapProductToCard = (product, apiBaseUrl) => {
             ? product.mediaUrls[0]
             : '');
     const imageUrl = normalizeMediaUrl(rawMedia, apiBaseUrl) || PRODUCT_IMAGE_FALLBACK;
-    const price = typeof product.price === 'number' ? product.price : null;
-    const unitPrice = typeof product.unitPrice === 'number' ? product.unitPrice : null;
-    const originalPriceField =
-        typeof product.originalPrice === 'number' ? product.originalPrice : null;
-    const discountValue = typeof product.discountValue === 'number' ? product.discountValue : 0;
-    const discountPercent = typeof product.discount === 'number' ? product.discount : null;
 
-    const currentPrice = price ?? unitPrice ?? 0;
-    const originalPrice = originalPriceField ?? unitPrice ?? currentPrice;
+    const unitPrice = typeof product.unitPrice === 'number' ? product.unitPrice : 0;
+    const tax = typeof product.tax === 'number' ? product.tax : 0; // tax is a percentage (e.g., 0.1 for 10%)
+    const priceFromBackend = typeof product.price === 'number' ? product.price : null; // This is the price AFTER promotion
 
-    const percentToApply =
-        discountPercent != null && Number.isFinite(discountPercent)
-            ? Math.min(99, Math.max(0, discountPercent))
-            : null;
+    // Calculate original price (before any promotion)
+    const originalPrice = unitPrice * (1 + tax);
 
-    const amountToApply =
-        percentToApply != null && originalPrice > 0
-            ? Math.round((percentToApply / 100) * originalPrice)
-            : originalPrice > currentPrice && originalPrice > 0
-                ? originalPrice - currentPrice
-                : discountValue;
+    // Current price is the price from backend (which already includes promotion)
+    const currentPrice = priceFromBackend ?? originalPrice;
 
-    const discountedPrice =
-        percentToApply != null
-            ? Math.max(originalPrice - amountToApply, 0)
-            : originalPrice > currentPrice && currentPrice > 0
-                ? currentPrice
-                : originalPrice > 0 && discountValue > 0
-                    ? Math.max(originalPrice - discountValue, 0)
-                    : currentPrice;
-
-    const computedDiscount =
-        percentToApply != null
-            ? percentToApply
-            : originalPrice > 0 && (originalPrice - discountedPrice) > 0
-                ? Math.min(
-                    99,
-                    Math.max(
-                        0,
-                        Math.round(((originalPrice - discountedPrice) / originalPrice) * 100),
-                    ),
-                )
-                : 0;
+    // Calculate discount percentage
+    let discount = 0;
+    if (originalPrice > 0 && currentPrice < originalPrice) {
+        discount = Math.min(99, Math.round(((originalPrice - currentPrice) / originalPrice) * 100));
+    }
 
     return {
         id: product.id,
         title: product.name || 'Sản phẩm',
         image: imageUrl,
-        currentPrice: discountedPrice ?? originalPrice ?? 0,
-        originalPrice: originalPrice || discountedPrice || 0,
-        discount: computedDiscount,
+        currentPrice: currentPrice,
+        originalPrice: originalPrice,
+        discount: discount,
         averageRating: typeof product.averageRating === 'number' ? product.averageRating : 0,
         quantitySold: typeof product.quantitySold === 'number' ? product.quantitySold : 0,
         updatedAt: product.updatedAt || product.createdAt || null,
     };
+};
+
+// Animation variants
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1,
+            delayChildren: 0.2,
+        },
+    },
+};
+
+const sectionVariants = {
+    hidden: {
+        opacity: 0,
+        y: 50,
+        scale: 0.95,
+    },
+    visible: {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        transition: {
+            duration: 0.6,
+            ease: [0.4, 0, 0.2, 1],
+        },
+    },
+};
+
+const cardVariants = {
+    hidden: {
+        opacity: 0,
+        y: 30,
+        scale: 0.9,
+    },
+    visible: (i) => ({
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        transition: {
+            delay: i * 0.1,
+            duration: 0.5,
+            ease: [0.4, 0, 0.2, 1],
+        },
+    }),
+};
+
+const serviceItemVariants = {
+    hidden: {
+        opacity: 0,
+        y: 30,
+        scale: 0.9,
+    },
+    visible: (i) => ({
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        transition: {
+            delay: i * 0.1,
+            duration: 0.5,
+            ease: [0.4, 0, 0.2, 1],
+        },
+    }),
+};
+
+const statusVariants = {
+    hidden: {
+        opacity: 0,
+        scale: 0.8,
+        y: -20,
+    },
+    visible: {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        transition: {
+            type: 'spring',
+            stiffness: 300,
+            damping: 25,
+        },
+    },
+    exit: {
+        opacity: 0,
+        scale: 0.8,
+        y: -20,
+        transition: {
+            duration: 0.2,
+        },
+    },
 };
 
 function Home() {
@@ -103,99 +156,36 @@ function Home() {
     const sessionToken = sessionStorage.getItem('token');
     const hasToken = token || sessionToken;
 
-    // Luôn bắt đầu với checking nếu có token để tránh flash
-    const [isChecking, setIsChecking] = useState(() => {
-        const tokenCheck = token || sessionStorage.getItem('token');
-        return !!tokenCheck;
-    });
+    const API_BASE_URL = getApiBaseUrl();
+
+    // State for banners
+    const [activeBannerImages, setActiveBannerImages] = useState([]);
+
+    // State for products
     const [homeProducts, setHomeProducts] = useState([]);
     const [productLoading, setProductLoading] = useState(true);
     const [productError, setProductError] = useState('');
 
-    useLayoutEffect(() => {
-        // Sync check ngay trước khi paint
-        if (!hasToken) {
-            // Không có token, đảm bảo xóa flag và không check
-            sessionStorage.removeItem('_checking_role');
-            setIsChecking(false);
-            return;
-        }
+    // Fetch vouchers and promotions
+    const { vouchers, loading: vouchersLoading } = useVouchers();
+    const { promotions, loading: promotionsLoading } = usePromotions();
 
-        // Đợi AdminRedirectHandler set flag (có thể mất vài ms)
-        const initialCheck = sessionStorage.getItem('_checking_role') === '1';
-        if (initialCheck) {
-            setIsChecking(true);
-        }
-    }, [hasToken, token, sessionToken]);
-
-    useEffect(() => {
-        if (!hasToken) {
-            // Không có token, reset checking ngay
-            setIsChecking(false);
-            sessionStorage.removeItem('_checking_role');
-            return;
-        }
-
-        // Monitor flag cho đến khi check xong
-        let mounted = true;
-        const checkInterval = setInterval(() => {
-            if (!mounted) return;
-
-            // Kiểm tra lại token mỗi lần (để phát hiện logout)
-            const currentToken = token || sessionStorage.getItem('token');
-            if (!currentToken) {
-                // Token đã bị xóa (logout), reset ngay
-                sessionStorage.removeItem('_checking_role');
-                setIsChecking(false);
-                clearInterval(checkInterval);
-                return;
-            }
-
-            const checking = sessionStorage.getItem('_checking_role') === '1';
-            if (checking) {
-                setIsChecking(true);
-            } else {
-                // Flag đã xóa, check xong - đợi một chút để đảm bảo redirect đã xảy ra
-                setTimeout(() => {
-                    if (mounted) {
-                        setIsChecking(false);
-                        clearInterval(checkInterval);
-                    }
-                }, 150);
-            }
-        }, 20); // Check rất nhanh
-
-        // Safety timeout
-        const timeout = setTimeout(() => {
-            if (mounted) {
-                setIsChecking(false);
-                clearInterval(checkInterval);
-            }
-        }, 800);
-
-        return () => {
-            mounted = false;
-            clearInterval(checkInterval);
-            clearTimeout(timeout);
-        };
-    }, [hasToken, token]);
-
-    const API_BASE_URL = getApiBaseUrl();
-    const [activeBannerImages, setActiveBannerImages] = useState([]);
-
+    // Fetch banners - direct fetch like LuminaBook
     useEffect(() => {
         let canceled = false;
         const fetchActiveBanners = async () => {
             try {
                 const resp = await fetch(`${API_BASE_URL}/banners/active`);
-                const data = await resp.json();
-                if (!resp.ok) return;
+                if (!resp.ok || canceled) return;
+                const data = await resp.json().catch(() => ({}));
                 const images = (data?.result || [])
                     .filter((b) => b?.imageUrl)
-                    .map((b) => normalizeMediaUrl(b.imageUrl, API_BASE_URL));
+                    .map((b) => normalizeMediaUrl(b.imageUrl, API_BASE_URL))
+                    .filter(Boolean);
                 if (!canceled) setActiveBannerImages(images);
             } catch (e) {
                 // silent fail for public home
+                if (!canceled) setActiveBannerImages([]);
             }
         };
         fetchActiveBanners();
@@ -204,6 +194,7 @@ function Home() {
         };
     }, [API_BASE_URL]);
 
+    // Fetch products - direct fetch like LuminaBook
     useEffect(() => {
         let canceled = false;
         const fetchActiveProducts = async () => {
@@ -215,7 +206,7 @@ function Home() {
                 if (canceled) return;
 
                 if (!resp.ok) {
-                    throw new Error(data?.message || 'Không thể tải sản phẩm thực tế');
+                    throw new Error(data?.message || 'Không thể tải sản phẩm');
                 }
 
                 const rawProducts = Array.isArray(data?.result)
@@ -228,11 +219,14 @@ function Home() {
                     .map((product) => mapProductToCard(product, API_BASE_URL))
                     .filter(Boolean);
 
-                setHomeProducts(normalizedProducts);
+                if (!canceled) {
+                    setHomeProducts(normalizedProducts);
+                }
             } catch (error) {
+                console.error('Error fetching products:', error);
                 if (!canceled) {
                     setHomeProducts([]);
-                    setProductError(error?.message || 'Không thể tải sản phẩm thực tế');
+                    setProductError(error?.message || 'Không thể tải sản phẩm');
                 }
             } finally {
                 if (!canceled) {
@@ -248,10 +242,9 @@ function Home() {
         };
     }, [API_BASE_URL]);
 
-    const allProducts = homeProducts;
-
+    // Sort and slice function (similar to LuminaBook)
     const sortAndSlice = (products, accessor, limit = 10) => {
-        if (!products.length) return [];
+        if (!Array.isArray(products) || !products.length) return [];
         return [...products]
             .sort((a, b) => {
                 const aVal = accessor(a) ?? 0;
@@ -261,178 +254,480 @@ function Home() {
             .slice(0, Math.min(limit, products.length));
     };
 
+    const allProducts = Array.isArray(homeProducts) ? homeProducts : [];
+
     // Sản phẩm khuyến mãi: chỉ lấy những sản phẩm có discount > 0
     const promotionalProducts = sortAndSlice(
-        allProducts.filter((p) => (p.discount ?? 0) > 0),
+        allProducts.filter((p) => p && (p.discount ?? 0) > 0),
         (p) => p.discount || 0,
         10,
     );
 
-    // Sản phẩm yêu thích: chỉ lấy những sản phẩm có đánh giá trung bình ~ 5*
+    // Sản phẩm yêu thích: chỉ lấy những sản phẩm có đánh giá trung bình >= 4.9
     const favoriteProducts = sortAndSlice(
-        allProducts.filter((p) => (p.averageRating ?? 0) >= 4.9),
+        allProducts.filter((p) => p && (p.averageRating ?? 0) >= 4.9),
         (p) => p.quantitySold || 0,
+        10,
     );
-    const bestSellerProducts = sortAndSlice(allProducts, (p) => p.quantitySold || 0);
+
+    const bestSellerProducts = sortAndSlice(
+        allProducts.filter((p) => p),
+        (p) => p.quantitySold || 0,
+        10,
+    );
+
     // Sản phẩm mới: 10 sản phẩm mới nhất dựa trên updatedAt / createdAt
     const newestProducts = sortAndSlice(
-        allProducts,
+        allProducts.filter((p) => p),
         (p) => (p.updatedAt ? new Date(p.updatedAt).getTime() : 0),
         10,
     );
 
+    // Memoize banner images with fallback
+    const heroImages = useMemo(() => {
+        if (Array.isArray(activeBannerImages) && activeBannerImages.length > 0) {
+            return activeBannerImages;
+        }
+        return [heroImage];
+    }, [activeBannerImages]);
+
+    // Format discount value
+    const formatDiscountValue = (item) => {
+        if (!item) return '';
+        if (item.discountValueType === 'PERCENTAGE') {
+            return `${item.discountValue || 0}%`;
+        }
+        const value = item.discountValue ?? 0;
+        if (!value) return '0đ';
+        return formatCurrency(value);
+    };
+
+    // Format date
+    const formatDate = (date) => {
+        if (!date) return '';
+        try {
+            const d = new Date(date);
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            return `${dd}/${mm}/${yyyy}`;
+        } catch {
+            return '';
+        }
+    };
+
+    // Get limited vouchers and promotions for home page
+    const displayedVouchers = useMemo(() => {
+        return vouchers.slice(0, 5);
+    }, [vouchers]);
+
+    const displayedPromotions = useMemo(() => {
+        return promotions.slice(0, 5);
+    }, [promotions]);
+
+    // Voucher Card Component
+    const VoucherCard = ({ voucher }) => {
+        const discountText = formatDiscountValue(voucher);
+        const hasMinOrder = voucher.minOrderValue && voucher.minOrderValue > 0;
+        const hasMaxOrder = voucher.maxOrderValue && voucher.maxOrderValue > 0;
+        const hasMaxDiscount = voucher.maxDiscountValue && voucher.maxDiscountValue > 0;
+
+        return (
+            <div className={cx('voucher-card', 'voucher-card-home')}>
+                <div className={cx('voucher-content', 'voucher-content-home')}>
+                    <div className={cx('voucher-discount-badge-home')}>
+                        <div className={cx('discount-value')}>{discountText}</div>
+                        <div className={cx('discount-label')}>
+                            {voucher.discountValueType === 'PERCENTAGE' ? 'Giảm' : 'Giảm giá'}
+                        </div>
+                    </div>
+                    <div className={cx('voucher-details-home')}>
+                        <div className={cx('voucher-code-main-home')}>
+                            <span className={cx('code-label-main-home')}>Mã:</span>
+                            <span className={cx('code-value-main-home')}>{voucher.code || '--'}</span>
+                        </div>
+                        {voucher.name && (
+                            <div className={cx('voucher-name-main-home')}>{voucher.name}</div>
+                        )}
+                        <div className={cx('voucher-conditions-home')}>
+                            {hasMinOrder && (
+                                <div className={cx('voucher-condition-item-home')}>
+                                    <span className={cx('condition-icon-home')}>💰</span>
+                                    <span>Đơn tối thiểu: {formatCurrency(voucher.minOrderValue)}</span>
+                                </div>
+                            )}
+                            {hasMaxOrder && (
+                                <div className={cx('voucher-condition-item-home')}>
+                                    <span className={cx('condition-icon-home')}>📊</span>
+                                    <span>Đơn tối đa: {formatCurrency(voucher.maxOrderValue)}</span>
+                                </div>
+                            )}
+                            {hasMaxDiscount && (
+                                <div className={cx('voucher-condition-item-home')}>
+                                    <span className={cx('condition-icon-home')}>🎯</span>
+                                    <span>Giảm tối đa: {formatCurrency(voucher.maxDiscountValue)}</span>
+                                </div>
+                            )}
+                            {!hasMinOrder && !hasMaxOrder && !hasMaxDiscount && (
+                                <div className={cx('voucher-condition-item-home', 'no-condition-home')}>
+                                    Áp dụng cho mọi đơn hàng
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // Promotion Card Component
+    const PromotionCard = ({ promotion }) => {
+        const discountText = formatDiscountValue(promotion);
+        const hasMinOrder = promotion.minOrderValue && promotion.minOrderValue > 0;
+        const hasMaxDiscount = promotion.maxDiscountValue && promotion.maxDiscountValue > 0;
+        const promotionImageUrl = promotion.imageUrl
+            ? normalizePromotionImageUrl(promotion.imageUrl, API_BASE_URL)
+            : null;
+
+        return (
+            <div className={cx('promotion-card', 'promotion-card-home')}>
+                <div className={cx('promotion-content', 'promotion-content-home')}>
+                    {promotionImageUrl ? (
+                        <div className={cx('promotion-image-wrapper-home')}>
+                            <img
+                                src={promotionImageUrl}
+                                alt={promotion.name}
+                                className={cx('promotion-image-home')}
+                            />
+                        </div>
+                    ) : (
+                        <div className={cx('promotion-discount-badge-home')}>
+                            <div className={cx('discount-value')}>{discountText}</div>
+                            <div className={cx('discount-label')}>
+                                {promotion.discountValueType === 'PERCENTAGE' ? 'Giảm' : 'Giảm giá'}
+                            </div>
+                        </div>
+                    )}
+                    <div className={cx('promotion-details-home')}>
+                        <h4 className={cx('promotion-name-home')}>{promotion.name || 'Khuyến mãi'}</h4>
+                        {promotion.code && (
+                            <div className={cx('promotion-code-main')}>
+                                <span className={cx('code-label-main')}>Mã:</span>
+                                <span className={cx('code-value-main')}>{promotion.code}</span>
+                            </div>
+                        )}
+                        {promotion.description && (
+                            <div className={cx('promotion-description')}>
+                                {promotion.description.length > 100
+                                    ? `${promotion.description.substring(0, 100)}...`
+                                    : promotion.description}
+                            </div>
+                        )}
+                        <div className={cx('promotion-conditions')}>
+                            {hasMinOrder && (
+                                <div className={cx('promotion-condition-item')}>
+                                    <span className={cx('condition-icon')}>💰</span>
+                                    <span>Đơn tối thiểu: {formatCurrency(promotion.minOrderValue)}</span>
+                                </div>
+                            )}
+                            {hasMaxDiscount && (
+                                <div className={cx('promotion-condition-item')}>
+                                    <span className={cx('condition-icon')}>🎯</span>
+                                    <span>Giảm tối đa: {formatCurrency(promotion.maxDiscountValue)}</span>
+                                </div>
+                            )}
+                            {(promotion.startDate || promotion.expiryDate) && (
+                                <div className={cx('promotion-condition-item')}>
+                                    <span className={cx('condition-icon')}>📅</span>
+                                    <span>
+                                        {promotion.startDate && formatDate(promotion.startDate)}
+                                        {promotion.startDate && promotion.expiryDate && ' - '}
+                                        {promotion.expiryDate && formatDate(promotion.expiryDate)}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
-        <div className={cx('home-wrapper')}>
+        <motion.div
+            className={cx('home-wrapper')}
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+        >
             <AdminRedirectHandler />
-            {!isChecking && (
-                <main className={cx('home-content')}>
-                    {/* Main Content Area - 2 columns layout */}
-                    <Banner1
-                        heroImages={activeBannerImages.length ? activeBannerImages : [heroImage]}
-                        promos={[
-                            { image: imgsach_test, alt: 'Mỹ phẩm chăm sóc da' },
-                            { image: promoImage2, alt: 'Mỹ phẩm trang điểm' },
-                            { image: promoImage3, alt: 'Mỹ phẩm chăm sóc tóc' },
-                        ]}
-                    />
+            <motion.main
+                className={cx('home-content')}
+                variants={containerVariants}
+            >
+                {/* Hero Banner - Full Width */}
+                <motion.section
+                    className={cx('hero-section')}
+                    variants={sectionVariants}
+                >
+                    <div className={cx('hero-container')}>
+                        <Banner1
+                            heroImages={heroImages}
+                            promos={[]}
+                            fullWidth={true}
+                        />
+                    </div>
+                </motion.section>
 
+                {/* Vouchers and Promotions Section */}
+                {!vouchersLoading && !promotionsLoading && (displayedVouchers.length > 0 || displayedPromotions.length > 0) && (
+                    <motion.section
+                        className={cx('vouchers-promotions-section')}
+                        variants={sectionVariants}
+                        initial="hidden"
+                        animate="visible"
+                    >
+                        <div className={cx('vouchers-promotions-container')}>
+                            {/* Vouchers Column */}
+                            {displayedVouchers.length > 0 && (
+                                <div className={cx('voucher-column')}>
+                                    <div className={cx('section-header')}>
+                                        <h3 className={cx('section-title')}>
+                                            <span className={cx('title-icon')}>🎫</span>
+                                            VOUCHER
+                                        </h3>
+                                        <Link to="/promotion#vouchers" className={cx('view-all-link')}>
+                                            Xem tất cả →
+                                        </Link>
+                                    </div>
+                                    <div className={cx('voucher-grid')}>
+                                        {displayedVouchers.map((voucher) => (
+                                            <VoucherCard key={voucher.id} voucher={voucher} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
-                    {/* Bottom Promotional Banners */}
-                    <Banner2
-                        items={[
-                            { image: bannerImage1, alt: 'Banner image 1', variant: 1 },
-                            { image: bannerImage2, alt: 'Banner image 2', variant: 2 },
-                            { image: bannerImage3, alt: 'Banner image 3', variant: 3 },
-                        ]}
-                    />
+                            {/* Promotions Column */}
+                            {displayedPromotions.length > 0 && (
+                                <div className={cx('promotion-column')}>
+                                    <div className={cx('section-header')}>
+                                        <h3 className={cx('section-title')}>
+                                            <span className={cx('title-icon')}>🔥</span>
+                                            KHUYẾN MÃI
+                                        </h3>
+                                        <Link to="/promotion#promotions" className={cx('view-all-link')}>
+                                            Xem tất cả →
+                                        </Link>
+                                    </div>
+                                    <div className={cx('promotion-grid')}>
+                                        {displayedPromotions.map((promotion) => (
+                                            <PromotionCard key={promotion.id} promotion={promotion} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </motion.section>
+                )}
 
-                    {productLoading && (
-                        <div className={cx('api-notice')}>Đang tải sản phẩm thực tế...</div>
-                    )}
-                    {!productLoading && productError && (
-                        <div className={cx('api-notice', 'error')}>{productError}</div>
-                    )}
+                {/* Loading & Error States */}
+                {productLoading && (
+                    <div className={cx('status-message')}>
+                        <span>Đang tải sản phẩm...</span>
+                    </div>
+                )}
+                {!productLoading && productError && (
+                    <div className={cx('status-message', 'error')}>
+                        {productError}
+                    </div>
+                )}
 
-                    {/* Hot Promotions Section */}
+                {/* Product Sections - Always render, even if empty */}
+                <motion.div variants={sectionVariants}>
                     <ProductList
                         products={promotionalProducts}
                         title="KHUYẾN MÃI HOT"
                         showNavigation={true}
                     />
+                </motion.div>
 
-                    {/* Mid-Autumn Promo Section (new) */}
-                    <section
-                        className={cx('mid-autumn-section')}
-                        style={{ backgroundImage: `url(${bgChristmas})` }}
+                <motion.section
+                    className={cx('featured-section')}
+                    style={{ backgroundImage: `url(${bgChristmas})` }}
+                    variants={sectionVariants}
+                    whileHover={{ scale: 1.01 }}
+                    transition={{ duration: 0.3 }}
+                >
+                    <motion.div
+                        className={cx('featured-overlay')}
+                        animate={{
+                            background: [
+                                'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
+                                'radial-gradient(circle at 70% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)',
+                                'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
+                            ],
+                        }}
+                        transition={{ duration: 8, repeat: Infinity }}
+                    />
+                    <div className={cx('featured-content')}>
+                        <ProductList
+                            products={allProducts}
+                            title="Tết ông trăng"
+                            showNavigation={true}
+                            showHeader={false}
+                            minimal={true}
+                        />
+                    </div>
+                </motion.section>
+
+                <ProductSection title="MỸ PHẨM YÊU THÍCH" products={favoriteProducts} />
+                <ProductSection title="MỸ PHẨM BÁN CHẠY" products={bestSellerProducts} />
+                <ProductSection title="MỸ PHẨM MỚI" products={newestProducts} />
+
+                {/* Service Highlights */}
+                <motion.section
+                    className={cx('services')}
+                    variants={sectionVariants}
+                >
+                    <motion.div
+                        className={cx('services-grid')}
+                        variants={containerVariants}
                     >
-                        <div className={cx('mid-autumn-overlay')} />
-                        <div className={cx('mid-autumn-products')}>
-                            <div className={cx('mid-autumn-header')}>
+                        {SERVICE_ITEMS.map((service, idx) => (
+                            <ServiceItem key={idx} service={service} index={idx} />
+                        ))}
+                    </motion.div>
+                </motion.section>
 
-                            </div>
-                            <ProductList
-                                products={allProducts}
-                                title="Tết ông trăng"
-                                showNavigation={true}
-                                showHeader={false}
-                                minimal={true}
-                            />
-                        </div>
-                    </section>
-
-                    {/* Trending Section */}
-                    <section className={cx('trending-section')}>
-                        <div className={cx('trending-header')}>
-                            <h3 className={cx('trending-title')}>MỸ PHẨM YÊU THÍCH</h3>
-                        </div>
-                        <ProductList
-                            products={favoriteProducts}
-                            title="MỸ PHẨM YÊU THÍCH"
-                            showNavigation={true}
-                            showHeader={false}
-                            minimal={true}
-                        />
-                    </section>
-
-
-
-                    {/* Trending Section */}
-                    <section className={cx('trending-section')}>
-                        <div className={cx('trending-header')}>
-                            <h3 className={cx('trending-title')}>MỸ PHẨM BÁN CHẠY</h3>
-                        </div>
-                        <ProductList
-                            products={bestSellerProducts}
-                            title="MỸ PHẨM BÁN CHẠY"
-                            showNavigation={true}
-                            showHeader={false}
-                            minimal={true}
-                        />
-                    </section>
-
-
-                    <section className={cx('trending-section')}>
-                        <div className={cx('trending-header')}>
-                            <h3 className={cx('trending-title')}>MỸ PHẨM MỚI</h3>
-                        </div>
-                        <ProductList
-                            products={newestProducts}
-                            title="MỸ PHẨM MỚI"
-                            showNavigation={true}
-                            showHeader={false}
-                            minimal={true}
-                        />
-                    </section>
-
-
-
-                    {/* Service Highlights Row */}
-                    <section className={cx('service-row')}>
-                        <div className={cx('service-grid')}>
-                            <div className={cx('service-item')}>
-                                <img className={cx('service-icon')} src={iconGiaoHang} alt="Giao hàng tận nơi" />
-                                <div className={cx('service-text')}>
-                                    <div className={cx('service-title')}>Giao hàng tận nơi</div>
-                                    <div className={cx('service-desc')}>Dành cho tất cả đơn hàng</div>
-                                </div>
-                            </div>
-                            <div className={cx('service-item')}>
-                                <img className={cx('service-icon')} src={iconDoiTra} alt="Đổi trả hàng 90 ngày trở lại" />
-                                <div className={cx('service-text')}>
-                                    <div className={cx('service-title')}>Đổi trả hàng 90 ngày trở lại</div>
-                                    <div className={cx('service-desc')}>Nếu hàng hóa có vấn đề</div>
-                                </div>
-                            </div>
-                            <div className={cx('service-item')}>
-                                <img className={cx('service-icon')} src={iconThanhToan} alt="Thanh toán an toàn" />
-                                <div className={cx('service-text')}>
-                                    <div className={cx('service-title')}>Thanh toán an toàn</div>
-                                    <div className={cx('service-desc')}>100% thanh toán an toàn</div>
-                                </div>
-                            </div>
-                            <div className={cx('service-item')}>
-                                <img className={cx('service-icon')} src={iconHoTro} alt="Hỗ trợ 24/7" />
-                                <div className={cx('service-text')}>
-                                    <div className={cx('service-title')}>Hỗ trợ 24/7</div>
-                                    <div className={cx('service-desc')}>Hỗ trợ khách hàng 24/7</div>
-                                </div>
-                            </div>
-                            <div className={cx('service-item')}>
-                                <img className={cx('service-icon')} src={iconKhuyenMai} alt="Khuyến mãi hấp dẫn" />
-                                <div className={cx('service-text')}>
-                                    <div className={cx('service-title')}>Khuyến mãi hấp dẫn</div>
-                                    <div className={cx('service-desc')}>Chương trình khuyến mãi hấp dẫn</div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Solid blue bar like header (no content) */}
-                    <div className={cx('home-bottom-bar')}></div>
-                </main>
-            )}
-        </div>
+                <motion.div
+                    className={cx('bottom-bar')}
+                    variants={sectionVariants}
+                    initial={{ height: 0 }}
+                    animate={{ height: 80 }}
+                    transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+                />
+            </motion.main>
+        </motion.div>
     );
 }
+
+// Memoized Service Item Component
+const ServiceItem = memo(({ service, index }) => {
+    return (
+        <motion.div
+            className={cx('service-item')}
+            custom={index}
+            variants={serviceItemVariants}
+            whileHover={{
+                scale: 1.05,
+                y: -8,
+                transition: { duration: 0.2 }
+            }}
+            whileTap={{ scale: 0.95 }}
+        >
+            <motion.img
+                className={cx('service-icon')}
+                src={service.icon}
+                alt={service.title}
+                loading="lazy"
+                whileHover={{
+                    rotate: [0, -10, 10, -10, 0],
+                    scale: 1.1,
+                }}
+                transition={{ duration: 0.5 }}
+            />
+            <div className={cx('service-text')}>
+                <motion.div
+                    className={cx('service-title')}
+                    whileHover={{ color: '#667eea' }}
+                >
+                    {service.title}
+                </motion.div>
+                <div className={cx('service-desc')}>{service.desc}</div>
+            </div>
+        </motion.div>
+    );
+});
+
+ServiceItem.displayName = 'ServiceItem';
+
+// Memoized Product Section Component with Intersection Observer
+const ProductSection = memo(({ title, products }) => {
+    const sectionRef = useRef(null);
+    const [isInView, setIsInView] = useState(false);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsInView(true);
+                    observer.disconnect();
+                }
+            },
+            {
+                threshold: 0.1,
+                rootMargin: '50px'
+            }
+        );
+
+        const currentRef = sectionRef.current;
+        if (currentRef) {
+            observer.observe(currentRef);
+        }
+
+        return () => {
+            if (currentRef) {
+                observer.disconnect();
+            }
+        };
+    }, []);
+
+    // Safety check for products
+    const safeProducts = Array.isArray(products) ? products : [];
+
+    return (
+        <motion.section
+            ref={sectionRef}
+            className={cx('product-section')}
+            initial="hidden"
+            animate={isInView ? "visible" : "hidden"}
+            variants={sectionVariants}
+            whileHover={{
+                y: -4,
+                transition: { duration: 0.3 }
+            }}
+        >
+            <motion.div
+                className={cx('section-header')}
+                initial={{ x: -50, opacity: 0 }}
+                animate={isInView ? { x: 0, opacity: 1 } : { x: -50, opacity: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+            >
+                <motion.h3
+                    className={cx('section-title')}
+                    whileHover={{
+                        scale: 1.02,
+                        x: 10,
+                    }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                >
+                    {title}
+                </motion.h3>
+            </motion.div>
+            {isInView && (
+                <ProductList
+                    products={safeProducts}
+                    title={title}
+                    showNavigation={true}
+                    showHeader={false}
+                    minimal={true}
+                />
+            )}
+        </motion.section>
+    );
+});
+
+ProductSection.displayName = 'ProductSection';
 
 export default Home;

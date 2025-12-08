@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 
-import styles from '../../Voucher/AddVoucher/AddVoucherPage.module.scss';
+import styles from './AddPromotionPage.module.scss';
 import { useNotification } from '../../../../../../components/Common/Notification';
 import {
     createPromotion,
@@ -549,7 +549,7 @@ export default function AddPromotionPage() {
             description: formState.description.trim() || null,
             discountValue: discountValueNum,
             discountValueType: formState.discountValueType,
-            minOrderValue: formState.minOrderValue ? Number(formState.minOrderValue) : null,
+            minOrderValue: null,
             maxDiscountValue:
                 formState.discountValueType === 'PERCENTAGE' && formState.maxDiscountValue
                     ? Number(formState.maxDiscountValue)
@@ -768,7 +768,7 @@ export default function AddPromotionPage() {
                                 value={formState.name}
                                 onChange={(e) => handleChange('name', e.target.value)}
                                 className={cx('form-input', { error: errors.name })}
-                                placeholder="VD: Giảm tối đa 50k cho đơn từ 400k"
+                                placeholder="VD: Giảm 50% cho sữa rửa mặt"
                             />
                             {errors.name && <span className={cx('error-text')}>{errors.name}</span>}
                         </div>
@@ -823,23 +823,9 @@ export default function AddPromotionPage() {
                             </div>
                         </div>
 
-                        {/* 3. Điều kiện áp dụng - Giá trị đơn từ */}
+                        {/* 3. Radio buttons: Theo danh mục mỹ phẩm / Theo sản phẩm cụ thể */}
                         <div className={cx('form-group')}>
-                            <label className={cx('form-label')}>Điều kiện áp dụng</label>
-                            <div className={cx('condition-row')}>
-                                <label className={cx('condition-label')}>Giá trị đơn từ (VNĐ):</label>
-                                <input
-                                    type="text"
-                                    className={cx('form-input', 'condition-input')}
-                                    placeholder="VD: 400000"
-                                    value={formState.minOrderValue}
-                                    onChange={(e) => handleChange('minOrderValue', e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        {/* 4. Radio buttons: Theo danh mục mỹ phẩm / Theo sản phẩm cụ thể */}
-                        <div className={cx('form-group')}>
+                            <label className={cx('form-label')}>Phạm vi áp dụng *</label>
                             <div className={cx('radio-group')}>
                                 <label className={cx('radio-label')}>
                                     <input
@@ -875,7 +861,7 @@ export default function AddPromotionPage() {
                                         <input
                                             type="text"
                                             className={cx('form-input')}
-                                            placeholder="VD: Tối đa 50.000₫ /đơn"
+                                            placeholder="VD: Tối đa 50.000₫ /sản phẩm"
                                             value={formState.maxDiscountValue}
                                             onChange={(e) => handleChange('maxDiscountValue', e.target.value)}
                                         />
@@ -906,7 +892,7 @@ export default function AddPromotionPage() {
                                         <input
                                             type="text"
                                             className={cx('form-input')}
-                                            placeholder="VD: Tối đa 50.000₫ /đơn"
+                                            placeholder="VD: Tối đa 50.000₫ /sản phẩm"
                                             value={formState.maxDiscountValue}
                                             onChange={(e) => handleChange('maxDiscountValue', e.target.value)}
                                         />

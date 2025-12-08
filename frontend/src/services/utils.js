@@ -1,3 +1,7 @@
+// Import for Product Card Utilities
+import { normalizeMediaUrl } from './productUtils';
+import PRODUCT_IMAGE_FALLBACK from '../assets/images/img_qc.png';
+
 // Re-export API functions from api.js for backward compatibility
 export { getApiBaseUrl, getUserRole, getStoredToken } from './api';
 
@@ -220,4 +224,82 @@ export const storage = {
             return false;
         }
     },
+};
+
+// =========== Product Card Utilities ===========
+
+/**
+ * Map product data to card format
+ */
+export const mapProductToCard = (product, apiBaseUrl) => {
+    if (!product) return null;
+
+    const rawMedia = product.defaultMediaUrl ||
+        (Array.isArray(product.mediaUrls) && product.mediaUrls.length > 0 ? product.mediaUrls[0] : '');
+    const imageUrl = normalizeMediaUrl(rawMedia, apiBaseUrl) || PRODUCT_IMAGE_FALLBACK;
+
+    const price = typeof product.price === 'number' ? product.price : null;
+    const unitPrice = typeof product.unitPrice === 'number' ? product.unitPrice : null;
+    const tax = typeof product.tax === 'number' ? product.tax : 0;
+    const discountValue = typeof product.discountValue === 'number' ? product.discountValue : 0;
+    const discountPercent = typeof product.discount === 'number' ? Math.min(99, Math.max(0, product.discount)) : null;
+
+    // Calculate originalPrice (giá gốc đã có tax nhưng chưa có promotion discount)
+    let originalPrice = 0;
+    if (unitPrice != null && unitPrice > 0) {
+        originalPrice = unitPrice * (1 + tax);
+    } else if (price != null && discountValue > 0) {
+        // Nếu không có unitPrice, tính ngược lại từ price và discountValue
+        originalPrice = price + discountValue;
+    } else if (price != null) {
+        originalPrice = price;
+    }
+
+    // currentPrice là giá cuối cùng (đã có promotion discount)
+    let currentPrice = 0;
+    if (price != null && price > 0) {
+        // Backend đã tính: price = unitPrice * (1 + tax) - discountValue
+        currentPrice = price;
+    } else if (unitPrice != null && unitPrice > 0) {
+        // Tính từ unitPrice, tax và discountValue
+        currentPrice = Math.max(0, unitPrice * (1 + tax) - discountValue);
+    }
+
+    // Calculate discount percentage
+    let discount = 0;
+    if (discountPercent != null && discountPercent > 0) {
+        discount = discountPercent;
+    } else if (discountValue > 0 && originalPrice > 0) {
+        discount = Math.min(99, Math.round((discountValue / originalPrice) * 100));
+    } else if (originalPrice > currentPrice && currentPrice > 0 && originalPrice > 0) {
+        discount = Math.min(99, Math.round(((originalPrice - currentPrice) / originalPrice) * 100));
+    }
+
+    const finalPrice = currentPrice;
+
+    return {
+        id: product.id,
+        title: product.name || 'Sản phẩm',
+        image: imageUrl,
+        currentPrice: finalPrice,
+        originalPrice: originalPrice,
+        discount: discount,
+        averageRating: typeof product.averageRating === 'number' ? product.averageRating : 0,
+        quantitySold: typeof product.quantitySold === 'number' ? product.quantitySold : 0,
+        updatedAt: product.updatedAt || product.createdAt || null,
+    };
+};
+
+/**
+ * Sort and slice products
+ */
+export const sortAndSlice = (products, accessor, limit = 10) => {
+    if (!products.length) return [];
+    return [...products]
+        .sort((a, b) => {
+            const aVal = accessor(a) ?? 0;
+            const bVal = accessor(b) ?? 0;
+            return bVal - aVal;
+        })
+        .slice(0, Math.min(limit, products.length));
 };

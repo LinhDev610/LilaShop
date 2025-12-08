@@ -52,7 +52,7 @@ export default function Chat() {
             }
         };
         loadUser();
-        
+
         // Reload user khi token thay đổi
         const handleTokenUpdate = () => {
             loadUser();
@@ -65,12 +65,12 @@ export default function Chat() {
     const isNearBottom = () => {
         const container = messagesContainerRef.current;
         if (!container) return true;
-        
+
         const scrollTop = container.scrollTop;
         const scrollHeight = container.scrollHeight;
         const clientHeight = container.clientHeight;
         const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-        
+
         // Nếu cách cuối dưới 200px thì coi như đang ở gần cuối
         return distanceFromBottom < 200;
     };
@@ -80,10 +80,10 @@ export default function Chat() {
         if (!force && !isNearBottom()) {
             return;
         }
-        
+
         const scrollBehavior = instant ? 'auto' : 'smooth';
         const delay = instant ? 0 : 100;
-        
+
         setTimeout(() => {
             const container = messagesContainerRef.current;
             if (container) {
@@ -100,22 +100,22 @@ export default function Chat() {
     const hasNewMessages = (oldMessages, newMessages) => {
         if (!oldMessages || oldMessages.length === 0) return true; // Lần đầu load
         if (!newMessages || newMessages.length === 0) return false;
-        
+
         const oldLastId = oldMessages[oldMessages.length - 1]?.id;
         const newLastId = newMessages[newMessages.length - 1]?.id;
-        
+
         // Có tin nhắn mới nếu ID cuối cùng khác hoặc số lượng tăng
         return newLastId !== oldLastId || newMessages.length > oldMessages.length;
     };
 
     const loadMessages = useCallback(async (partnerId) => {
         if (!partnerId) return;
-        
+
         // Tránh concurrent requests - nếu đang loading thì skip
         if (isLoadingMessagesRef.current) {
             return;
         }
-        
+
         try {
             const token = getStoredToken('token');
             if (!token) {
@@ -126,11 +126,11 @@ export default function Chat() {
                 }
                 return;
             }
-            
+
             isLoadingMessagesRef.current = true;
             setIsLoadingMessages(true);
             const { ok, data, status } = await getChatConversation(partnerId, token);
-            
+
             if (status === 401) {
                 // Token invalid, stop polling
                 if (pollingIntervalRef.current) {
@@ -142,30 +142,30 @@ export default function Chat() {
                 setIsLoadingMessages(false);
                 return;
             }
-            
+
             if (ok && Array.isArray(data)) {
                 // Lưu messages cũ và vị trí scroll trước khi update
                 const oldMessages = messagesRef.current;
                 const container = messagesContainerRef.current;
                 const wasNearBottom = isNearBottom();
                 const hasNew = hasNewMessages(oldMessages, data);
-                
+
                 // Lưu scroll position hiện tại (chỉ khi không cần auto scroll và không có tin nhắn mới ở cuối)
                 const shouldAutoScroll = shouldAutoScrollRef.current;
                 // Nếu có tin nhắn mới và đang ở cuối, không lưu scroll position để tránh nhảy lên
                 const shouldPreserveScroll = !shouldAutoScroll && !(hasNew && wasNearBottom);
                 const previousScrollTop = shouldPreserveScroll ? (container?.scrollTop || 0) : null;
-                
+
                 // Cập nhật ref và state
                 messagesRef.current = data;
                 setMessages(data);
-                
+
                 // Sử dụng requestAnimationFrame để scroll đồng bộ với DOM update
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
                         const newContainer = messagesContainerRef.current;
                         if (!newContainer) return;
-                        
+
                         // Chỉ scroll nếu shouldAutoScrollRef.current = true
                         // (khi mở conversation mới hoặc gửi tin nhắn)
                         if (shouldAutoScroll) {
@@ -284,9 +284,9 @@ export default function Chat() {
             // Poll mỗi 3 giây để giảm số lượng request (tăng từ 1.5s lên 3s)
             pollingIntervalRef.current = setInterval(() => {
                 // Chỉ poll nếu tab/window đang active và không đang loading
-                if (document.visibilityState === 'visible' && 
-                    !isLoadingMessagesRef.current && 
-                    isOpenRef.current && 
+                if (document.visibilityState === 'visible' &&
+                    !isLoadingMessagesRef.current &&
+                    isOpenRef.current &&
                     currentPartnerIdRef.current) {
                     loadMessages(currentPartnerIdRef.current);
                 }
@@ -329,7 +329,7 @@ export default function Chat() {
         setCurrentPartnerId(null);
         setIsOpen(true);
         setViewMode('menu'); // Reset về menu khi mở
-        
+
         // Kiểm tra đăng nhập
         const token = getStoredToken('token');
         if (!token) {
@@ -375,7 +375,7 @@ export default function Chat() {
         messagesRef.current = [];
         setMessages([]);
         setViewMode('chat');
-        
+
         // Kiểm tra đăng nhập
         const token = getStoredToken('token');
         if (!token) {
@@ -402,7 +402,7 @@ export default function Chat() {
     const handleSelectPolicies = async () => {
         // Chuyển sang chat và hiển thị thông tin chính sách như tin nhắn bot
         await handleSelectChat();
-        
+
         // Tạo tin nhắn bot với thông tin chính sách
         const policyMessage = {
             id: `policy-${Date.now()}`,
@@ -434,7 +434,7 @@ Bạn có câu hỏi gì về chính sách không? Nhân viên sẽ hỗ trợ b
             createdAt: new Date().toISOString(),
             isSystemMessage: true
         };
-        
+
         // Thêm tin nhắn vào danh sách
         setMessages((prev) => {
             const newMessages = [...prev, policyMessage];
@@ -449,7 +449,7 @@ Bạn có câu hỏi gì về chính sách không? Nhân viên sẽ hỗ trợ b
     const handleSelectFAQ = async () => {
         // Chuyển sang chat và hiển thị thông tin FAQ
         await handleSelectChat();
-        
+
         const faqMessage = {
             id: `faq-${Date.now()}`,
             message: `❓ **CÂU HỎI THƯỜNG GẶP**
@@ -474,7 +474,7 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
             createdAt: new Date().toISOString(),
             isSystemMessage: true
         };
-        
+
         // setMessages((prev) => {
         //     const newMessages = [...prev, faqMessage];
         //     messagesRef.current = newMessages;
@@ -509,7 +509,7 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
         try {
             const token = getStoredToken('token');
             const { ok, status, data } = await sendChatMessage(messageText, currentPartnerId, token);
-            
+
             if (ok) {
                 // Thêm tin nhắn vào danh sách ngay lập tức
                 setMessages((prev) => {
@@ -517,10 +517,10 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
                     messagesRef.current = newMessages;
                     return newMessages;
                 });
-                
+
                 // Luôn scroll khi gửi tin nhắn của chính mình
                 shouldAutoScrollRef.current = true; // Cho phép scroll
-                
+
                 // Sử dụng requestAnimationFrame để scroll ngay sau khi DOM update
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
@@ -569,23 +569,15 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
 
     // Chỉ hiển thị cho customer hoặc user chưa đăng nhập
     const userRole = user?.role?.name || user?.role;
-    
+
     // Ẩn nếu là admin, staff, hoặc customer_support
     // Nếu user chưa được load hoặc không có role, vẫn hiển thị (cho phép user chưa đăng nhập)
     const shouldHide = user && userRole && (userRole === 'ADMIN' || userRole === 'STAFF' || userRole === 'CUSTOMER_SUPPORT');
-    
-    // Debug: Log để kiểm tra
-    console.log('[Chat Component] Render check:', {
-        hasUser: !!user,
-        userRole,
-        shouldHide,
-        willRender: !shouldHide
-    });
-    
+
     if (shouldHide) {
         return null;
     }
-    
+
     // Luôn hiển thị chat button (cho customer hoặc user chưa đăng nhập)
 
     return (
@@ -656,7 +648,7 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
                             </div>
                         </div>
                         {viewMode !== 'menu' && (
-                            <button 
+                            <button
                                 className={cx('back-button')}
                                 onClick={handleBackToMenu}
                                 aria-label="Quay lại menu"
@@ -668,7 +660,7 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
 
                     {viewMode === 'menu' && (
                         <div className={cx('menu-options')}>
-                            <button 
+                            <button
                                 className={cx('option-button')}
                                 onClick={handleSelectChat}
                             >
@@ -678,7 +670,7 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
                                     <p>Nhận hỗ trợ trực tiếp từ nhân viên CSKH</p>
                                 </div>
                             </button>
-                            
+
                             {/* <button 
                                 className={cx('option-button')}
                                 onClick={handleSelectPolicies}
@@ -701,7 +693,7 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
                                 </div>
                             </button> */}
 
-                            <button 
+                            <button
                                 className={cx('option-button')}
                                 onClick={handleSelectHotline}
                             >
@@ -736,7 +728,7 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
                                             messages.map((message) => {
                                                 // Kiểm tra nếu là tin nhắn hệ thống
                                                 const isSystemMessage = message.isSystemMessage || message.senderId === 'system';
-                                                
+
                                                 // So sánh senderId với user.id (đảm bảo cả hai đều là string)
                                                 let isOwn = false;
                                                 if (!isSystemMessage && user && user.id && message && message.senderId) {
@@ -745,11 +737,11 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
                                                     const senderId = String(message.senderId).trim();
                                                     isOwn = userId === senderId;
                                                 }
-                                                
+
                                                 return (
-                                                    <div 
-                                                        key={message.id} 
-                                                        className={cx('message', { 
+                                                    <div
+                                                        key={message.id}
+                                                        className={cx('message', {
                                                             own: isOwn,
                                                             system: isSystemMessage
                                                         })}
