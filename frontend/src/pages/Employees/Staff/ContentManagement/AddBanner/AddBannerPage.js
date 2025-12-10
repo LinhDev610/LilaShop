@@ -322,7 +322,7 @@ export default function AddBannerPage() {
                 const formDataUpload = new FormData();
                 formDataUpload.append('files', formData.imageFile);
 
-                const uploadResponse = await fetch(`${API_BASE_URL}/media/upload-product`, {
+                const uploadResponse = await fetch(`${API_BASE_URL}/media/upload-banner`, {
                     method: 'POST',
                     headers: {
                         Authorization: `Bearer ${token}`,

@@ -7,7 +7,6 @@ import com.lila_shop.backend.entity.Category;
 import com.lila_shop.backend.entity.Product;
 import com.lila_shop.backend.entity.Voucher;
 import org.mapstruct.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
 import java.util.Set;
@@ -24,7 +23,6 @@ public interface VoucherMapper {
     @Mapping(target = "categoryNames", source = "categoryApply", qualifiedByName = "mapCategoryListToNames")
     @Mapping(target = "productIds", source = "productApply", qualifiedByName = "mapProductListToIds")
     @Mapping(target = "productNames", source = "productApply", qualifiedByName = "mapProductListToNames")
-    @Mapping(target = "imageUrl", source = "imageUrl", qualifiedByName = "normalizeImageUrl")
     VoucherResponse toResponse(Voucher voucher);
 
     @Mapping(target = "id", ignore = true)
@@ -58,60 +56,31 @@ public interface VoucherMapper {
 
     @Named("mapCategoryListToIds")
     default Set<String> mapCategoryListToIds(Set<Category> categories) {
-        if (categories == null) return null;
+        if (categories == null)
+            return null;
         return categories.stream().map(Category::getId).collect(Collectors.toSet());
     }
 
     @Named("mapCategoryListToNames")
     default List<String> mapCategoryListToNames(Set<Category> categories) {
-        if (categories == null) return null;
-        return categories.stream().map(Category::getName).filter(name -> name != null && !name.isBlank()).collect(Collectors.toList());
+        if (categories == null)
+            return null;
+        return categories.stream().map(Category::getName).filter(name -> name != null && !name.isBlank())
+                .collect(Collectors.toList());
     }
 
     @Named("mapProductListToIds")
     default Set<String> mapProductListToIds(Set<Product> products) {
-        if (products == null) return null;
+        if (products == null)
+            return null;
         return products.stream().map(Product::getId).collect(Collectors.toSet());
     }
 
     @Named("mapProductListToNames")
     default List<String> mapProductListToNames(Set<Product> products) {
-        if (products == null) return null;
-        return products.stream().map(Product::getName).filter(name -> name != null && !name.isBlank()).collect(Collectors.toList());
-    }
-
-    @Named("normalizeImageUrl")
-    default String normalizeImageUrl(String url) {
-        if (url == null || url.isBlank()) return url;
-        // Nếu URL đã là absolute, giữ nguyên
-        String lower = url.toLowerCase();
-        if (lower.startsWith("http://") || lower.startsWith("https://")) {
-            return replaceLegacyVoucherPath(url);
-        }
-        // Nếu URL bắt đầu với /voucher_media, thêm context path
-        if (url.startsWith("/voucher_media")) {
-            String base = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-            return base + url;
-        }
-        // Legacy path support: /vouchers
-        if (url.startsWith("/vouchers")) {
-            String base = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-            String converted = url.replaceFirst("/vouchers", "/voucher_media");
-            return base + converted;
-        }
-        // Nếu URL không phải là absolute và không bắt đầu với /vouchers, mount dưới /vouchers/
-        String base = ServletUriComponentsBuilder.fromCurrentContextPath().path("/voucher_media/").build().toUriString();
-        if (base.endsWith("/")) return base + url;
-        return base + "/" + url;
-    }
-
-    private String replaceLegacyVoucherPath(String url) {
-        if (url == null) return null;
-        if (url.contains("/vouchers/") && !url.contains("/voucher_media/")) {
-            return url.replace("/vouchers/", "/voucher_media/");
-        }
-        return url;
+        if (products == null)
+            return null;
+        return products.stream().map(Product::getName)
+                .filter(name -> name != null && !name.isBlank()).collect(Collectors.toList());
     }
 }
-
-

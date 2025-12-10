@@ -14,7 +14,7 @@ export default function UpdateContentPage() {
     const API_BASE_URL = useMemo(() => getApiBaseUrl(), []);
     const fileInputRef = useRef(null);
     const { success: notifySuccess, error: notifyError } = useNotification();
-    
+
     const [banner, setBanner] = useState(null);
     const [formData, setFormData] = useState({
         title: '',
@@ -131,7 +131,7 @@ export default function UpdateContentPage() {
                         startDate: formatLocalDate(bannerData.startDate),
                         endDate: formatLocalDate(bannerData.endDate),
                     });
-                    
+
                     // Set selected products
                     if (availableProducts.length > 0) {
                         const selected = (bannerData.productIds || [])
@@ -163,7 +163,7 @@ export default function UpdateContentPage() {
     // Update selected products names when availableProducts are loaded
     useEffect(() => {
         if (availableProducts.length === 0 || selectedProducts.length === 0) return;
-        
+
         const needsUpdate = selectedProducts.some((p) => p.name === 'Đang tải...');
         if (needsUpdate) {
             const updated = selectedProducts.map((sp) => {
@@ -254,7 +254,7 @@ export default function UpdateContentPage() {
                 const formDataUpload = new FormData();
                 formDataUpload.append('files', formData.imageFile);
 
-                const uploadResponse = await fetch(`${API_BASE_URL}/media/upload-product`, {
+                const uploadResponse = await fetch(`${API_BASE_URL}/media/upload-banner`, {
                     method: 'POST',
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -321,7 +321,7 @@ export default function UpdateContentPage() {
                             localStorage.setItem('token', refreshData.result.token);
                             localStorage.setItem('refreshToken', refreshData.result.token);
                             token = refreshData.result.token;
-                            
+
                             // Retry với token mới
                             updateResponse = await fetch(`${API_BASE_URL}/banners/${id}`, {
                                 method: 'PUT',
@@ -404,8 +404,8 @@ export default function UpdateContentPage() {
     const displayImageUrl = formData.imageFile
         ? URL.createObjectURL(formData.imageFile)
         : formData.imageUrl
-        ? normalizeMediaUrl(formData.imageUrl, API_BASE_URL)
-        : '';
+            ? normalizeMediaUrl(formData.imageUrl, API_BASE_URL)
+            : '';
 
     return (
         <div className={cx('wrap')}>
@@ -419,7 +419,7 @@ export default function UpdateContentPage() {
             </div>
             <div className={cx('card')}>
                 <h3>Chỉnh sửa banner/slider</h3>
-                
+
                 {/* Lý do không duyệt banner */}
                 {banner.rejectionReason && (
                     <div className={cx('rejection-box')}>
@@ -462,8 +462,8 @@ export default function UpdateContentPage() {
                                 {formData.imageFile
                                     ? formData.imageFile.name
                                     : formData.imageUrl
-                                    ? 'Ảnh hiện tại (có thể thay đổi)'
-                                    : 'Chưa có tệp nào được chọn'}
+                                        ? 'Ảnh hiện tại (có thể thay đổi)'
+                                        : 'Chưa có tệp nào được chọn'}
                             </span>
                         </div>
                         {displayImageUrl && (
@@ -572,10 +572,10 @@ export default function UpdateContentPage() {
                                     {availableProducts.filter(
                                         (p) => !selectedProducts.find((sp) => sp.id === p.id)
                                     ).length === 0 && (
-                                        <div className={cx('no-products')}>
-                                            Không còn sản phẩm nào để thêm
-                                        </div>
-                                    )}
+                                            <div className={cx('no-products')}>
+                                                Không còn sản phẩm nào để thêm
+                                            </div>
+                                        )}
                                 </div>
                             </div>
                         </div>

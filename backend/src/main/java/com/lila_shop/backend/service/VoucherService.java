@@ -26,9 +26,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -49,6 +46,7 @@ public class VoucherService {
     CategoryRepository categoryRepository;
     ProductRepository productRepository;
     VoucherMapper voucherMapper;
+    FileStorageService fileStorageService;
 
     @Transactional
     public VoucherResponse createVoucher(VoucherCreationRequest request) {
@@ -91,14 +89,16 @@ public class VoucherService {
             voucher.setApprovedBy(admin);
             voucher.setApprovedAt(LocalDateTime.now());
             voucher.setRejectionReason(null);
-            // log.info("Voucher approved: {} by admin: {}", voucher.getId(), admin.getId());
+            // log.info("Voucher approved: {} by admin: {}", voucher.getId(),
+            // admin.getId());
         } else if ("REJECT".equals(request.getAction())) {
             voucher.setStatus(VoucherStatus.REJECTED);
             voucher.setIsActive(false);
             voucher.setApprovedBy(admin);
             voucher.setApprovedAt(LocalDateTime.now());
             voucher.setRejectionReason(request.getReason());
-            // log.info("Voucher rejected: {} by admin: {}", voucher.getId(), admin.getId());
+            // log.info("Voucher rejected: {} by admin: {}", voucher.getId(),
+            // admin.getId());
         }
 
         Voucher savedVoucher = voucherRepository.save(voucher);
@@ -174,14 +174,16 @@ public class VoucherService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
-        if (request.getCode() != null && !request.getCode().equals(voucher.getCode()) && voucherRepository.existsByCode(request.getCode())) {
+        if (request.getCode() != null && !request.getCode().equals(voucher.getCode())
+                && voucherRepository.existsByCode(request.getCode())) {
             throw new AppException(ErrorCode.VOUCHER_CODE_ALREADY_EXISTS);
         }
 
         voucherMapper.updateVoucher(voucher, request);
 
         if (request.getApplyScope() != null || request.getCategoryIds() != null || request.getProductIds() != null) {
-            DiscountApplyScope scope = request.getApplyScope() != null ? request.getApplyScope() : voucher.getApplyScope();
+            DiscountApplyScope scope = request.getApplyScope() != null ? request.getApplyScope()
+                    : voucher.getApplyScope();
             applyScopeTargets(scope, request.getCategoryIds(), request.getProductIds(), voucher);
             voucher.setApplyScope(scope);
         }
@@ -310,81 +312,8 @@ public class VoucherService {
     }
 
     private void deletePhysicalFileByUrl(String url) {
-        if (url == null || url.isBlank()) return;
-        try {
-            String filename = null;
-            try {
-                java.net.URI uri = java.net.URI.create(url);
-                String path = uri.getPath();
-                if (path != null && !path.isBlank()) {
-                    // Loại bỏ context path nếu có (ví dụ: /lila_shop)
-                    if (path.startsWith("/lila_shop")) {
-                        path = path.substring("/lila_shop".length());
-                    }
-                    // Tìm phần path sau /voucher_media/ hoặc legacy /vouchers/
-                    if (path.contains("/voucher_media/")) {
-                        int vouchersIndex = path.indexOf("/voucher_media/");
-                        filename = path.substring(vouchersIndex + "/voucher_media/".length());
-                    } else if (path.contains("/vouchers/")) {
-                        int vouchersIndex = path.indexOf("/vouchers/");
-                        filename = path.substring(vouchersIndex + "/vouchers/".length());
-                    } else {
-                        // Nếu không có /vouchers/, lấy filename từ cuối path
-                        int lastSlash = path.lastIndexOf('/');
-                        if (lastSlash >= 0 && lastSlash < path.length() - 1) {
-                            filename = path.substring(lastSlash + 1);
-                        }
-                    }
-                }
-            } catch (IllegalArgumentException ignored) { }
-
-            if (filename == null) {
-                String path = url;
-                // Loại bỏ protocol và domain nếu có
-                if (path.startsWith("http://") || path.startsWith("https://")) {
-                    try {
-                        java.net.URI uri = java.net.URI.create(path);
-                        path = uri.getPath();
-                    } catch (Exception ignored) { }
-                }
-                // Loại bỏ context path nếu có
-                if (path.startsWith("/lila_shop")) {
-                    path = path.substring("/lila_shop".length());
-                }
-                if (path.startsWith("/")) path = path.substring(1);
-                if (path.startsWith("uploads/vouchers/")) {
-                    filename = path.substring("uploads/vouchers/".length());
-                } else if (path.startsWith("voucher_media/")) {
-                    filename = path.substring("voucher_media/".length());
-                } else if (path.startsWith("vouchers/")) {
-                    filename = path.substring("vouchers/".length());
-                }
-            }
-
-            if (filename == null && !url.contains("/")) {
-                filename = url;
-            }
-
-            if (filename == null || filename.isBlank()) return;
-
-            // Xác định thư mục dựa trên URL (mặc định là uploads/vouchers)
-            Path targetDir = Paths.get("uploads", "vouchers");
-            Path filePath = targetDir.resolve(filename);
-            boolean deleted = Files.deleteIfExists(filePath);
-
-            if (!deleted) {
-                Path legacyDir = Paths.get("vouchers");
-                Path legacyPath = legacyDir.resolve(filename);
-                deleted = Files.deleteIfExists(legacyPath);
-                // if (deleted) {
-                //     log.info("Deleted media file from legacy folder: {}", legacyPath.toAbsolutePath());
-                // }
-            } else {
-                log.info("Deleted media file: {}", filePath.toAbsolutePath());
-            }
-        } catch (Exception e) {
-            log.warn("Could not delete media file for url {}: {}", url, e.getMessage());
-        }
+        // Xóa file từ Cloudinary thay vì local storage
+        fileStorageService.deleteFileFromCloudinary(url);
     }
 
     private User tryGetCurrentUser() {
@@ -398,5 +327,3 @@ public class VoucherService {
         }
     }
 }
-
-

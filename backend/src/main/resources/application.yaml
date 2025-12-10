@@ -67,3 +67,10 @@ momo:
   access-key: "mTCKt9W3eU1m39TW"
   secret-key: "SetA5RDnLHvt51AULf51DyauxUo3kDU6"
   request-type: "captureWallet"
+
+# Cloudinary Configuration
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
+  secure: true

@@ -20,12 +20,17 @@ export const getPromotionImageUrl = (promotion) => {
 export const normalizeVoucherImageUrl = (url, apiBaseUrl = null) => {
     if (!url) return '';
 
-    const baseUrl = apiBaseUrl || getApiBaseUrl();
-
-    // Nếu URL đã là absolute, chuẩn hóa path legacy
+    // Nếu URL đã là Cloudinary URL (absolute), trả về trực tiếp
     if (url.startsWith('http://') || url.startsWith('https://')) {
+        // Cloudinary URLs không cần normalize
+        if (url.includes('cloudinary.com')) {
+            return url;
+        }
+        // Legacy local URLs - normalize path
         return url.replace('/vouchers/', '/voucher_media/').replace('/promotions/', '/promotion_media/');
     }
+
+    const baseUrl = apiBaseUrl || getApiBaseUrl();
 
     // Nếu URL bắt đầu với /, thêm base URL
     if (url.startsWith('/')) {
@@ -57,12 +62,17 @@ export const normalizeVoucherImageUrl = (url, apiBaseUrl = null) => {
 export const normalizePromotionImageUrl = (url, apiBaseUrl = null) => {
     if (!url) return '';
 
-    const baseUrl = apiBaseUrl || getApiBaseUrl();
-
-    // Nếu URL đã là absolute, chuẩn hóa path legacy
+    // Nếu URL đã là Cloudinary URL (absolute), trả về trực tiếp
     if (url.startsWith('http://') || url.startsWith('https://')) {
+        // Cloudinary URLs không cần normalize
+        if (url.includes('cloudinary.com')) {
+            return url;
+        }
+        // Legacy local URLs - normalize path
         return url.replace('/promotions/', '/promotion_media/').replace('/vouchers/', '/voucher_media/');
     }
+
+    const baseUrl = apiBaseUrl || getApiBaseUrl();
 
     // Nếu URL bắt đầu với /, thêm base URL
     if (url.startsWith('/')) {

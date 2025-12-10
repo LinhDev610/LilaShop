@@ -27,10 +27,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -50,6 +46,7 @@ public class PromotionService {
     CategoryRepository categoryRepository;
     ProductRepository productRepository;
     PromotionMapper promotionMapper;
+    FileStorageService fileStorageService;
 
     @Transactional
     public PromotionResponse createPromotion(PromotionCreationRequest request) {
@@ -865,82 +862,7 @@ public class PromotionService {
     }
 
     private void deletePhysicalFileByUrl(String url) {
-        if (url == null || url.isBlank())
-            return;
-        try {
-            String filename = null;
-            try {
-                URI uri = URI.create(url);
-                String path = uri.getPath();
-                if (path != null && !path.isBlank()) {
-                    // Loại bỏ context path nếu có (ví dụ: /lila_shop)
-                    if (path.startsWith("/lila_shop")) {
-                        path = path.substring("/lila_shop".length());
-                    }
-                    // Tìm phần path sau /promotion_media/ hoặc legacy /promotions/
-                    if (path.contains("/promotion_media/")) {
-                        int promotionsIndex = path.indexOf("/promotion_media/");
-                        filename = path.substring(promotionsIndex + "/promotion_media/".length());
-                    } else if (path.contains("/promotions/")) {
-                        int promotionsIndex = path.indexOf("/promotions/");
-                        filename = path.substring(promotionsIndex + "/promotions/".length());
-                    } else {
-                        // Nếu không có /promotions/, lấy filename từ cuối path
-                        int lastSlash = path.lastIndexOf('/');
-                        if (lastSlash >= 0 && lastSlash < path.length() - 1) {
-                            filename = path.substring(lastSlash + 1);
-                        }
-                    }
-                }
-            } catch (IllegalArgumentException ignored) {
-            }
-
-            if (filename == null) {
-                String path = url;
-                // Loại bỏ protocol và domain nếu có
-                if (path.startsWith("http://") || path.startsWith("https://")) {
-                    try {
-                        URI uri = URI.create(path);
-                        path = uri.getPath();
-                    } catch (Exception ignored) {
-                    }
-                }
-                // Loại bỏ context path nếu có
-                if (path.startsWith("/lila_shop")) {
-                    path = path.substring("/lila_shop".length());
-                }
-                if (path.startsWith("/"))
-                    path = path.substring(1);
-                if (path.startsWith("uploads/promotions/")) {
-                    filename = path.substring("uploads/promotions/".length());
-                } else if (path.startsWith("promotion_media/")) {
-                    filename = path.substring("promotion_media/".length());
-                } else if (path.startsWith("promotions/")) {
-                    filename = path.substring("promotions/".length());
-                }
-            }
-
-            if (filename == null && !url.contains("/")) {
-                filename = url;
-            }
-
-            if (filename == null || filename.isBlank())
-                return;
-
-            // Xác định thư mục dựa trên URL (mặc định là uploads/promotions)
-            Path targetDir = Paths.get("uploads", "promotions");
-            Path filePath = targetDir.resolve(filename);
-            boolean deleted = Files.deleteIfExists(filePath);
-
-            if (!deleted) {
-                Path legacyDir = Paths.get("promotions");
-                Path legacyPath = legacyDir.resolve(filename);
-                deleted = Files.deleteIfExists(legacyPath);
-            } else {
-                log.info("Deleted media file: {}", filePath.toAbsolutePath());
-            }
-        } catch (Exception e) {
-            log.warn("Could not delete media file for url {}: {}", url, e.getMessage());
-        }
+        // Xóa file từ Cloudinary thay vì local storage
+        fileStorageService.deleteFileFromCloudinary(url);
     }
 }

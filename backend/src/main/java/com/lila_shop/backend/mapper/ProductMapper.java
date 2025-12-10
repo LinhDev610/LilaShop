@@ -13,7 +13,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
 
@@ -91,31 +90,11 @@ public interface ProductMapper {
     default List<String> mapMediaUrls(List<ProductMedia> mediaList) {
         if (mediaList == null)
             return null;
-        return mediaList.stream().map(pm -> normalizeUrl(pm.getMediaUrl())).toList();
-    }
-
-    @Named("normalizeUrl")
-    default String normalizeUrl(String url) {
-        if (url == null || url.isBlank())
-            return url;
-        // Nếu URL đã là absolute, thì không cần thiết phải thêm thông tin context path.
-        String lower = url.toLowerCase();
-        if (lower.startsWith("http://") || lower.startsWith("https://")) {
-            return url;
-        }
-        // Nếu URL bắt đầu với /product_media, thì thêm thông tin context path (ví dụ:
-        // /lila_shop)
-        if (url.startsWith("/product_media")) {
-            String base = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-            return base + url;
-        }
-        // Nếu URL không phải 2 phần trên, thì coi như là tên file hoặc relative và
-        // mount dưới /product_media/
-        String base = ServletUriComponentsBuilder.fromCurrentContextPath().path("/product_media/").build()
-                .toUriString();
-        if (base.endsWith("/"))
-            return base + url;
-        return base + "/" + url;
+        // All URLs are now Cloudinary URLs (absolute URLs), return as-is
+        return mediaList.stream()
+                .map(ProductMedia::getMediaUrl)
+                .filter(url -> url != null && !url.isBlank())
+                .toList();
     }
 
     @Named("mapReviewCount")
@@ -168,7 +147,8 @@ public interface ProductMapper {
     default String mapDefaultMediaUrl(ProductMedia defaultMedia) {
         if (defaultMedia == null || defaultMedia.getMediaUrl() == null || defaultMedia.getMediaUrl().isBlank())
             return null;
-        return normalizeUrl(defaultMedia.getMediaUrl());
+        // All URLs are now Cloudinary URLs (absolute URLs), return as-is
+        return defaultMedia.getMediaUrl();
     }
 
     @Named("mapPromotionId")
