@@ -579,6 +579,12 @@ export async function createProductVariant(productId, variantData, token = null)
     return { ok, status, data: extractResult(data) };
 }
 
+export async function updateProductVariant(productId, variantId, variantData, token = null) {
+    const endpoint = `/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}`;
+    const { data, ok, status } = await apiRequest(endpoint, { method: 'PUT', body: variantData, token });
+    return { ok, status, data: extractResult(data) };
+}
+
 export async function updateProduct(productId, productData, token = null) {
     const { data, ok } = await apiRequest(products.detail(productId), { method: 'PUT', body: productData, token });
     return { ok, data: extractResult(data) };

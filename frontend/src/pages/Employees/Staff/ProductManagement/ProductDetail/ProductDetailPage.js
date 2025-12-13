@@ -146,7 +146,7 @@ function ProductDetailPage() {
     const statusClass = getStatusClass(product.status);
     const inventoryQuantity = product.stockQuantity ?? null;
 
-    // Giảm giá - tính toán giá trị giảm giá và phần trăm giảm giá
+    // Giảm giá - lấy từ discountValue (nếu có khuyến mãi)
     const discountAmount = (() => {
         if (
             product.discountValue !== undefined &&
@@ -154,15 +154,6 @@ function ProductDetailPage() {
             product.discountValue > 0
         ) {
             return product.discountValue;
-        }
-        if (
-            product.unitPrice !== undefined &&
-            product.unitPrice !== null &&
-            product.price !== undefined &&
-            product.price !== null &&
-            product.unitPrice > product.price
-        ) {
-            return product.unitPrice - product.price;
         }
         return 0;
     })();

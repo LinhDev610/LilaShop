@@ -3,7 +3,7 @@ import classNames from 'classnames/bind';
 import styles from './ComplaintManagementPage.module.scss';
 import { useNavigate } from 'react-router-dom';
 import { getApiBaseUrl, getStoredToken, formatDateTime } from '../../../../services/utils';
-import Notification, { useNotification } from '../../../../components/Common/Notification';
+import { useNotification } from '../../../../components/Common/Notification';
 import ConfirmDialog from '../../../../components/Common/ConfirmDialog/DeleteAccountDialog';
 
 const cx = classNames.bind(styles);
