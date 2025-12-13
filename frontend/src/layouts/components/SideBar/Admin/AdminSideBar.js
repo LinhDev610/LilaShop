@@ -1,9 +1,12 @@
 import classNames from 'classnames/bind';
-import styles from './AdminSideBar.module.scss';
-import adminHeaderStyles from '../../Header/Admin/AdminHeader.module.scss';
-import useLocalStorage from '../../../../hooks/useLocalStorage';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
+import { FiLogOut } from 'react-icons/fi';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import useLocalStorage from '../../../../hooks/useLocalStorage';
+import { ADMIN_MENU_ITEMS, SIDEBAR_VARIANTS, ITEM_VARIANTS } from '../../../../services/constants';
+import adminHeaderStyles from '../../Header/Admin/AdminHeader.module.scss';
+import styles from './AdminSideBar.module.scss';
 
 const cx = classNames.bind(styles);
 const cxModal = classNames.bind(adminHeaderStyles);
@@ -12,160 +15,128 @@ export default function AdminSideBar() {
     const location = useLocation();
     const navigate = useNavigate();
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-    const [token, setToken, removeToken] = useLocalStorage('token', null);
-    const [refreshToken, setRefreshToken, removeRefreshToken] = useLocalStorage(
-        'refreshToken',
-        null,
-    );
-    const [displayName, setDisplayName, removeDisplayName] = useLocalStorage(
-        'displayName',
-        null,
-    );
-
-    // Check if current path is related to staff management
-    const isStaffManagementActive =
-        location.pathname === '/admin' ||
-        location.pathname.startsWith('/admin/add-employee');
+    const [, , removeToken] = useLocalStorage('token', null);
+    const [, , removeRefreshToken] = useLocalStorage('refreshToken', null);
+    const [, , removeDisplayName] = useLocalStorage('displayName', null);
 
     const handleLogout = () => {
-        // Close confirm modal immediately so it disappears before navigation
         setShowLogoutConfirm(false);
         removeToken();
         removeRefreshToken();
         removeDisplayName();
         sessionStorage.removeItem('token');
-        // Always go back to home after logout
         navigate('/', { replace: true });
     };
 
     return (
         <>
-            <div className={cx('side')}>
-                <div className={cx('panel-title')}>ADMIN PANEL</div>
-                <ul className={cx('menu')}>
-                    <li>
-                        <NavLink
-                            to="/admin"
-                            end
-                            className={({ isActive }) =>
-                                cx('link', {
-                                    active: isActive || isStaffManagementActive,
-                                })
-                            }
-                        >
-                            QL Tài khoản nhân viên
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink
-                            to="/admin/customer-accounts"
-                            className={({ isActive }) => cx('link', { active: isActive })}
-                        >
-                            QL Tài khoản khách hàng
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink
-                            to="/admin/products"
-                            className={({ isActive }) => cx('link', { active: isActive })}
-                        >
-                            QL Sản phẩm
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink
-                            to="/admin/categories"
-                            className={({ isActive }) => cx('link', { active: isActive })}
-                        >
-                            QL Danh mục
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink
-                            to="/admin/orders"
-                            className={({ isActive }) => cx('link', { active: isActive })}
-                        >
-                            QL Đơn hàng
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink
-                            to="/admin/vouchers-promotions"
-                            className={({ isActive }) => cx('link', { active: isActive })}
-                        >
-                            QL Voucher & Khuyến mãi
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink
-                            to="/admin/complaints"
-                            className={({ isActive }) => cx('link', { active: isActive })}
-                        >
-                            QL Khiếu nại
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink
-                            to="/admin/content"
-                            className={({ isActive }) => cx('link', { active: isActive })}
-                        >
-                            QL Nội dung
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink
-                            to="/admin/reports"
-                            className={({ isActive }) => cx('link', { active: isActive })}
-                        >
-                            Báo cáo và thống kê
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink
-                            to="/admin/profile"
-                            className={({ isActive }) => cx('link', { active: isActive })}
-                        >
-                            Hồ sơ cá nhân
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink
-                            to="#"
-                            className={cx('link', 'logout')}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setShowLogoutConfirm(true);
-                            }}
-                        >
-                            Đăng xuất
-                        </NavLink>
-                    </li>
-                </ul>
-            </div>
-            {showLogoutConfirm && (
-                <div className={cxModal('modal-overlay')} role="dialog" aria-modal="true">
-                    <div className={cxModal('modal')}>
-                        <h3 className={cxModal('modal-title')}>Đăng xuất tài khoản?</h3>
-                        <p className={cxModal('modal-desc')}>
-                            Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?
-                        </p>
-                        <div className={cxModal('modal-actions')}>
-                            <button
-                                className={cxModal('btn', 'btn-muted')}
-                                onClick={() => setShowLogoutConfirm(false)}
-                            >
-                                Hủy
-                            </button>
-                            <button
-                                className={cxModal('btn', 'btn-primary')}
-                                onClick={handleLogout}
-                            >
-                                Đăng xuất
-                            </button>
-                        </div>
-                    </div>
+            <motion.div
+                className={cx('side')}
+                initial="hidden"
+                animate="visible"
+                variants={SIDEBAR_VARIANTS}
+            >
+                <div className={cx('panel-header')}>
+                    <div className={cx('panel-title')}>ADMIN PANEL</div>
+                    <div className={cx('panel-subtitle')}>Management System</div>
                 </div>
-            )}
+
+                <ul className={cx('menu')}>
+                    {ADMIN_MENU_ITEMS.map((item, index) => {
+                        const Icon = item.icon;
+                        return (
+                            <motion.li key={index} variants={ITEM_VARIANTS} className={cx('menu-item')}>
+                                <NavLink
+                                    to={item.to}
+                                    end={item.exact}
+                                    className={({ isActive }) => {
+                                        const active =
+                                            isActive ||
+                                            (item.matchStart && location.pathname.startsWith(item.matchStart));
+                                        return cx('link', { active });
+                                    }}
+                                >
+                                    {({ isActive }) => {
+                                        const active =
+                                            isActive ||
+                                            (item.matchStart && location.pathname.startsWith(item.matchStart));
+                                        return (
+                                            <>
+                                                <span className={cx('icon-wrapper')}>
+                                                    <Icon />
+                                                </span>
+                                                <span className={cx('label')}>{item.label}</span>
+                                                {active && (
+                                                    <motion.div
+                                                        layoutId="activeIndicator"
+                                                        className={cx('active-indicator')}
+                                                        transition={{
+                                                            type: 'spring',
+                                                            stiffness: 300,
+                                                            damping: 30,
+                                                        }}
+                                                    />
+                                                )}
+                                            </>
+                                        );
+                                    }}
+                                </NavLink>
+                            </motion.li>
+                        );
+                    })}
+
+                    <div className={cx('divider')} />
+
+                    <motion.li variants={ITEM_VARIANTS} className={cx('menu-item')}>
+                        <button
+                            className={cx('link', 'logout')}
+                            onClick={() => setShowLogoutConfirm(true)}
+                        >
+                            <span className={cx('icon-wrapper')}>
+                                <FiLogOut />
+                            </span>
+                            <span className={cx('label')}>Đăng xuất</span>
+                        </button>
+                    </motion.li>
+                </ul>
+            </motion.div>
+
+            <AnimatePresence>
+                {showLogoutConfirm && (
+                    <motion.div
+                        className={cxModal('modal-overlay')}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div
+                            className={cxModal('modal')}
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                        >
+                            <h3 className={cxModal('modal-title')}>Đăng xuất tài khoản?</h3>
+                            <p className={cxModal('modal-desc')}>
+                                Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?
+                            </p>
+                            <div className={cxModal('modal-actions')}>
+                                <button
+                                    className={cxModal('btn', 'btn-muted')}
+                                    onClick={() => setShowLogoutConfirm(false)}
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    className={cxModal('btn', 'btn-primary')}
+                                    onClick={handleLogout}
+                                >
+                                    Đăng xuất
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </>
     );
 }

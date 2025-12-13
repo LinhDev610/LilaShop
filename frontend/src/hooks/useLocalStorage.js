@@ -1,7 +1,7 @@
 // useLocalStorage Hook
 // Lưu trữ dữ liệu trong localStorage
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 function useLocalStorage(key, initialValue) {
     // Lấy giá trị từ localStorage hoặc sử dụng initialValue

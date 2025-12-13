@@ -7,6 +7,18 @@ import iconDoiTra from '../assets/icons/icon_doitrahang.png';
 import iconThanhToan from '../assets/icons/icon_thanhtoanantoan.png';
 import iconHoTro from '../assets/icons/icon_hotro247.png';
 import iconKhuyenMai from '../assets/icons/icon_khuyenmaihapdan.png';
+import {
+    FiBox,
+    FiFileText,
+    FiGrid,
+    FiHome,
+    FiMessageSquare,
+    FiPieChart,
+    FiShoppingBag,
+    FiTag,
+    FiUser,
+    FiUsers,
+} from 'react-icons/fi';
 
 // =========== API Configuration ===========
 // API Base URL fallback - được cấu hình trong backend/application.yaml: app.frontend.base-url
@@ -461,3 +473,77 @@ export const SERVICE_ITEMS = [
         desc: 'Chương trình khuyến mãi hấp dẫn',
     },
 ];
+
+// =========== Admin Sidebar Menu Items ===========
+export const ADMIN_MENU_ITEMS = [
+    {
+        to: '/admin',
+        label: 'Tài khoản nhân viên',
+        icon: FiUsers,
+        exact: true,
+        matchStart: '/admin/add-employee',
+    },
+    {
+        to: '/admin/customer-accounts',
+        label: 'Tài khoản khách hàng',
+        icon: FiUser,
+    },
+    {
+        to: '/admin/products',
+        label: 'QL Sản phẩm',
+        icon: FiBox,
+    },
+    {
+        to: '/admin/categories',
+        label: 'QL Danh mục',
+        icon: FiGrid,
+    },
+    {
+        to: '/admin/orders',
+        label: 'QL Đơn hàng',
+        icon: FiShoppingBag,
+    },
+    {
+        to: '/admin/vouchers-promotions',
+        label: 'Voucher & Khuyến mãi',
+        icon: FiTag,
+    },
+    {
+        to: '/admin/complaints',
+        label: 'QL Khiếu nại',
+        icon: FiMessageSquare,
+    },
+    {
+        to: '/admin/content',
+        label: 'QL Nội dung',
+        icon: FiFileText,
+    },
+    {
+        to: '/admin/reports',
+        label: 'Báo cáo & Thống kê',
+        icon: FiPieChart,
+    },
+    {
+        to: '/admin/profile',
+        label: 'Hồ sơ cá nhân',
+        icon: FiHome,
+    },
+];
+
+// =========== Framer Motion Variants ===========
+export const SIDEBAR_VARIANTS = {
+    hidden: { opacity: 0, x: -20 },
+    visible: {
+        opacity: 1,
+        x: 0,
+        transition: {
+            duration: 0.5,
+            staggerChildren: 0.05,
+        },
+    },
+};
+
+export const ITEM_VARIANTS = {
+    hidden: { opacity: 0, x: -10 },
+    visible: { opacity: 1, x: 0 },
+};
