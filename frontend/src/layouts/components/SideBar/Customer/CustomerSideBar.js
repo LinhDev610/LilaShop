@@ -1,12 +1,16 @@
 import classNames from 'classnames/bind';
-import styles from './CustomerSideBar.module.scss';
-import { NavLink } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
-import useLocalStorage from '../../../../hooks/useLocalStorage';
-import guestImgIcon from '../../../../assets/icons/icon_img_guest.png';
-import { getStoredToken, getMyInfo, updateUser, API_BASE_URL_FALLBACK } from '../../../../services';
 import SetAvatarDialog from '../../../../components/Common/ConfirmDialog/SetAvatarDialog';
+import guestImgIcon from '../../../../assets/icons/icon_img_guest.png';
+import useLocalStorage from '../../../../hooks/useLocalStorage';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
+import { FiLogOut } from 'react-icons/fi';
+import { NavLink } from 'react-router-dom';
 import { useNotification } from '../../../../components/Common/Notification';
+import { API_BASE_URL_FALLBACK, getMyInfo, getStoredToken, updateUser } from '../../../../services';
+import { CUSTOMER_MENU_ITEMS, ITEM_VARIANTS, SIDEBAR_VARIANTS } from '../../../../services/constants';
+
+import styles from './CustomerSideBar.module.scss';
 
 const cx = classNames.bind(styles);
 
@@ -17,20 +21,13 @@ export default function CustomerSideBar() {
     const [selectedFile, setSelectedFile] = useState(null);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const fileInputRef = useRef(null);
-    const [token, setToken, removeToken] = useLocalStorage('token', null);
-    const [displayName, setDisplayName, removeDisplayName] = useLocalStorage(
-        'displayName',
-        null,
-    );
-    const [email, setEmail, removeEmail] = useLocalStorage('email', '');
-    const [userAvatar, setUserAvatar, removeUserAvatar] = useLocalStorage(
-        'userAvatar',
-        null,
-    );
+    const [, , removeToken] = useLocalStorage('token', null);
+    const [displayName, , removeDisplayName] = useLocalStorage('displayName', null);
+    const [, , removeEmail] = useLocalStorage('email', '');
+    const [userAvatar, setUserAvatar, removeUserAvatar] = useLocalStorage('userAvatar', null);
     const [user, setUser] = useState(null);
     const { success: notifySuccess, error: notifyError } = useNotification();
 
-    // Fetch user info for sidebar display & keep in sync when profile changes
     useEffect(() => {
         const fetchUser = async () => {
             try {
@@ -50,7 +47,6 @@ export default function CustomerSideBar() {
 
         fetchUser();
 
-        // Lắng nghe sự kiện displayNameUpdated để refetch khi user cập nhật thông tin cá nhân
         const handleProfileUpdated = () => {
             fetchUser();
         };
@@ -70,13 +66,11 @@ export default function CustomerSideBar() {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Create preview URL
         const previewUrl = URL.createObjectURL(file);
         setAvatarPreview(previewUrl);
         setSelectedFile(file);
         setShowAvatarDialog(true);
 
-        // Reset file input
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -102,7 +96,6 @@ export default function CustomerSideBar() {
                 return;
             }
 
-            // Upload file - backend expects 'files' parameter
             const form = new FormData();
             form.append('files', selectedFile);
             const resp = await fetch(`${API_BASE_URL_FALLBACK}/media/upload`, {
@@ -119,22 +112,17 @@ export default function CustomerSideBar() {
             }
 
             const avatarUrl = data.result[0];
-
-            // Update user profile
             const updateData = await updateUser(user.id, { avatarUrl }, tk);
 
             if (updateData) {
-                // Update local state
                 setUser((prev) => ({ ...prev, avatarUrl }));
                 setUserAvatar(avatarUrl);
 
-                // Refresh user info
                 const refreshedUser = await getMyInfo(tk);
                 if (refreshedUser) {
                     setUser(refreshedUser);
                 }
 
-                // Clean up
                 if (avatarPreview) {
                     URL.revokeObjectURL(avatarPreview);
                 }
@@ -165,14 +153,18 @@ export default function CustomerSideBar() {
 
     return (
         <>
-            <div className={cx('side')}>
+            <motion.div
+                className={cx('side')}
+                initial="hidden"
+                animate="visible"
+                variants={SIDEBAR_VARIANTS}
+            >
                 <div className={cx('side-profile')}>
                     <div
                         className={cx('side-avatar')}
                         onClick={handleAvatarClick}
                         role="button"
                         aria-label="Chọn ảnh đại diện"
-                        style={{ cursor: 'pointer' }}
                     >
                         <img
                             src={(user && user.avatarUrl) || userAvatar || guestImgIcon}
@@ -191,106 +183,97 @@ export default function CustomerSideBar() {
                         />
                     </div>
                     <div className={cx('side-name')}>
-                        {/* Ưu tiên tên thật từ API, sau đó mới tới displayName local */}
                         {user?.fullName || displayName || user?.email || 'Khách'}
                     </div>
                 </div>
+
                 <ul className={cx('menu')}>
-                    <li>
-                        <NavLink
-                            to="/customer-account"
-                            end
-                            className={({ isActive }) => cx('link', { active: isActive })}
-                        >
-                            <img
-                                className={cx('mi')}
-                                src={require('../../../../assets/icons/icon_user.png')}
-                                alt="user"
-                            />
-                            <span>Thông tin cá nhân</span>
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink
-                            to="/customer-account/orders"
-                            className={({ isActive }) => cx('link', { active: isActive })}
-                        >
-                            <img
-                                className={cx('mi')}
-                                src={require('../../../../assets/icons/icon_clock.png')}
-                                alt="history"
-                            />
-                            <span>Lịch sử mua hàng</span>
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink
-                            to="/customer-account/vouchers"
-                            className={({ isActive }) => cx('link', { active: isActive })}
-                        >
-                            <img
-                                className={cx('mi')}
-                                src={require('../../../../assets/icons/icon_voucher.png')}
-                                alt="voucher"
-                            />
-                            <span>Voucher và khuyến mãi</span>
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink
-                            to="/customer-account/password"
-                            className={({ isActive }) => cx('link', { active: isActive })}
-                        >
-                            <img
-                                className={cx('mi')}
-                                src={require('../../../../assets/icons/icon_lock.png')}
-                                alt="lock"
-                            />
-                            <span>Đổi mật khẩu</span>
-                        </NavLink>
-                    </li>
-                    <li>
+                    {CUSTOMER_MENU_ITEMS.map((item, index) => {
+                        const Icon = item.icon;
+                        return (
+                            <motion.li key={index} variants={ITEM_VARIANTS} className={cx('menu-item')}>
+                                <NavLink
+                                    to={item.to}
+                                    end={item.exact}
+                                    className={({ isActive }) => cx('link', { active: isActive })}
+                                >
+                                    {({ isActive }) => (
+                                        <>
+                                            <span className={cx('icon-wrapper')}>
+                                                <Icon />
+                                            </span>
+                                            <span className={cx('label')}>{item.label}</span>
+                                            {isActive && (
+                                                <motion.div
+                                                    layoutId="activeIndicatorCustomer"
+                                                    className={cx('active-indicator')}
+                                                    transition={{
+                                                        type: 'spring',
+                                                        stiffness: 300,
+                                                        damping: 30,
+                                                    }}
+                                                />
+                                            )}
+                                        </>
+                                    )}
+                                </NavLink>
+                            </motion.li>
+                        );
+                    })}
+
+                    <div className={cx('divider')} />
+
+                    <motion.li variants={ITEM_VARIANTS} className={cx('menu-item')}>
                         <button
                             className={cx('link', 'logout')}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setShowLogoutConfirm(true);
-                            }}
+                            onClick={() => setShowLogoutConfirm(true)}
                         >
-                            <img
-                                className={cx('mi')}
-                                src={require('../../../../assets/icons/icon_logout.png')}
-                                alt="logout"
-                            />
-                            <span>Đăng xuất</span>
+                            <span className={cx('icon-wrapper')}>
+                                <FiLogOut />
+                            </span>
+                            <span className={cx('label')}>Đăng xuất</span>
                         </button>
-                    </li>
+                    </motion.li>
                 </ul>
-            </div>
-            {showLogoutConfirm && (
-                <div className={cx('modal-overlay')} role="dialog" aria-modal="true">
-                    <div className={cx('modal')}>
-                        <h3 className={cx('modal-title')}>Đăng xuất tài khoản?</h3>
-                        <p className={cx('modal-desc')}>
-                            Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?
-                        </p>
-                        <div className={cx('modal-actions')}>
-                            <button
-                                className={cx('btn', 'btn-muted')}
-                                onClick={() => setShowLogoutConfirm(false)}
-                            >
-                                Hủy
-                            </button>
-                            <button
-                                className={cx('btn', 'btn-primary')}
-                                onClick={handleLogout}
-                            >
-                                Đăng xuất
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            </motion.div>
+
+            <AnimatePresence>
+                {showLogoutConfirm && (
+                    <motion.div
+                        className={cx('modal-overlay')}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div
+                            className={cx('modal')}
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                        >
+                            <h3 className={cx('modal-title')}>Đăng xuất tài khoản?</h3>
+                            <p className={cx('modal-desc')}>
+                                Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?
+                            </p>
+                            <div className={cx('modal-actions')}>
+                                <button
+                                    className={cx('btn', 'btn-muted')}
+                                    onClick={() => setShowLogoutConfirm(false)}
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    className={cx('btn', 'btn-primary')}
+                                    onClick={handleLogout}
+                                >
+                                    Đăng xuất
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <SetAvatarDialog
                 open={showAvatarDialog}
                 previewUrl={avatarPreview}

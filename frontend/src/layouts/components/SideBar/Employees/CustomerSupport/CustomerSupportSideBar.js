@@ -1,12 +1,6 @@
+import { CUSTOMER_SUPPORT_MENU_ITEMS } from '../../../../../services/constants';
 import EmployeesSideBar from '../EmployeesSideBar';
-
-const menuItems = [
-    { path: '/customer-support/complaints', label: 'Quản lý khiếu nại' },
-    { path: '/customer-support/reviews', label: 'Quản lý đánh giá và bình luận' },
-    { path: '/customer-support/refund-management', label: 'Quản lý Trả hàng/ Hoàn tiền' },
-    { path: '/customer-support/chat', label: 'Hỗ trợ và chăm sóc khách hàng' },
-    { path: '/customer-support/profile', label: 'Hồ sơ cá nhân' },
-];
+import routes from '../../../../../config/routes';
 
 const roleDisplay = (rawRole) => {
     return rawRole === 'CUSTOMER_SUPPORT' ? 'Chăm sóc khách hàng' : 'CSKH';
@@ -15,9 +9,10 @@ const roleDisplay = (rawRole) => {
 export default function CustomerSupportSideBar() {
     return (
         <EmployeesSideBar
-            title="Hệ thống - CSKH"
-            homePath="/customer-support"
-            menuItems={menuItems}
+            title="Customer Support Panel"
+            subtitle="Management System"
+            homePath={routes.customerSupportHome}
+            menuItems={CUSTOMER_SUPPORT_MENU_ITEMS}
             roleDisplay={roleDisplay}
         />
     );

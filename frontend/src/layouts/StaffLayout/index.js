@@ -1,5 +1,5 @@
-import { StaffHeader } from '../components/Header';
-import StaffSideBar from '../components/SideBar/Employees/Staff';
+import StaffSideBar from '../components/SideBar/Employees/Staff/StaffSideBar';
+
 
 function StaffLayout({ children }) {
     return (
