@@ -390,6 +390,7 @@ export const INITIAL_FORM_STATE_VOUCHER = {
     applyScope: 'CATEGORY', // Default to CATEGORY to match image
     categoryIds: [],
     productIds: [],
+    lossThreshold: '', // Ngưỡng lỗ tối đa (VND)
 };
 
 // Trạng thái ban đầu của form thêm promotion
@@ -407,6 +408,7 @@ export const INITIAL_FORM_STATE_PROMOTION = {
     applyScope: 'CATEGORY',
     categoryIds: [],
     productIds: [],
+    lossThreshold: '', // Ngưỡng lỗ tối đa (VND)
 };
 
 

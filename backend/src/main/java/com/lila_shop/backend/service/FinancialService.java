@@ -1,16 +1,15 @@
 package com.lila_shop.backend.service;
 
 import com.lila_shop.backend.dto.response.*;
-import com.lila_shop.backend.entity.FinancialRecord;
-import com.lila_shop.backend.entity.Order;
-import com.lila_shop.backend.entity.OrderItem;
-import com.lila_shop.backend.entity.Product;
+import com.lila_shop.backend.entity.*;
 import com.lila_shop.backend.enums.FinancialRecordType;
 import com.lila_shop.backend.enums.OrderStatus;
 import com.lila_shop.backend.enums.PaymentMethod;
 import com.lila_shop.backend.enums.PaymentStatus;
 import com.lila_shop.backend.repository.FinancialRecordRepository;
 import com.lila_shop.backend.repository.OrderRepository;
+import com.lila_shop.backend.repository.VoucherRepository;
+import com.lila_shop.backend.repository.PromotionRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -35,12 +34,15 @@ public class FinancialService {
 
     FinancialRecordRepository financialRecordRepository;
     OrderRepository orderRepository;
+    VoucherRepository voucherRepository;
+    PromotionRepository promotionRepository;
+    NotificationService notificationService;
 
     // Chuyển đổi LocalDate thành LocalDateTime range (start of day đến end of day).
     private LocalDateTime[] toDateTimeRange(LocalDate start, LocalDate end) {
         return new LocalDateTime[] {
-            start.atStartOfDay(),
-            end.atTime(LocalTime.MAX)
+                start.atStartOfDay(),
+                end.atTime(LocalTime.MAX)
         };
     }
 
@@ -58,7 +60,7 @@ public class FinancialService {
                             || order.getItems().isEmpty()) {
                         return false;
                     }
-                    
+
                     // Kiểm tra điều kiện theo phương thức thanh toán
                     PaymentMethod paymentMethod = order.getPaymentMethod();
                     if (paymentMethod == PaymentMethod.COD) {
@@ -68,7 +70,7 @@ public class FinancialService {
                         // MoMo: chỉ tính khi khách hàng đã thanh toán thành công và nhân viên xác nhận đơn
                         return order.getStatus() == OrderStatus.CONFIRMED;
                     }
-                    
+
                     // Các phương thức thanh toán khác: giữ nguyên logic cũ
                     return true;
                 })
@@ -90,7 +92,8 @@ public class FinancialService {
                 orderId, FinancialRecordType.ORDER_PAYMENT);
     }
 
-    // Xóa các FinancialRecord cũ của đơn COD (để ghi nhận lại với occurredAt = thời điểm DELIVERED)
+    // Xóa các FinancialRecord cũ của đơn COD (để ghi nhận lại với occurredAt = thời
+    // điểm DELIVERED)
     @Transactional
     public void deleteOrderRevenueRecords(String orderId) {
         List<FinancialRecord> records = financialRecordRepository.findByOrderIdAndRecordType(
@@ -117,7 +120,7 @@ public class FinancialService {
     // Xử lý lại doanh thu cho đơn COD đã DELIVERED (đảm bảo có FinancialRecord với occurredAt = thời điểm DELIVERED)
     @Transactional
     public void ensureCodOrderRevenueRecorded(Order order) {
-        if (order == null 
+        if (order == null
                 || order.getPaymentMethod() != PaymentMethod.COD
                 || order.getStatus() != OrderStatus.DELIVERED
                 || order.getPaymentStatus() != PaymentStatus.PAID
@@ -141,26 +144,154 @@ public class FinancialService {
                             order.getPaymentMethod()
                     );
                 } catch (Exception e) {
-                    log.error("Error recording revenue for COD order {} product {}", 
+                    log.error("Error recording revenue for COD order {} product {}",
                             order.getId(), item.getProduct().getId(), e);
                 }
             }
         }
-        log.info("Ensured revenue recorded for COD order {} when delivered with {} items", 
+        log.info("Ensured revenue recorded for COD order {} when delivered with {} items",
                 order.getId(), order.getItems().size());
+
+        // Theo dõi lỗ cho voucher/promotion
+        trackVoucherPromotionLoss(order);
     }
 
-        // r[0] = year
-        // r[1] = month
-        // r[2] = day
-        // r[3] = hour
-        // r[4] = orderId
-        // r[5] = orderTotal
+    // Tính lỗ của đơn hàng dựa trên purchasePrice và finalPrice.
+    // Lỗ = sum((purchasePrice - finalPrice/quantity) × quantity) 
+    // khi purchasePrice > finalPrice/quantity
+    private double calculateOrderLoss(Order order) {
+        if (order == null || order.getItems() == null || order.getItems().isEmpty()) {
+            return 0.0;
+        }
+
+        return order.getItems().stream()
+                .filter(item -> item.getProduct() != null
+                        && item.getProduct().getPurchasePrice() != null
+                        && item.getFinalPrice() != null
+                        && item.getQuantity() != null
+                        && item.getQuantity() > 0)
+                .mapToDouble(item -> {
+                    double purchasePrice = item.getProduct().getPurchasePrice();
+                    double finalPricePerUnit = item.getFinalPrice() / item.getQuantity();
+                    double lossPerUnit = purchasePrice - finalPricePerUnit;
+                    return lossPerUnit > 0 ? lossPerUnit * item.getQuantity() : 0.0;
+                })
+                .sum();
+    }
+
+    // Cập nhật tổng lỗ cho voucher và gửi notification nếu vượt ngưỡng.
+    @Transactional
+    private void updateVoucherLoss(String voucherCode, double lossAmount) {
+        if (voucherCode == null || voucherCode.isBlank() || lossAmount <= 0) {
+            return;
+        }
+
+        voucherRepository.findByCode(voucherCode).ifPresent(voucher -> {
+            double currentLoss = voucher.getTotalLoss() != null ? voucher.getTotalLoss() : 0.0;
+            double newTotalLoss = currentLoss + lossAmount;
+            voucher.setTotalLoss(newTotalLoss);
+            voucherRepository.save(voucher);
+
+            // Kiểm tra ngưỡng và gửi cảnh báo
+            Double threshold = voucher.getLossThreshold();
+            if (threshold != null && threshold > 0 && newTotalLoss >= threshold) {
+                notifyLossThresholdReached(
+                        "Voucher",
+                        voucher.getName() != null ? voucher.getName() : voucherCode,
+                        newTotalLoss,
+                        threshold,
+                        "/admin/vouchers");
+            }
+        });
+    }
+
+    // Cập nhật tổng lỗ cho promotion và gửi notification nếu vượt ngưỡng.
+    @Transactional
+    private void updatePromotionLoss(Order order, double lossAmount) {
+        if (order == null || order.getItems() == null || lossAmount <= 0) {
+            return;
+        }
+
+        // Tìm các promotion được áp dụng trong đơn hàng
+        order.getItems().stream()
+                .filter(item -> item.getProduct() != null && item.getProduct().getPromotion() != null)
+                .map(item -> item.getProduct().getPromotion())
+                .distinct()
+                .forEach(promotion -> {
+                    double currentLoss = promotion.getTotalLoss() != null ? promotion.getTotalLoss() : 0.0;
+                    // Chia đều lỗ cho các promotion (đơn giản hóa)
+                    long promotionCount = order.getItems().stream()
+                            .filter(item -> item.getProduct() != null && item.getProduct().getPromotion() != null)
+                            .map(item -> item.getProduct().getPromotion().getId())
+                            .distinct()
+                            .count();
+                    double lossShare = promotionCount > 0 ? lossAmount / promotionCount : lossAmount;
+                    double newTotalLoss = currentLoss + lossShare;
+                    promotion.setTotalLoss(newTotalLoss);
+                    promotionRepository.save(promotion);
+
+                    // Kiểm tra ngưỡng và gửi cảnh báo
+                    Double threshold = promotion.getLossThreshold();
+                    if (threshold != null && threshold > 0 && newTotalLoss >= threshold) {
+                        notifyLossThresholdReached(
+                                "Promotion",
+                                promotion.getName() != null ? promotion.getName() : promotion.getCode(),
+                                newTotalLoss,
+                                threshold,
+                                "/admin/promotions");
+                    }
+                });
+    }
+
+    // Gửi notification khi vượt ngưỡng lỗ.
+    private void notifyLossThresholdReached(String type, String name, double totalLoss, double threshold, String link) {
+        try {
+            notificationService.sendToRole(
+                    "⚠️ " + type + " vượt ngưỡng lỗ",
+                    String.format(
+                            "%s '%s' đã vượt ngưỡng lỗ: %.0f VND / %.0f VND. Vui lòng kiểm tra và xem xét điều chỉnh.",
+                            type, name, totalLoss, threshold),
+                    "WARNING",
+                    "ADMIN",
+                    link);
+        } catch (Exception e) {
+            log.error("Failed to send loss threshold notification: {}", e.getMessage(), e);
+        }
+    }
+
+    // Track loss cho voucher/promotion sau khi order DELIVERED.
+    private void trackVoucherPromotionLoss(Order order) {
+        try {
+            // Tính lỗ của đơn hàng
+            double orderLoss = calculateOrderLoss(order);
+            if (orderLoss <= 0) {
+                return; // Không có lỗ
+            }
+
+            // Cập nhật lỗ cho voucher (nếu có)
+            if (order.getCart() != null && order.getCart().getAppliedVoucherCode() != null) {
+                updateVoucherLoss(order.getCart().getAppliedVoucherCode(), orderLoss);
+            }
+
+            // Cập nhật lỗ cho promotion (nếu có)
+            updatePromotionLoss(order, orderLoss);
+        } catch (Exception e) {
+            log.error("Error tracking voucher/promotion loss for order {}: {}",
+                    order.getId(), e.getMessage(), e);
+        }
+    }
+
+    // r[0] = year
+    // r[1] = month
+    // r[2] = day
+    // r[3] = hour
+    // r[4] = orderId
+    // r[5] = orderTotal
 
     // Tính doanh thu theo đơn hàng theo timeMode
     public List<RevenuePoint> revenueByDay(LocalDate start, LocalDate end, String timeMode) {
         LocalDateTime[] range = toDateTimeRange(start, end);
-        
+
         // Day mode: group theo giờ
         if ("day".equals(timeMode)) {
             List<Object[]> orderRevenueData = financialRecordRepository.revenueByHourGroupedByOrder(
@@ -177,7 +308,7 @@ public class FinancialService {
                                 return LocalDateTime.of(year, month, day, hour, 0);
                             },
                             Collectors.summingDouble(r -> ((Number) r[5]).doubleValue())
-                    ));
+                        ));
 
             return revenueByHour.entrySet().stream()
                     .map(entry -> new RevenuePoint(entry.getKey(), entry.getValue()))
@@ -189,7 +320,7 @@ public class FinancialService {
                     })
                     .toList();
         }
-        
+
         // Year mode: group theo tháng
         if ("year".equals(timeMode)) {
             List<Object[]> orderRevenueData = financialRecordRepository.revenueByMonthGroupedByOrder(
@@ -204,14 +335,13 @@ public class FinancialService {
                                 return LocalDate.of(year, month, 1); // Ngày 1 của tháng
                             },
                             Collectors.summingDouble(r -> ((Number) r[3]).doubleValue())
-                    ));
-            
+                        ));
 
             // Fill tất cả các tháng trong năm (từ tháng 1 đến tháng 12)
             // Dùng năm từ end date (năm hiện tại) thay vì start date
             int year = end.getYear();
             List<RevenuePoint> result = new ArrayList<>();
-            
+
             // Tạo tất cả các tháng từ 1 đến 12
             for (int month = 1; month <= 12; month++) {
                 LocalDate monthStart = LocalDate.of(year, month, 1);
@@ -224,7 +354,7 @@ public class FinancialService {
                     .sorted((a, b) -> a.getDate().compareTo(b.getDate()))
                     .toList();
         }
-        
+
         // Month mode: group theo tuần
         if ("month".equals(timeMode)) {
             List<Object[]> orderRevenueData = financialRecordRepository.revenueByDayGroupedByOrder(
@@ -244,25 +374,25 @@ public class FinancialService {
                                 return date.minusDays(daysToMonday);
                             },
                             Collectors.summingDouble(r -> ((Number) r[4]).doubleValue())
-                    ));
+                        ));
 
             // Fill tất cả các tuần trong tháng (kể cả tuần không có data)
             LocalDate monthStart = start;
             LocalDate monthEnd = end;
             List<RevenuePoint> result = new ArrayList<>();
-            
+
             // Tìm tuần đầu tiên của tháng (có thể là thứ 2 của tuần chứa ngày 1)
             LocalDate firstDayOfMonth = monthStart;
             int firstDayOfWeek = firstDayOfMonth.getDayOfWeek().getValue();
             int daysToFirstMonday = (firstDayOfWeek == 1) ? 0 : (firstDayOfWeek == 7) ? 6 : firstDayOfWeek - 1;
             LocalDate firstWeekStart = firstDayOfMonth.minusDays(daysToFirstMonday);
-            
+
             // Tìm tuần cuối cùng của tháng
             LocalDate lastDayOfMonth = monthEnd;
             int lastDayOfWeek = lastDayOfMonth.getDayOfWeek().getValue();
             int daysToLastMonday = (lastDayOfWeek == 1) ? 0 : (lastDayOfWeek == 7) ? 6 : lastDayOfWeek - 1;
             LocalDate lastWeekStart = lastDayOfMonth.minusDays(daysToLastMonday);
-            
+
             // Tạo tất cả các tuần từ tuần đầu đến tuần cuối
             LocalDate currentWeekStart = firstWeekStart;
             while (!currentWeekStart.isAfter(lastWeekStart)) {
@@ -273,8 +403,8 @@ public class FinancialService {
 
             return result.stream()
                     .sorted((a, b) -> a.getDate().compareTo(b.getDate()))
-                .toList();
-    }
+                    .toList();
+        }
 
         // Week mode: group theo ngày
         List<Object[]> orderRevenueData = financialRecordRepository.revenueByDayGroupedByOrder(
@@ -291,13 +421,13 @@ public class FinancialService {
                             return LocalDate.of(year, month, day);
                         },
                         Collectors.summingDouble(r -> ((Number) r[4]).doubleValue())
-                ));
+                    ));
 
         // Fill tất cả các ngày trong tuần (từ thứ 2 đến Chủ nhật)
         LocalDate weekStart = start; // start đã là thứ 2
         LocalDate weekEnd = end; // end đã là Chủ nhật
         List<RevenuePoint> result = new ArrayList<>();
-        
+
         // Tạo tất cả các ngày từ thứ 2 đến Chủ nhật
         LocalDate currentDate = weekStart;
         while (!currentDate.isAfter(weekEnd)) {
@@ -323,7 +453,7 @@ public class FinancialService {
     // Tổng doanh thu = tổng giá trị các sản phẩm mỹ phẩm bán ra (OrderItem.finalPrice), không bao gồm shipping fee
     public RevenueSummary revenueSummary(LocalDate start, LocalDate end) {
         LocalDateTime[] range = toDateTimeRange(start, end);
-        
+
         // Lọc các đơn hàng đã thanh toán thành công
         List<Order> paidOrders = getPaidOrdersInRange(range[0], range[1]);
 
@@ -349,32 +479,30 @@ public class FinancialService {
      * Công thức:
      * - Tổng thu = Tổng doanh thu từ các đơn hàng đã thanh toán (OrderItem.finalPrice) - bỏ giá ship của đơn
      * - Tổng chi = Giá gốc sản phẩm + Chi phí phát sinh do hoàn hàng và lỗi do cửa hàng
-     *   - Giá gốc sản phẩm = sum của (purchasePrice × quantity) cho tất cả OrderItem
-     *   - Chi phí phát sinh = sum của FinancialRecord có type là REFUND hoặc COMPENSATION
+     * - Giá gốc sản phẩm = sum của (purchasePrice × quantity) cho tất cả OrderItem
+     * - Chi phí phát sinh = sum của FinancialRecord có type là REFUND hoặc COMPENSATION
      * - Lợi nhuận = Tổng thu - Tổng chi
      */
     public FinancialSummary summary(LocalDate start, LocalDate end) {
         LocalDateTime[] range = toDateTimeRange(start, end);
-        
+
         // Lọc các đơn hàng đã thanh toán thành công
         List<Order> paidOrders = getPaidOrdersInRange(range[0], range[1]);
 
         // Tổng thu = Tổng doanh thu từ các đơn hàng đã thanh toán (OrderItem.finalPrice) - bỏ giá ship của đơn
         // OrderItem.finalPrice chỉ chứa giá sản phẩm, không bao gồm shipping fee
         double income = calculateTotalRevenue(paidOrders);
-        log.debug("Financial report - Total income (revenue): {}", income);
-        log.debug("Financial report - Number of paid orders: {}", paidOrders.size());
 
         // Giá gốc sản phẩm = sum của (purchasePrice × quantity) cho tất cả OrderItem
         // Lưu ý: Nếu purchasePrice là null hoặc <= 0, sẽ tính = 0 (không có giá gốc)
-        // Điều này có thể dẫn đến lợi nhuận không chính xác nếu sản phẩm chưa được set purchasePrice
+        // Điều này có thể dẫn đến lợi nhuận không chính xác nếu sản phẩm chưa được setpurchasePrice
         AtomicInteger itemsWithoutPurchasePrice = new AtomicInteger(0);
         AtomicInteger totalItemsCount = new AtomicInteger(0);
         double costOfGoodsSold = paidOrders.stream()
                 .flatMap(order -> order.getItems().stream())
                 .filter(item -> {
                     totalItemsCount.incrementAndGet();
-                    return item.getProduct() != null 
+                    return item.getProduct() != null
                             && item.getQuantity() != null
                             && item.getQuantity() > 0;
                 })
@@ -384,23 +512,25 @@ public class FinancialService {
                     double price = (purchasePrice != null && purchasePrice > 0) ? purchasePrice : 0.0;
                     int quantity = item.getQuantity();
                     double cost = price * quantity;
-                    
+
                     // Đếm số item không có purchasePrice để log warning sau
                     if (purchasePrice == null || purchasePrice <= 0) {
                         itemsWithoutPurchasePrice.incrementAndGet();
                     }
-                    
+
                     return cost;
                 })
                 .sum();
-        
+
         log.debug("Financial report - Cost of goods sold: {}", costOfGoodsSold);
         log.debug("Financial report - Total items processed: {}", totalItemsCount.get());
-        
+
         // Log warning nếu có sản phẩm không có purchasePrice
         if (itemsWithoutPurchasePrice.get() > 0) {
-            log.warn("Financial report: {} out of {} order items have no purchase price set. Cost calculated as 0 for these items. " +
-                    "Please update purchase price for products to get accurate profit calculation.", 
+            log.warn(
+                    "Financial report: {} out of {} order items have no purchase price set. Cost calculated as 0 for these items. "
+                            +
+                            "Please update purchase price for products to get accurate profit calculation.",
                     itemsWithoutPurchasePrice.get(), totalItemsCount.get());
         }
 
@@ -408,16 +538,16 @@ public class FinancialService {
         // (hoàn hàng và lỗi do cửa hàng)
         List<FinancialRecord> records = financialRecordRepository.findByOccurredAtBetween(range[0], range[1]);
         double expense = records.stream()
-                .filter(fr -> fr.getAmount() != null 
-                        && (fr.getRecordType() == FinancialRecordType.REFUND 
-                            || fr.getRecordType() == FinancialRecordType.COMPENSATION))
+                .filter(fr -> fr.getAmount() != null
+                        && (fr.getRecordType() == FinancialRecordType.REFUND
+                                || fr.getRecordType() == FinancialRecordType.COMPENSATION))
                 .mapToDouble(fr -> Math.abs(fr.getAmount())) // Lấy giá trị tuyệt đối vì đây là chi phí
                 .sum();
         log.debug("Financial report - Other expenses (refunds/compensations): {}", expense);
 
         // Tổng chi = Giá gốc sản phẩm + Chi phí phát sinh do hoàn hàng và lỗi do cửa hàng
         double totalExpense = costOfGoodsSold + expense;
-        log.debug("Financial report - Total expense: {} (cost of goods: {} + other expenses: {})", 
+        log.debug("Financial report - Total expense: {} (cost of goods: {} + other expenses: {})",
                 totalExpense, costOfGoodsSold, expense);
 
         // Lợi nhuận = Tổng thu - Tổng chi
@@ -441,7 +571,7 @@ public class FinancialService {
      */
     public List<ProductRevenue> topProductsByRevenue(LocalDate start, LocalDate end, int limit) {
         LocalDateTime[] range = toDateTimeRange(start, end);
-        
+
         // Lọc các đơn hàng đã thanh toán thành công
         List<Order> paidOrders = getPaidOrdersInRange(range[0], range[1]);
 
@@ -460,17 +590,17 @@ public class FinancialService {
                         Collectors.collectingAndThen(
                                 Collectors.toList(),
                                 this::buildProductRevenue
-                        )
-                ));
-        
+                            )
+                        ));
+
         // Sắp xếp theo doanh thu giảm dần và lấy top limit
         List<ProductRevenue> result = productMap.values().stream()
                 .sorted((a, b) -> Double.compare(b.getTotal(), a.getTotal()))
                 .limit(limit)
                 .collect(Collectors.toList());
-        
+
         if (!result.isEmpty()) {
-            log.info("Top product: {} - quantity: {}, revenue: {}", 
+            log.info("Top product: {} - quantity: {}, revenue: {}",
                     result.get(0).getProductName(), result.get(0).getQuantity(), result.get(0).getTotal());
         }
         return result;
@@ -497,7 +627,7 @@ public class FinancialService {
         double totalRevenue = items.stream()
                 .mapToDouble(OrderItem::getFinalPrice)
                 .sum();
-        
+
         return ProductRevenue.builder()
                 .productId(product.getId())
                 .productName(product.getName())

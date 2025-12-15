@@ -50,10 +50,10 @@ public class Voucher {
     @Column(name = "comment", columnDefinition = "TEXT")
     String description;
     Integer usageLimit;
-    
+
     @Builder.Default
     Integer usageCount = 0;
-    
+
     @Column(name = "usage_per_user")
     Integer usagePerUser; // Số lần mỗi user được dùng voucher này
 
@@ -82,16 +82,16 @@ public class Voucher {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-        name = "voucher_categories",
-        joinColumns = @JoinColumn(name = "voucher_id"),
+        name = "voucher_categories", 
+        joinColumns = @JoinColumn(name = "voucher_id"), 
         inverseJoinColumns = @JoinColumn(name = "category_id"))
     @Builder.Default
     Set<Category> categoryApply = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-        name = "voucher_products",
-        joinColumns = @JoinColumn(name = "voucher_id"),
+        name = "voucher_products", 
+        joinColumns = @JoinColumn(name = "voucher_id"), 
         inverseJoinColumns = @JoinColumn(name = "product_id"))
     @Builder.Default
     Set<Product> productApply = new HashSet<>();
@@ -99,4 +99,12 @@ public class Voucher {
     @Builder.Default
     @ManyToMany(mappedBy = "usedVouchers")
     Set<User> usedByUsers = new HashSet<>();
+
+    // Loss tracking fields
+    @Column(name = "total_loss")
+    @Builder.Default
+    Double totalLoss = 0.0;
+
+    @Column(name = "loss_threshold")
+    Double lossThreshold; // null = no limit
 }

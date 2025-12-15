@@ -322,6 +322,7 @@ export default function AddVoucherPage() {
             productIds: formState.applyScope === 'PRODUCT'
                 ? formState.productIds
                 : null,
+            lossThreshold: formState.lossThreshold ? Number(formState.lossThreshold) : null,
         };
         return payload;
     };
@@ -745,6 +746,24 @@ export default function AddVoucherPage() {
                                 </div>
                                 {errors.expiryDate && <span className={cx('error-text')}>{errors.expiryDate}</span>}
                             </div>
+                        </div>
+
+                        {/* 6.5 Ngưỡng lỗ tối đa */}
+                        <div className={cx('form-group')}>
+                            <label className={cx('form-label')}>
+                                Ngưỡng lỗ tối đa (VND)
+                                <span className={cx('optional-text')}> (Tuỳ chọn)</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={formState.lossThreshold}
+                                onChange={(e) => handleChange('lossThreshold', e.target.value)}
+                                className={cx('form-input')}
+                                placeholder="VD: 500000 (hệ thống sẽ cảnh báo khi lỗ vượt ngưỡng)"
+                            />
+                            <p className={cx('helper-text')}>
+                                Để trống nếu không muốn giới hạn. Khi tổng lỗ vượt ngưỡng, Admin sẽ nhận được thông báo cảnh báo.
+                            </p>
                         </div>
 
                         {/* 7. Ảnh voucher */}

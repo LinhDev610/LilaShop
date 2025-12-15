@@ -559,6 +559,7 @@ export default function AddPromotionPage() {
             applyScope: formState.applyScope,
             categoryIds: formState.applyScope === 'CATEGORY' ? (Array.isArray(formState.categoryIds) ? formState.categoryIds : [formState.categoryIds].filter(Boolean)) : null,
             productIds: formState.applyScope === 'PRODUCT' ? formState.productIds : null,
+            lossThreshold: formState.lossThreshold ? Number(formState.lossThreshold) : null,
         };
         return payload;
     };
@@ -1008,6 +1009,24 @@ export default function AddPromotionPage() {
                                     </>
                                 )}
                             </div>
+                        </div>
+
+                        {/* 7.5 Ngưỡng lỗ tối đa */}
+                        <div className={cx('form-group')}>
+                            <label className={cx('form-label')}>
+                                Ngưỡng lỗ tối đa (VND)
+                                <span className={cx('optional-text')}> (Tuỳ chọn)</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={formState.lossThreshold}
+                                onChange={(e) => handleChange('lossThreshold', e.target.value)}
+                                className={cx('form-input')}
+                                placeholder="VD: 500000 (hệ thống sẽ cảnh báo khi lỗ vượt ngưỡng)"
+                            />
+                            <p className={cx('helper-text')}>
+                                Để trống nếu không muốn giới hạn. Khi tổng lỗ vượt ngưỡng, Admin sẽ nhận được thông báo cảnh báo.
+                            </p>
                         </div>
 
                         {/* 8. Ghi chú / Lý do đề xuất */}
