@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './ManageComplaintsPage.module.scss';
 import { getApiBaseUrl, getStoredToken, formatDateTime } from '../../../services/utils';
-import SearchAndSort from '../../../components/Common/SearchAndSort';
+import SearchAndSort from '../../../layouts/components/SearchAndSort';
 
 const cx = classNames.bind(styles);
 
@@ -64,8 +64,8 @@ export default function ManageComplaintsPage() {
                     // Extract username from email (part before @)
                     const username = ticket.email ? ticket.email.split('@')[0] : '';
                     // Format date as dd/mm/yyyy
-                    const dateStr = ticket.createdAt 
-                        ? formatDateTime(ticket.createdAt).split(' ')[0] 
+                    const dateStr = ticket.createdAt
+                        ? formatDateTime(ticket.createdAt).split(' ')[0]
                         : '';
 
                     return {
@@ -179,8 +179,8 @@ export default function ManageComplaintsPage() {
             if (response.ok) {
                 const mappedComplaints = (data?.result || []).map((ticket) => {
                     const username = ticket.email ? ticket.email.split('@')[0] : '';
-                    const dateStr = ticket.createdAt 
-                        ? formatDateTime(ticket.createdAt).split(' ')[0] 
+                    const dateStr = ticket.createdAt
+                        ? formatDateTime(ticket.createdAt).split(' ')[0]
                         : '';
 
                     return {
@@ -441,10 +441,10 @@ export default function ManageComplaintsPage() {
                                 <div className={cx('detail-row')}>
                                     <span className={cx('detail-label')}>Người phụ trách:</span>
                                     <span className={cx('detail-value')}>
-                                        {selectedComplaint.handlerName 
+                                        {selectedComplaint.handlerName
                                             ? `CSKH - ${selectedComplaint.handlerName}`
-                                            : selectedComplaint.assignedToRaw === 'ADMIN' 
-                                                ? 'Admin' 
+                                            : selectedComplaint.assignedToRaw === 'ADMIN'
+                                                ? 'Admin'
                                                 : 'CSKH'}
                                     </span>
                                 </div>

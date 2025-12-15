@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './OrderManagementPage.scss';
 import { useNavigate } from 'react-router-dom';
-import SearchAndSort from '../../../../components/Common/SearchAndSort';
+import SearchAndSort from '../../../../layouts/components/SearchAndSort';
 import CancelOrderDialog from '../../../../components/Common/ConfirmDialog/CancelOrderDialog';
 import {
     formatDateTime,

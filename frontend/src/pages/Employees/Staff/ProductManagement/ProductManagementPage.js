@@ -16,7 +16,7 @@ import {
     getProductVariants,
     updateProductVariant,
 } from '../../../../services';
-import SearchAndSort from '../../../../components/Common/SearchAndSort';
+import SearchAndSort from '../../../../layouts/components/SearchAndSort';
 import StatusBadge from '../../../../components/Common/StatusBadge';
 import RestockProductDialog from '../../../../components/Common/RestockProductDialog';
 import Notification from '../../../../components/Common/Notification';

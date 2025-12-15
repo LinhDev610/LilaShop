@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './ManageContentPage.module.scss';
 import { getApiBaseUrl, getStoredToken, formatDateTime } from '../../../services/utils';
-import SearchAndSort from '../../../components/Common/SearchAndSort';
+import SearchAndSort from '../../../layouts/components/SearchAndSort';
 import ReviewAndCommentPage from './ReviewAndComment';
 
 const cx = classNames.bind(styles);

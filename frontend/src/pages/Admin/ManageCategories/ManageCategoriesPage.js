@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import useLocalStorage from '../../../hooks/useLocalStorage';
 import styles from './ManageCategoriesPage.module.scss';
-import SearchAndSort from '../../../components/Common/SearchAndSort';
+import SearchAndSort from '../../../layouts/components/SearchAndSort';
 import DeleteCategoryDialog from '../../../components/Common/ConfirmDialog/DeleteCategoryDialog';
 import SetStatusCategoryDialog from '../../../components/Common/ConfirmDialog/SetStatusCategoryDialog';
 import { getStoredToken } from '../../../services/utils';

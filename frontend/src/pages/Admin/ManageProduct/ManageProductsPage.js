@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './ManageProductsPage.module.scss';
-import SearchAndSort from '../../../components/Common/SearchAndSort';
+import SearchAndSort from '../../../layouts/components/SearchAndSort';
 import { formatDateTime } from '../../../services/utils';
 import { getAllProducts, getActiveCategories } from '../../../services';
 
