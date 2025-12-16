@@ -14,6 +14,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -82,12 +83,14 @@ public class OrderController {
     @GetMapping("/recent")
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public ApiResponse<OrderPageResponse> getRecentOrders(
-            @RequestParam LocalDate start,
-            @RequestParam LocalDate end,
+            @RequestParam(required = false) LocalDate start,
+            @RequestParam(required = false) LocalDate end,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        var orderPage = orderService.getOrdersByDateRangePage(start, end, page, size);
-        
+        Page<Order> orderPage = orderService.getOrdersPageFiltered(start, end, status, search, page, size);
+
         OrderPageResponse response = OrderPageResponse.builder()
                 .orders(orderPage.getContent().stream().map(this::toResponse).toList())
                 .totalElements(orderPage.getTotalElements())
@@ -97,7 +100,7 @@ public class OrderController {
                 .hasNext(orderPage.hasNext())
                 .hasPrevious(orderPage.hasPrevious())
                 .build();
-        
+
         return ApiResponse.<OrderPageResponse>builder()
                 .result(response)
                 .build();
@@ -166,8 +169,7 @@ public class OrderController {
                 .build();
     }
 
-
-     // Tạo đơn hàng trực tiếp sau khi thanh toán MoMo thành công.
+    // Tạo đơn hàng trực tiếp sau khi thanh toán MoMo thành công.
 
     @PostMapping("/create-direct-after-payment")
     @PreAuthorize("hasRole('CUSTOMER')")
@@ -192,9 +194,8 @@ public class OrderController {
                 .build();
     }
 
-
-     // Lấy danh sách các yêu cầu trả hàng/hoàn tiền.
-     // Dành cho Customer Support để quản lý và xử lý các yêu cầu trả hàng từ khách hàng.
+    // Lấy danh sách các yêu cầu trả hàng/hoàn tiền.
+    // Dành cho Customer Support để quản lý và xử lý các yêu cầu trả hàng từ khách hàng.
 
     @GetMapping("/return-requests")
     @PreAuthorize("hasAnyRole('CUSTOMER_SUPPORT','STAFF','ADMIN')")
@@ -348,7 +349,7 @@ public class OrderController {
                                 // Lấy ảnh từ defaultMedia hoặc mediaList đầu tiên
                                 if (oi.getProduct().getDefaultMedia() != null) {
                                     imageUrl = oi.getProduct().getDefaultMedia().getMediaUrl();
-                                } else if (oi.getProduct().getMediaList() != null 
+                                } else if (oi.getProduct().getMediaList() != null
                                         && !oi.getProduct().getMediaList().isEmpty()) {
                                     imageUrl = oi.getProduct().getMediaList().get(0).getMediaUrl();
                                 }
@@ -556,5 +557,3 @@ public class OrderController {
         String address;
     }
 }
-
-

@@ -12,7 +12,6 @@ const {
     addresses,
     ghn,
     notifications,
-    financial,
     orders,
     shipments,
     chat,
