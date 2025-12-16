@@ -11,10 +11,11 @@ import {
     createProduct,
     createProductVariant,
     uploadProductMedia,
-    getMyProducts,
     INITIAL_FORM_STATE_PRODUCT,
     CATEGORY_FIELD_CONFIG,
 } from '../../../../../services';
+import imageCompression from 'browser-image-compression';
+import LoadingBar from '../../../../../components/Common/LoadingBar';
 
 const cx = classNames.bind(styles);
 const MAX_TOTAL_MEDIA_SIZE = 50 * 1024 * 1024; // 50MB tổng dung lượng ảnh/video
@@ -155,6 +156,7 @@ export default function AddProductPage() {
     const formRef = useRef(null);
     const { success, error: notifyError } = useNotification();
     const [isLoading, setIsLoading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
 
     // State form
     const [productId, setProductId] = useState(INITIAL_FORM_STATE_PRODUCT.productId);
@@ -482,31 +484,6 @@ export default function AddProductPage() {
         fetchCategories();
     }, []);
 
-    useEffect(() => {
-        const fetchExistingProducts = async () => {
-            try {
-                const token = getStoredToken('token');
-                if (!token) {
-                    setExistingProductsMap({});
-                    return;
-                }
-                const products = await getMyProducts(token);
-                const normalized = {};
-                if (Array.isArray(products)) {
-                    products.forEach((product) => {
-                        const id = (product?.id || '').trim().toUpperCase();
-                        if (!id) return;
-                        normalized[id] = product?.name || '';
-                    });
-                }
-                setExistingProductsMap(normalized);
-            } catch (err) {
-                console.error('Error fetching existing products:', err);
-            }
-        };
-
-        fetchExistingProducts();
-    }, [getStoredToken]);
 
     // ========== Validation ==========
     const validate = () => {
@@ -685,43 +662,98 @@ export default function AddProductPage() {
     }, [price, taxDecimal]);
 
     // ========== API Helpers ==========
-    // Upload media files
+    // Compress image before upload
+    const compressImage = useCallback(async (file) => {
+        // Skip compression for small files (< 1MB)
+        if (file.size < 1024 * 1024) {
+            return file;
+        }
+
+        // Skip compression for non-images
+        if (!file.type.startsWith('image/')) {
+            return file;
+        }
+
+        const options = {
+            maxSizeMB: 1.0,
+            maxWidthOrHeight: 1920,
+            quality: 0.88,
+            initialQuality: 0.9,
+            useWebWorker: true,
+        };
+
+        try {
+            const compressedFile = await imageCompression(file, options);
+
+            // If compression doesn't help much (> 90% of original), keep original
+            if (compressedFile.size > file.size * 0.9) {
+                return file;
+            }
+
+            return compressedFile;
+        } catch (error) {
+            console.error('Image compression failed:', error);
+            return file; // Fallback to original
+        }
+    }, []);
+
+    // Upload media files with compression and parallel processing
     const uploadMediaFiles = useCallback(async (files, token) => {
         if (!files || files.length === 0) {
             return { imageUrls: [], videoUrls: [], defaultUrl: '' };
         }
 
         try {
-            const fileArray = files.map((m) => m.file);
-            const { ok, urls, message } = await uploadProductMedia(fileArray, token);
+            setUploadProgress(0);
+            let completedCount = 0;
+            const totalFiles = files.length;
 
-            if (!ok || !urls || urls.length === 0) {
-                throw new Error(message || 'Upload media thất bại');
+            // Compress images first
+            const compressedFiles = await Promise.all(
+                files.map(async (m) => {
+                    if (m.type === 'IMAGE' && m.file.type.startsWith('image/')) {
+                        const compressed = await compressImage(m.file);
+                        return { ...m, file: compressed };
+                    }
+                    return m;
+                })
+            );
+
+            // Upload in parallel with batching (3 files at a time to avoid overload)
+            const batchSize = 3;
+            const allResults = [];
+
+            for (let i = 0; i < compressedFiles.length; i += batchSize) {
+                const batch = compressedFiles.slice(i, i + batchSize);
+
+                const batchPromises = batch.map(async (m) => {
+                    const { ok, url, message } = await uploadProductMedia([m.file], token);
+
+                    if (!ok || !url) {
+                        throw new Error(message || `Failed to upload ${m.file.name}`);
+                    }
+
+                    completedCount++;
+                    setUploadProgress(Math.round((completedCount / totalFiles) * 100));
+
+                    return { ...m, uploadedUrl: url };
+                });
+
+                const batchResults = await Promise.all(batchPromises);
+                allResults.push(...batchResults);
             }
 
-            // Validate số lượng URLs khớp với số lượng files
-            if (urls.length !== files.length) {
-                throw new Error(
-                    `Số lượng URLs (${urls.length}) không khớp với số lượng files (${files.length})`,
-                );
-            }
-
-            // Map uploaded URLs back to media files
-            const mapped = files.map((m, index) => ({
-                ...m,
-                uploadedUrl: urls[index],
-            }));
-
-            const imageUrls = mapped
+            const imageUrls = allResults
                 .filter((m) => m.type === 'IMAGE')
                 .map((m) => m.uploadedUrl)
                 .filter(Boolean);
-            const videoUrls = mapped
+
+            const videoUrls = allResults
                 .filter((m) => m.type === 'VIDEO')
                 .map((m) => m.uploadedUrl)
                 .filter(Boolean);
 
-            const defaultItem = mapped.find((m) => m.isDefault) || mapped[0];
+            const defaultItem = allResults.find((m) => m.isDefault) || allResults[0];
             const defaultUrl = defaultItem?.uploadedUrl || '';
 
             return { imageUrls, videoUrls, defaultUrl };
@@ -729,7 +761,7 @@ export default function AddProductPage() {
             console.error('Error uploading media:', error);
             throw error;
         }
-    }, []);
+    }, [compressImage]);
 
     // Build product payload
     const buildProductPayload = useCallback(
@@ -945,6 +977,13 @@ export default function AddProductPage() {
 
     return (
         <div className={cx('wrap')}>
+            {/* Upload Progress */}
+            <LoadingBar
+                show={isLoading && uploadProgress > 0 && uploadProgress < 100}
+                progress={uploadProgress}
+                message="Đang tải lên ảnh/video..."
+            />
+
             <div className={cx('topbar')}>
                 <button
                     className={cx('backBtn')}

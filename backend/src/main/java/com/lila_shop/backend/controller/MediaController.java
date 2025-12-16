@@ -25,7 +25,7 @@ public class MediaController {
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<List<String>> uploadProfileMedia(@RequestPart("files") List<MultipartFile> files) {
-        List<String> urls = files.stream()
+        List<String> urls = files.parallelStream()
                 .map(fileStorageService::storeProfileMedia)
                 .collect(Collectors.toList());
         return ApiResponse.<List<String>>builder().result(urls).build();
@@ -33,7 +33,7 @@ public class MediaController {
 
     @PostMapping(value = "/upload-product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<List<String>> uploadProductMedia(@RequestPart("files") List<MultipartFile> files) {
-        List<String> urls = files.stream()
+        List<String> urls = files.parallelStream()
                 .map(fileStorageService::storeProductMedia)
                 .collect(Collectors.toList());
         return ApiResponse.<List<String>>builder().result(urls).build();
@@ -41,7 +41,7 @@ public class MediaController {
 
     @PostMapping(value = "/upload-voucher", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<List<String>> uploadVoucherMedia(@RequestPart("files") List<MultipartFile> files) {
-        List<String> urls = files.stream()
+        List<String> urls = files.parallelStream()
                 .map(fileStorageService::storeVoucherMedia)
                 .collect(Collectors.toList());
         return ApiResponse.<List<String>>builder().result(urls).build();
@@ -49,7 +49,7 @@ public class MediaController {
 
     @PostMapping(value = "/upload-promotion", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<List<String>> uploadPromotionMedia(@RequestPart("files") List<MultipartFile> files) {
-        List<String> urls = files.stream()
+        List<String> urls = files.parallelStream()
                 .map(fileStorageService::storePromotionMedia)
                 .collect(Collectors.toList());
         return ApiResponse.<List<String>>builder().result(urls).build();
@@ -57,7 +57,7 @@ public class MediaController {
 
     @PostMapping(value = "/upload-banner", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<List<String>> uploadBannerMedia(@RequestPart("files") List<MultipartFile> files) {
-        List<String> urls = files.stream()
+        List<String> urls = files.parallelStream()
                 .map(fileStorageService::storeBannerMedia)
                 .collect(Collectors.toList());
         return ApiResponse.<List<String>>builder().result(urls).build();
