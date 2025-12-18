@@ -771,8 +771,7 @@ public class ProductService {
      * @return true nếu cần duyệt, false nếu không
      */
     private boolean checkIfRequiresApproval(ProductUpdateRequest request, Product product) {
-        // 1. Kiểm tra thay đổi giá cả (chỉ khi có giá trị trong request và giá trị thực
-        // sự thay đổi)
+        // 1. Kiểm tra thay đổi giá cả
         if (request.getUnitPrice() != null) {
             Double currentUnitPrice = product.getUnitPrice();
             Double newUnitPrice = request.getUnitPrice();
@@ -796,20 +795,17 @@ public class ProductService {
         if (request.getPrice() != null) {
             Double currentPrice = product.getPrice();
             Double newPrice = request.getPrice();
-            // Price được làm tròn trong frontend (Math.round), làm tròn cả hai về số
-            // nguyên để so sánh
             if (currentPrice == null && newPrice != null && newPrice > 1.0) {
                 log.debug("Requires approval: price changed from null to {}", newPrice);
-                return true; // Từ null sang có giá trị
+                return true;
             }
             if (currentPrice != null && newPrice != null) {
-                // Làm tròn cả hai về số nguyên để so sánh (vì frontend dùng Math.round)
                 long roundedCurrent = Math.round(currentPrice);
                 long roundedNew = Math.round(newPrice);
                 if (roundedCurrent != roundedNew) {
                     log.debug("Requires approval: price changed from {} to {} (rounded: {} vs {})",
                             currentPrice, newPrice, roundedCurrent, roundedNew);
-                    return true; // Khác nhau sau khi làm tròn
+                    return true;
                 }
             }
         }
@@ -817,10 +813,10 @@ public class ProductService {
         if (request.getTax() != null) {
             Double currentTax = product.getTax();
             Double newTax = request.getTax();
-            // Tax là decimal (0.05 = 5%), làm tròn về 4 chữ số thập phân để so sánh
+            // Làm tròn Tax về 4 chữ số thập phân để so sánh
             if (currentTax == null && newTax != null && newTax > 0.0001) {
                 log.info("Requires approval: tax changed from null to {}", newTax);
-                return true; // Từ null sang có giá trị
+                return true;
             }
             if (currentTax != null && newTax != null) {
                 // Làm tròn cả hai về 4 chữ số thập phân để so sánh
@@ -842,35 +838,32 @@ public class ProductService {
         if (request.getDiscountValue() != null) {
             Double currentDiscount = product.getDiscountValue();
             Double newDiscount = request.getDiscountValue();
-            // Discount có thể được làm tròn, so sánh với tolerance 1 VND
             if (currentDiscount == null && newDiscount != null && newDiscount > 1.0) {
-                return true; // Từ null sang có giá trị
+                return true;
             }
             if (currentDiscount != null && newDiscount != null) {
-                // Làm tròn cả hai về số nguyên để so sánh (vì có thể được làm tròn)
                 long roundedCurrent = Math.round(currentDiscount);
                 long roundedNew = Math.round(newDiscount);
                 if (roundedCurrent != roundedNew) {
-                    return true; // Khác nhau sau khi làm tròn
+                    return true;
                 }
             }
         }
 
-        // 2. Kiểm tra thay đổi danh mục (chỉ khi có giá trị trong request và giá trị
-        // thực sự thay đổi)
+        // 2. Kiểm tra thay đổi danh mục
         if (request.getCategoryId() != null && !request.getCategoryId().trim().isEmpty()) {
             String currentCategoryId = product.getCategory() != null ? product.getCategory().getId() : null;
             String newCategoryId = request.getCategoryId().trim();
-            // So sánh: xử lý cả null và empty string
             if (currentCategoryId == null || currentCategoryId.isEmpty()) {
                 if (newCategoryId != null && !newCategoryId.isEmpty()) {
                     log.debug("Requires approval: categoryId changed from null/empty to {}", newCategoryId);
-                    return true; // Từ null/empty sang có giá trị
+                    return true;
                 }
             } else {
                 if (!currentCategoryId.equals(newCategoryId)) {
-                    log.debug("Requires approval: categoryId changed from {} to {}", currentCategoryId, newCategoryId);
-                    return true; // Giá trị khác nhau
+                    log.debug("Requires approval: categoryId changed from {} to {}", currentCategoryId,
+                            newCategoryId);
+                    return true;
                 }
             }
         }
@@ -888,7 +881,7 @@ public class ProductService {
             }
         }
 
-        // 4. Kiểm tra thay đổi tồn kho (chỉ khi có thay đổi thực sự)
+        // 4. Kiểm tra thay đổi tồn kho
         // Giảm số lượng luôn cần duyệt, từ 0 sang > 0 cần duyệt, tăng > 100 cần duyệt
         if (request.getStockQuantity() != null) {
             int currentStock = product.getInventory() != null && product.getInventory().getStockQuantity() != null
@@ -896,7 +889,6 @@ public class ProductService {
                     : 0;
             int newStock = request.getStockQuantity();
 
-            // Chỉ kiểm tra nếu có thay đổi thực sự
             if (currentStock != newStock) {
                 // Nếu giảm số lượng (newStock < currentStock): Luôn cần duyệt
                 if (newStock < currentStock) {

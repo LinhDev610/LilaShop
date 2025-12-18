@@ -88,7 +88,8 @@
 .radio-option {
     display: flex;
     align-items: flex-start;
-    justify-content: space-between; /* Đẩy giá sang bên phải để luôn nhìn thấy */
+    justify-content: space-between;
+    /* Đẩy giá sang bên phải để luôn nhìn thấy */
     gap: 10px;
     padding: 10px 12px;
     border-radius: 8px;
@@ -125,9 +126,11 @@
     font-size: 14px;
     font-weight: 600;
     color: #111827;
-    min-width: 80px;         /* Đảm bảo luôn có chỗ cho số tiền */
+    min-width: 80px;
+    /* Đảm bảo luôn có chỗ cho số tiền */
     text-align: right;
-    white-space: nowrap;     /* Không bị xuống dòng lộn xộn */
+    white-space: nowrap;
+    /* Không bị xuống dòng lộn xộn */
 }
 
 .note-input {
@@ -196,7 +199,8 @@
 }
 
 .product-name {
-    font-size: 20px; /* tăng thêm 10px so với trước đó */
+    font-size: 20px;
+    /* tăng thêm 10px so với trước đó */
     font-weight: 600;
     color: #1a3c5a;
 }
@@ -360,4 +364,99 @@
     cursor: pointer;
 }
 
+// Voucher Auto-Suggestion Styles
+.voucher-suggestions {
+    margin-top: 16px;
+    padding: 14px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf4 100%);
+    border-radius: 10px;
+}
 
+.suggestions-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a3c5a;
+    margin: 0 0 10px 0;
+}
+
+.suggestions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.suggestion-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+}
+
+.suggestion-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 54px;
+    height: 54px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 15px;
+    font-weight: 900;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.suggestion-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.suggestion-code {
+    font-size: 13px;
+    font-weight: 700;
+    color: #9d4edd;
+    font-family: 'Courier New', monospace;
+}
+
+.suggestion-name {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggestion-estimate {
+    font-size: 12px;
+    color: #27ae60;
+    font-weight: 600;
+    margin-top: 3px;
+}
+
+.suggestion-apply-btn {
+    padding: 6px 12px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+
+    &:hover {
+        background: #5568d3;
+    }
+}

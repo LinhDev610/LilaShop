@@ -636,7 +636,6 @@ function UpdateProduct() {
             if (videoUrls.length > 0) payload.videoUrls = videoUrls;
             if (finalDefaultMediaUrl) payload.defaultMediaUrl = finalDefaultMediaUrl;
 
-            console.log('Admin Update request data:', JSON.stringify(payload, null, 2));
 
             let response = await fetch(`${API_BASE_URL}/products/${id}`, {
                 method: 'PUT',

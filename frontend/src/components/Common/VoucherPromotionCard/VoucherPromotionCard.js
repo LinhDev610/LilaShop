@@ -1,9 +1,52 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import classNames from 'classnames/bind';
 import styles from './VoucherPromotionCard.module.scss';
 
 const cx = classNames.bind(styles);
+
+/**
+ * Helper function to render scope information
+ * @param {string} applyScope - PRODUCT, CATEGORY, or ORDER
+ * @param {Array} categoryNames - List of category names from backend
+ * @param {Array} productNames - List of product names from backend
+ * @returns {Object} scope display data
+ */
+const getScopeDisplay = (applyScope, categoryNames = [], productNames = []) => {
+    if (!applyScope) {
+        return { icon: '🌐', text: 'Áp dụng cho toàn bộ đơn hàng', detail: null };
+    }
+
+    switch (applyScope) {
+        case 'ORDER':
+            return { icon: '🌐', text: 'Áp dụng cho toàn bộ đơn hàng', detail: null };
+        case 'CATEGORY':
+            const catList = Array.isArray(categoryNames) ? categoryNames : [];
+            if (catList.length === 0) {
+                return { icon: '📁', text: 'Áp dụng cho các danh mục', detail: null };
+            }
+            // Show all categories
+            return {
+                icon: '📁',
+                text: 'Áp dụng cho danh mục',
+                detail: catList.join(', ')
+            };
+        case 'PRODUCT':
+            const prodList = Array.isArray(productNames) ? productNames : [];
+            if (prodList.length === 0) {
+                return { icon: '🏷️', text: 'Áp dụng cho các sản phẩm cụ thể', detail: null };
+            }
+            // Show all products
+            return {
+                icon: '🏷️',
+                text: 'Áp dụng cho sản phẩm',
+                detail: prodList.join(', ')
+            };
+        default:
+            return { icon: '🌐', text: 'Áp dụng cho toàn bộ đơn hàng', detail: null };
+    }
+};
+
+
 
 /**
  * VoucherCard Component
@@ -111,6 +154,23 @@ export const VoucherCard = ({
                             </span>
                         </div>
                     )}
+                    {/* Scope Information */}
+                    {(() => {
+                        const scopeInfo = getScopeDisplay(
+                            voucher.applyScope,
+                            voucher.categoryNames,
+                            voucher.productNames
+                        );
+                        return (
+                            <div className={cx('condition-item', 'scope-info')}>
+                                <span className={cx('condition-icon')}>{scopeInfo.icon}</span>
+                                <span className={cx('condition-text')}>
+                                    {scopeInfo.text}
+                                    {scopeInfo.detail && <strong>: {scopeInfo.detail}</strong>}
+                                </span>
+                            </div>
+                        );
+                    })()}
                 </div>
             </div>
         </motion.div>
@@ -239,6 +299,23 @@ export const PromotionCard = ({
                             </span>
                         </div>
                     )}
+                    {/* Scope Information */}
+                    {(() => {
+                        const scopeInfo = getScopeDisplay(
+                            promotion.applyScope,
+                            promotion.categoryNames,
+                            promotion.productNames
+                        );
+                        return (
+                            <div className={cx('condition-item', 'scope-info')}>
+                                <span className={cx('condition-icon')}>{scopeInfo.icon}</span>
+                                <span className={cx('condition-text')}>
+                                    {scopeInfo.text}
+                                    {scopeInfo.detail && <strong>: {scopeInfo.detail}</strong>}
+                                </span>
+                            </div>
+                        );
+                    })()}
                 </div>
             </div>
         </motion.div>

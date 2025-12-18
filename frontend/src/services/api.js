@@ -890,11 +890,14 @@ export async function removeCartItem(cartItemId, token = null) {
     return { ok, status, data: extractResult(data) };
 }
 
-export async function applyVoucherToCart(voucherCode, token = null) {
+export async function applyVoucherToCart(voucherCode, token = null, options = {}) {
+    const { orderValue } = options;
+
     const { data, ok, status } = await apiRequest(
         `/cart/apply-voucher?code=${encodeURIComponent(voucherCode)}`,
         {
             method: 'POST',
+            body: orderValue !== undefined ? { orderValue } : undefined,
             token,
         }
     );

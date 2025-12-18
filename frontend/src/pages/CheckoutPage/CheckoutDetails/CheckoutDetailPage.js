@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './CheckoutDetailPage.module.scss';
@@ -20,6 +20,7 @@ import {
     getMyAddresses,
     calculateGhnShippingFee,
     calculateGhnLeadtime,
+    getActiveVouchers,
 } from '../../../services';
 import {
     GHN_DEFAULT_FROM_WARD_CODE,
@@ -65,6 +66,9 @@ export default function CheckoutDetailPage() {
     const [note, setNote] = useState('');
     const [voucherCodeInput, setVoucherCodeInput] = useState('');
     const [selectedVoucherCode, setSelectedVoucherCode] = useState('');
+    // Voucher auto-suggestion
+    const [availableVouchers, setAvailableVouchers] = useState([]);
+    const [applicableVouchers, setApplicableVouchers] = useState([]);
     // Lưu meta sản phẩm: ảnh + giá gốc chưa giảm
     const [productMeta, setProductMeta] = useState({});
     // Modal chọn / sửa địa chỉ giao hàng ngay trên trang checkout
@@ -299,6 +303,23 @@ export default function CheckoutDetailPage() {
                 });
         });
     }, [cart, directCheckout, directProduct, directProductId, API_BASE_URL]);
+
+    // Fetch available vouchers for auto-suggestion
+    useEffect(() => {
+        const fetchVouchers = async () => {
+            if (!isLoggedIn) return;
+
+            try {
+                const vouchers = await getActiveVouchers(getStoredToken('token'));
+                setAvailableVouchers(Array.isArray(vouchers) ? vouchers : []);
+            } catch (err) {
+                console.error('Error fetching vouchers:', err);
+                setAvailableVouchers([]);
+            }
+        };
+
+        fetchVouchers();
+    }, [isLoggedIn]);
 
     // Derived items: direct checkout từ product hoặc từ cart
     const checkoutItems = useMemo(() => {
@@ -716,6 +737,55 @@ export default function CheckoutDetailPage() {
     // Tổng cộng hiển thị: giống backend = selectedSubtotal + shippingFee - voucherDiscount
     const total = Math.max(0, itemsSubtotal + shippingFee - voucherDiscount);
 
+    // Filter applicable vouchers based on order value
+    // NOTE: This useEffect must be AFTER checkoutItems and itemsSubtotal are defined
+    useEffect(() => {
+        if (!availableVouchers.length || !checkoutItems.length || selectedVoucherCode) {
+            setApplicableVouchers([]);
+            return;
+        }
+
+        const now = new Date();
+
+        const filtered = availableVouchers.filter(voucher => {
+            // Check expiry
+            if (voucher.expiryDate && new Date(voucher.expiryDate) < now) {
+                return false;
+            }
+
+            // Check minimum order value
+            if (voucher.minOrderValue && itemsSubtotal < voucher.minOrderValue) {
+                return false;
+            }
+
+            // Check maximum order value (if exists)
+            if (voucher.maxOrderValue && itemsSubtotal > voucher.maxOrderValue) {
+                return false;
+            }
+
+            return true;
+        });
+
+        // Sort by estimated discount (highest first)
+        filtered.sort((a, b) => {
+            const discountA = a.discountValueType === 'PERCENTAGE'
+                ? Math.min(
+                    (itemsSubtotal * a.discountValue / 100),
+                    a.maxDiscountValue || Infinity
+                )
+                : a.discountValue;
+            const discountB = b.discountValueType === 'PERCENTAGE'
+                ? Math.min(
+                    (itemsSubtotal * b.discountValue / 100),
+                    b.maxDiscountValue || Infinity
+                )
+                : b.discountValue;
+            return discountB - discountA;
+        });
+
+        setApplicableVouchers(filtered.slice(0, 3)); // Top 3 vouchers
+    }, [availableVouchers, checkoutItems, itemsSubtotal, selectedVoucherCode]);
+
     const formatPrice = (value) =>
         new Intl.NumberFormat('vi-VN', {
             style: 'currency',
@@ -737,6 +807,49 @@ export default function CheckoutDetailPage() {
 
         try {
             const token = getStoredToken('token');
+
+            // For direct checkout, pass order value explicitly to backend
+            if (directCheckout) {
+                const { ok, status, data } = await applyVoucherToCart(
+                    code,
+                    token,
+                    { orderValue: itemsSubtotal }
+                );
+
+                if (!ok) {
+                    if (status === 401) {
+                        showError('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+                        openLoginModal();
+                    } else {
+                        const backendCode = data?.code ?? data?.errorCode ?? data?.statusCode;
+                        if (backendCode === 3009) {
+                            showError('Bạn đã sử dụng voucher này cho một đơn hàng khác.');
+                            setSelectedVoucherCode('');
+                        } else {
+                            const msg =
+                                data?.message ||
+                                data?.error ||
+                                `Không thể áp dụng mã giảm giá (Lỗi: ${status})`;
+                            showError(msg);
+                        }
+                    }
+                    return;
+                }
+
+                // Store voucher data locally for direct checkout (no cart to update)
+                // Backend returns voucherDiscount value
+                setCart({
+                    ...cart,
+                    appliedVoucherCode: code,
+                    voucherDiscount: data.voucherDiscount || 0,
+                });
+                setSelectedVoucherCode(code);
+                setVoucherCodeInput('');
+                success('Đã áp dụng mã giảm giá thành công');
+                return;
+            }
+
+            // Regular cart-based checkout
             const { ok, status, data } = await applyVoucherToCart(code, token);
 
             if (!ok) {
@@ -1236,6 +1349,75 @@ export default function CheckoutDetailPage() {
                                                 Hủy mã
                                             </button>
                                         </p>
+                                    )}
+                                    {/* Voucher Suggestions */}
+                                    {applicableVouchers.length > 0 && !selectedVoucherCode && (
+                                        <div className={cx('voucher-suggestions')}>
+                                            <h4 className={cx('suggestions-title')}>
+                                                💎 Mã giảm giá khả dụng
+                                            </h4>
+                                            <div className={cx('suggestions-list')}>
+                                                {applicableVouchers.map((voucher) => {
+                                                    const discountValue =
+                                                        voucher.discountValueType === 'PERCENTAGE'
+                                                            ? `${voucher.discountValue}%`
+                                                            : formatPrice(voucher.discountValue);
+
+                                                    const estimatedDiscount =
+                                                        voucher.discountValueType === 'PERCENTAGE'
+                                                            ? Math.min(
+                                                                (itemsSubtotal *
+                                                                    voucher.discountValue) /
+                                                                100,
+                                                                voucher.maxDiscountValue ||
+                                                                Infinity
+                                                            )
+                                                            : voucher.discountValue;
+
+                                                    return (
+                                                        <div
+                                                            key={voucher.code}
+                                                            className={cx('suggestion-card')}
+                                                            onClick={() => {
+                                                                setVoucherCodeInput(voucher.code);
+                                                                // Trigger apply after setting code
+                                                                setTimeout(() => {
+                                                                    const applyBtn = document.querySelector(
+                                                                        `.${cx('voucher-apply-btn')}:not(.${cx('clear-btn')})`
+                                                                    );
+                                                                    if (applyBtn) applyBtn.click();
+                                                                }, 100);
+                                                            }}
+                                                        >
+                                                            <div className={cx('suggestion-badge')}>
+                                                                {discountValue}
+                                                            </div>
+                                                            <div className={cx('suggestion-info')}>
+                                                                <div className={cx('suggestion-code')}>
+                                                                    {voucher.code}
+                                                                </div>
+                                                                {voucher.name && (
+                                                                    <div className={cx('suggestion-name')}>
+                                                                        {voucher.name}
+                                                                    </div>
+                                                                )}
+                                                                <div className={cx('suggestion-estimate')}>
+                                                                    Giảm ~{formatPrice(estimatedDiscount)}
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                className={cx('suggestion-apply-btn')}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                }}
+                                                            >
+                                                                Áp dụng
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                             </div>
