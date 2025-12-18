@@ -58,7 +58,7 @@ import StaffUpdateProductPage from '../pages/Employees/Staff/ProductManagement/U
 import ContentManagementPage from '../pages/Employees/Staff/ContentManagement';
 import AddBannerPage from '../pages/Employees/Staff/ContentManagement/AddBanner';
 import BannerDetailPage from '../pages/Employees/Staff/ContentManagement/BannerDetail';
-import BannerBookListPage from '../pages/Employees/Staff/ContentManagement/BannerDetail/BannerBookList';
+import BannerBookListPage from '../pages/Employees/Staff/ContentManagement/BannerDetail/BannerList';
 import UpdateContentPage from '../pages/Employees/Staff/ContentManagement/UpdateContent';
 import VouchersPromotionsPage from '../pages/Employees/Staff/VouchersPromotionsPage';
 import OrderManagementPage from '../pages/Employees/Staff/OrderManagement';

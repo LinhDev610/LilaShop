@@ -1,5 +1,5 @@
 import classNames from 'classnames/bind';
-import styles from './BannerBookListPage.module.scss';
+import styles from './BannerListPage.module.scss';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { getApiBaseUrl, getStoredToken } from '../../../../../../services/utils';
@@ -7,7 +7,7 @@ import { useNotification } from '../../../../../../components/Common/Notificatio
 
 const cx = classNames.bind(styles);
 
-export default function BannerBookListPage() {
+export default function BannerListPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { id } = useParams();

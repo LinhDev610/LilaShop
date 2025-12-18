@@ -209,7 +209,7 @@ export default function ManageContentPage() {
                 <>
                     {/* Search and Filter */}
                     <SearchAndSort
-                        searchPlaceholder="Tìm kiếm theo tiêu đề,......"
+                        searchPlaceholder="Tìm kiếm theo tiêu đề"
                         searchValue={searchTerm}
                         onSearchChange={(e) => setSearchTerm(e.target.value)}
                         onSearchClick={handleSearch}

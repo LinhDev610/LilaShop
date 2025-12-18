@@ -131,7 +131,7 @@ export default function ContentManagementPage() {
             <SearchFilterBar
                 searchQuery={searchQuery}
                 onSearchChange={(e) => setSearchQuery(e.target.value)}
-                searchPlaceholder="Tìm kiếm theo mã voucher, tên khuyến mãi,......"
+                searchPlaceholder="Tìm kiếm theo tiêu đề"
                 dateFilter={dateFilter}
                 onDateChange={(e) => setDateFilter(e.target.value)}
                 onSearchClick={handleSearch}

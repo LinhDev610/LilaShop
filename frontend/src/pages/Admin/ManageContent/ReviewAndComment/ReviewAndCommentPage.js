@@ -186,7 +186,7 @@ export default function ReviewAndCommentPage() {
         <div className={cx('review-page')}>
             <div className={cx('tabs-placeholder')} />
             <SearchAndSort
-                searchPlaceholder="Tìm kiếm theo tiêu đề,......"
+                searchPlaceholder="Tìm kiếm theo tiêu đề"
                 searchValue={searchTerm}
                 onSearchChange={(e) => setSearchTerm(e.target.value)}
                 onSearchClick={handleSearchClick}
