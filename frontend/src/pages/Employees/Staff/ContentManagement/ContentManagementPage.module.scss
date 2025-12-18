@@ -174,25 +174,28 @@
     font-size: 12px;
     font-weight: 600;
     text-align: center;
-    min-width: 90px;
+    min-width: 100px;
     transition: all 0.2s ease;
 
-    &.pending {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        color: #92400e;
-        box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
-    }
-
-    &.approved {
+    // Currently active - Green
+    &.active {
         background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
         color: #065f46;
         box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
     }
 
-    &.rejected {
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-        color: #991b1b;
-        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+    // Future/upcoming - Blue-purple
+    &.future {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+    }
+
+    // Expired - Gray
+    &.expired {
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        color: #6b7280;
+        box-shadow: 0 2px 8px rgba(107, 114, 128, 0.15);
     }
 }
 
