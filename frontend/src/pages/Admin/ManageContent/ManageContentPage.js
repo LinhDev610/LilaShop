@@ -8,10 +8,38 @@ import ReviewAndCommentPage from './ReviewAndComment';
 
 const cx = classNames.bind(styles);
 
+/**
+ * Helper function to determine banner display status based on dates
+ * @param {string} startDate - Banner start date
+ * @param {string} endDate - Banner end date
+ * @returns {Object} { statusDisplay: string, statusClass: string }
+ */
+const getBannerTimeStatus = (startDate, endDate) => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+
+    if (!start && !end) {
+        return { statusDisplay: 'Đang hiển thị', statusClass: 'active' };
+    }
+
+    if (start && start > now) {
+        return { statusDisplay: 'Sắp hiển thị', statusClass: 'future' };
+    }
+
+    if (end && end < now) {
+        return { statusDisplay: 'Đã kết thúc', statusClass: 'expired' };
+    }
+
+    return { statusDisplay: 'Đang hiển thị', statusClass: 'active' };
+};
+
 export default function ManageContentPage() {
     const navigate = useNavigate();
     const API_BASE_URL = useMemo(() => getApiBaseUrl(), []);
-    const [activeTab, setActiveTab] = useState('banner'); // 'banner' or 'reviews'
+    const [activeTab, setActiveTab] = useState('banner');
     const [banners, setBanners] = useState([]);
     const [filteredBanners, setFilteredBanners] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -19,19 +47,6 @@ export default function ManageContentPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [dateFilter, setDateFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
-
-    // Determine label/class using timestamps to know if rejected
-    const getStatusDisplayFromRecord = (status, pendingReview) => {
-        if (status === true) return 'Đã duyệt';
-        if (status === false && pendingReview !== true) return 'Không duyệt';
-        return 'Chờ duyệt';
-    };
-
-    const getStatusClassFromRecord = (status, pendingReview) => {
-        if (status === true) return 'approved';
-        if (status === false && pendingReview !== true) return 'rejected';
-        return 'pending';
-    };
 
     // Fetch banners from API
     useEffect(() => {
@@ -60,28 +75,59 @@ export default function ManageContentPage() {
                     throw new Error(data?.message || 'Không thể tải danh sách banner');
                 }
 
-                // Map backend data to display format
+                // Map backend data with time-based status
                 const mappedBanners = (data?.result || []).map((banner) => {
-                    // Format date as dd/mm/yyyy
                     const dateStr = banner.createdAt
                         ? formatDateTime(banner.createdAt).split(' ')[0]
                         : '';
+
+                    // Get time-based status
+                    const { statusDisplay, statusClass } = getBannerTimeStatus(
+                        banner.startDate,
+                        banner.endDate
+                    );
+
+                    // Format date range
+                    const startDateStr = banner.startDate
+                        ? new Date(banner.startDate).toLocaleDateString('vi-VN')
+                        : null;
+                    const endDateStr = banner.endDate
+                        ? new Date(banner.endDate).toLocaleDateString('vi-VN')
+                        : null;
+
+                    let dateRange = 'Không giới hạn';
+                    if (startDateStr && endDateStr) {
+                        dateRange = `${startDateStr} - ${endDateStr}`;
+                    } else if (startDateStr) {
+                        dateRange = `Từ ${startDateStr}`;
+                    } else if (endDateStr) {
+                        dateRange = `Đến ${endDateStr}`;
+                    }
 
                     return {
                         id: banner.id,
                         title: banner.title,
                         linkUrl: banner.linkUrl || '',
                         creator: banner.createdByName || banner.createdBy || '',
-                        status: banner.status,
-                        pendingReview: banner.pendingReview === true,
-                        statusDisplay: getStatusDisplayFromRecord(banner.status, banner.pendingReview),
-                        statusClass: getStatusClassFromRecord(banner.status, banner.pendingReview),
+                        statusDisplay,
+                        statusClass,
+                        dateRange,
                         date: dateStr,
                         createdAt: banner.createdAt,
-                        updatedAt: banner.updatedAt,
+                        startDate: banner.startDate,
+                        endDate: banner.endDate,
                         productIds: banner.productIds || [],
                         productNames: banner.productNames || [],
                     };
+                });
+
+                // Sort: Active first, then Future, then Expired
+                const statusOrder = { active: 0, future: 1, expired: 2 };
+                mappedBanners.sort((a, b) => {
+                    const orderA = statusOrder[a.statusClass] ?? 3;
+                    const orderB = statusOrder[b.statusClass] ?? 3;
+                    if (orderA !== orderB) return orderA - orderB;
+                    return new Date(b.startDate || 0) - new Date(a.startDate || 0);
                 });
 
                 setBanners(mappedBanners);
@@ -119,10 +165,8 @@ export default function ManageContentPage() {
         if (dateFilter) {
             filtered = filtered.filter((b) => {
                 if (!b.createdAt) return false;
-                // Convert dateFilter (YYYY-MM-DD) to Date object
                 const filterDate = new Date(dateFilter);
                 const complaintDate = new Date(b.createdAt);
-                // Compare dates (ignore time)
                 return (
                     filterDate.getFullYear() === complaintDate.getFullYear() &&
                     filterDate.getMonth() === complaintDate.getMonth() &&
@@ -131,15 +175,9 @@ export default function ManageContentPage() {
             });
         }
 
-        // Status filter
+        // Time-based status filter
         if (statusFilter !== 'all') {
-            if (statusFilter === 'Đã duyệt') {
-                filtered = filtered.filter((b) => b.statusClass === 'approved');
-            } else if (statusFilter === 'Chờ duyệt') {
-                filtered = filtered.filter((b) => b.statusClass === 'pending');
-            } else if (statusFilter === 'Không duyệt') {
-                filtered = filtered.filter((b) => b.statusClass === 'rejected');
-            }
+            filtered = filtered.filter((b) => b.statusClass === statusFilter);
         }
 
         setFilteredBanners(filtered);
@@ -151,16 +189,6 @@ export default function ManageContentPage() {
 
     const handleViewDetail = (bannerId) => {
         navigate(`/admin/content/${bannerId}`);
-    };
-
-    const getLinkDisplay = (banner) => {
-        if (banner.productIds && banner.productIds.length > 0) {
-            return 'Xem sản phẩm';
-        }
-        if (banner.linkUrl) {
-            return banner.linkUrl;
-        }
-        return '-';
     };
 
     if (loading) {
@@ -216,12 +244,12 @@ export default function ManageContentPage() {
                         dateFilter={dateFilter}
                         onDateChange={setDateFilter}
                         dateLabel="Ngày"
-                        sortLabel="Sắp xếp:"
+                        sortLabel="Trạng thái:"
                         sortOptions={[
-                            { value: 'all', label: 'Tất cả trạng thái' },
-                            { value: 'Chờ duyệt', label: 'Chờ duyệt' },
-                            { value: 'Đã duyệt', label: 'Đã duyệt' },
-                            { value: 'Không duyệt', label: 'Không duyệt' },
+                            { value: 'all', label: 'Tất cả' },
+                            { value: 'active', label: 'Đang hiển thị' },
+                            { value: 'future', label: 'Sắp hiển thị' },
+                            { value: 'expired', label: 'Đã kết thúc' },
                         ]}
                         sortValue={statusFilter}
                         onSortChange={(e) => setStatusFilter(e.target.value)}
@@ -239,7 +267,7 @@ export default function ManageContentPage() {
                                 <thead>
                                     <tr>
                                         <th>Tiêu đề</th>
-                                        <th>Liên kết</th>
+                                        <th>Thời gian hiển thị</th>
                                         <th>Người tạo</th>
                                         <th>Trạng thái</th>
                                         <th>Thao tác</th>
@@ -249,31 +277,7 @@ export default function ManageContentPage() {
                                     {filteredBanners.map((banner, index) => (
                                         <tr key={banner.id} className={index % 2 === 1 ? cx('odd-row') : ''}>
                                             <td className={cx('title-cell')}>{banner.title}</td>
-                                            <td className={cx('link-cell')}>
-                                                {banner.productIds && banner.productIds.length > 0 ? (
-                                                    <a
-                                                        href="#"
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            // Navigate to products or show products
-                                                        }}
-                                                        className={cx('link-text')}
-                                                    >
-                                                        Xem sản phẩm
-                                                    </a>
-                                                ) : banner.linkUrl ? (
-                                                    <a
-                                                        href={banner.linkUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className={cx('link-text')}
-                                                    >
-                                                        {banner.linkUrl}
-                                                    </a>
-                                                ) : (
-                                                    '-'
-                                                )}
-                                            </td>
+                                            <td className={cx('date-cell')}>{banner.dateRange}</td>
                                             <td>{banner.creator}</td>
                                             <td>
                                                 <span

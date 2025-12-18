@@ -109,26 +109,39 @@
 
 .status-tag {
     display: inline-block;
-    padding: 5px 14px;
-    border-radius: 16px;
+    padding: 6px 16px;
+    border-radius: 20px;
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
     white-space: nowrap;
+    min-width: 100px;
+    text-align: center;
 }
 
-.status-tag.status-pending {
-    background: #fbbf24;
-    color: #78350f;
+// Currently active - Green
+.status-tag.status-active {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #065f46;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
 }
 
-.status-tag.status-approved {
-    background: #10b981;
-    color: #064e3b;
+// Future/upcoming - Blue
+.status-tag.status-future {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #1e40af;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
 }
 
-.status-tag.status-rejected {
-    background: #ef4444;
-    color: #7f1d1d;
+// Expired - Gray
+.status-tag.status-expired {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    color: #6b7280;
+    box-shadow: 0 2px 6px rgba(107, 114, 128, 0.15);
+}
+
+.date-cell {
+    color: #6b7280;
+    font-size: 14px;
 }
 
 .view-btn {
@@ -146,4 +159,3 @@
 .view-btn:hover {
     background: #0f2a3f;
 }
-
