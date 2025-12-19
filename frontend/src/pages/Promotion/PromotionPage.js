@@ -1,15 +1,12 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import homeStyles from '../Home/Home.module.scss';
 import promoStyles from './Promotion.module.scss';
 import categoryStyles from '../Category/CategoryPage.module.scss';
 import ProductList from '../../components/Common/ProductList/ProductList';
-import { VoucherCard, PromotionCard } from '../../components/Common/VoucherPromotionCard';
 import { getActiveProducts, getApiBaseUrl, formatCurrency } from '../../services';
 import { normalizeMediaUrl } from '../../services/productUtils';
-import { normalizePromotionImageUrl } from '../../services/voucherPromotionUtils';
-import { useVouchers, usePromotions } from '../../hooks/useVouchersPromotions';
 import iconFire from '../../assets/icons/icon_fire.png';
 
 const cxHome = classNames.bind(homeStyles);
@@ -67,34 +64,10 @@ const calculateDiscount = (product) => {
 
 export default function PromotionPage() {
     const location = useLocation();
-    const vouchersSectionRef = useRef(null);
-    const promotionsSectionRef = useRef(null);
     const [allProducts, setAllProducts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'price-high', 'price-low', 'bestseller', 'discount-high'
-
-    // Fetch vouchers & promotions
-    const { vouchers, loading: vouchersLoading } = useVouchers();
-    const { promotions, loading: promotionsLoading } = usePromotions();
-
-    // Scroll tới voucher section khi hash là #vouchers
-    useEffect(() => {
-        if (location.hash === '#vouchers' && vouchersSectionRef.current && !vouchersLoading) {
-            setTimeout(() => {
-                vouchersSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-        }
-    }, [location.hash, vouchersLoading]);
-
-    // Scroll tới promotion section khi hash là #promotions
-    useEffect(() => {
-        if (location.hash === '#promotions' && promotionsSectionRef.current && !promotionsLoading) {
-            setTimeout(() => {
-                promotionsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-        }
-    }, [location.hash, promotionsLoading]);
 
     // Map và lọc sản phẩm có khuyến mãi
     const productsWithPromotion = useMemo(() => {
@@ -202,29 +175,6 @@ export default function PromotionPage() {
         </div>
     );
 
-    const formatDiscountValue = (item) => {
-        if (!item) return '';
-        if (item.discountValueType === 'PERCENTAGE') {
-            return `${item.discountValue || 0}%`;
-        }
-        const value = item.discountValue ?? 0;
-        if (!value) return '0đ';
-        return formatCurrency(value);
-    };
-
-    const formatDate = (date) => {
-        if (!date) return '';
-        try {
-            const d = new Date(date);
-            const dd = String(d.getDate()).padStart(2, '0');
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const yyyy = d.getFullYear();
-            return `${dd}/${mm}/${yyyy}`;
-        } catch {
-            return '';
-        }
-    };
-
     const renderSection = (title, icon, colorClass, productList, options = {}) => {
         if (!productList || productList.length === 0) return null;
         const { minimal = true, isGrid = false, gridColumns = 4 } = options;
@@ -250,56 +200,6 @@ export default function PromotionPage() {
     return (
         <div className={cxHome('home-wrapper')}>
             <main className={cxHome('home-content')}>
-                {/* Vouchers Section */}
-                {vouchers.length > 0 && (
-                    <section id="vouchers" ref={vouchersSectionRef} className={cxHome('vouchers-section')}>
-                        <div className={cxHome('section-header')}>
-                            <h2 className={cxHome('section-title')}>
-                                <span className={cxHome('title-icon')}>🎫</span>
-                                VOUCHER
-                            </h2>
-                        </div>
-                        <div className={cxHome('voucher-grid', 'voucher-grid-compact')}>
-                            {vouchers.map((voucher) => (
-                                <VoucherCard
-                                    key={voucher.id}
-                                    voucher={voucher}
-                                    formatDiscountValue={formatDiscountValue}
-                                    formatCurrency={formatCurrency}
-                                    formatDate={formatDate}
-                                    normalizeImageUrl={normalizePromotionImageUrl}
-                                    apiBaseUrl={API_BASE_URL}
-                                />
-                            ))}
-                        </div>
-                    </section>
-                )}
-
-                {/* Promotions Section */}
-                {promotions.length > 0 && (
-                    <section id="promotions" ref={promotionsSectionRef} className={cxHome('promotions-section')}>
-                        <div className={cxHome('section-header')}>
-                            <h2 className={cxHome('section-title')}>
-                                <span className={cxHome('title-icon')}>🔥</span>
-                                KHUYẾN MÃI
-                            </h2>
-                        </div>
-                        <div className={cxHome('promotion-grid', 'promotion-grid-compact')}>
-                            {promotions.map((promotion) => (
-                                <PromotionCard
-                                    key={promotion.id}
-                                    promotion={promotion}
-                                    formatDiscountValue={formatDiscountValue}
-                                    formatCurrency={formatCurrency}
-                                    formatDate={formatDate}
-                                    normalizeImageUrl={normalizePromotionImageUrl}
-                                    apiBaseUrl={API_BASE_URL}
-                                />
-                            ))}
-                        </div>
-                    </section>
-                )}
-
                 {/* Products Section */}
                 {loading && renderStateCard('Đang tải dữ liệu khuyến mãi...')}
 
