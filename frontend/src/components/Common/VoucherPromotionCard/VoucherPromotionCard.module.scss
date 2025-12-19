@@ -7,6 +7,283 @@ $accent-purple: #9d4edd;
 $text-primary: #1a1a1a;
 $text-secondary: #6b7280;
 $text-light: #ffffff;
+$voucher-red: #e53935;
+$voucher-yellow: #fdd835;
+
+// ============================================
+// VOUCHER TICKET STYLE - Horizontal Layout
+// ============================================
+.voucher-ticket {
+    display: flex;
+    flex-direction: row;
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: visible;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e0e0e0;
+    cursor: pointer;
+    min-width: 300px;
+    max-width: 340px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.voucher-ticket-left {
+    width: 100px;
+    min-width: 100px;
+    background: linear-gradient(135deg, $voucher-red 0%, #c62828 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 6px;
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: repeating-linear-gradient(to bottom,
+                transparent,
+                transparent 4px,
+                #ccc 4px,
+                #ccc 8px);
+    }
+}
+
+.voucher-ticket-discount {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    color: $text-light;
+    width: 100%;
+    padding: 0 4px;
+
+    .discount-label {
+        font-size: 0.6rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        opacity: 0.9;
+        margin-bottom: 2px;
+    }
+
+    .discount-value {
+        font-size: 1.1rem;
+        font-weight: 800;
+        line-height: 1.2;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        word-break: break-word;
+        max-width: 100%;
+    }
+}
+
+.voucher-ticket-cut {
+    position: absolute;
+    left: 96px;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 2;
+    pointer-events: none;
+
+    .cut-circle {
+        width: 12px;
+        height: 12px;
+        background: #f5f5f5;
+        border-radius: 50%;
+        position: relative;
+        left: -2px;
+
+        &.top {
+            margin-top: -6px;
+        }
+
+        &.bottom {
+            margin-bottom: -6px;
+        }
+    }
+
+    .cut-line {
+        flex: 1;
+        border-left: 1px dashed #ccc;
+        margin-left: 5px;
+    }
+}
+
+.voucher-ticket-right {
+    flex: 1;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.voucher-ticket-header {
+    display: flex;
+    align-items: center;
+}
+
+.voucher-ticket-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: $text-primary;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.voucher-ticket-desc {
+    margin: 0;
+    font-size: 0.72rem;
+    color: $text-secondary;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.voucher-ticket-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+}
+
+.voucher-btn {
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+
+    &.copy-btn {
+        background: $voucher-red;
+        color: $text-light;
+
+        &:hover {
+            background: darken($voucher-red, 8%);
+        }
+    }
+
+    &.condition-btn {
+        background: transparent;
+        color: $voucher-red;
+        border: 1px solid $voucher-red;
+
+        &:hover {
+            background: rgba($voucher-red, 0.08);
+        }
+    }
+}
+
+.voucher-conditions-popup {
+    left: 0;
+    right: auto;
+
+    left: 0;
+    right: auto;
+
+    position: absolute;
+    top: calc(100% + 8px);
+    left: -100px;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+    z-index: 1000;
+    overflow: hidden;
+
+    .popup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 14px;
+        background: linear-gradient(135deg, $voucher-red 0%, #c62828 100%);
+        color: $text-light;
+    }
+
+    .popup-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .popup-close {
+        background: none;
+        border: none;
+        color: $text-light;
+        font-size: 0.9rem;
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 4px;
+        transition: background 0.2s;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    }
+
+    .popup-content {
+        padding: 10px 14px;
+    }
+
+    .popup-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.75rem;
+        color: $text-secondary;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        &.code-item {
+            background: rgba($voucher-red, 0.05);
+            margin: 0 -14px;
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba($voucher-red, 0.1);
+        }
+
+        &.highlight {
+            color: #2e7d32;
+            font-weight: 600;
+        }
+
+        strong {
+            color: $text-primary;
+            font-weight: 700;
+        }
+    }
+
+    .item-icon {
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .item-label {
+        color: $text-secondary;
+        font-weight: 500;
+    }
+
+    .item-value {
+        color: $voucher-red;
+        font-weight: 700;
+        font-family: 'JetBrains Mono', monospace;
+    }
+}
 
 // ============================================
 // REDESIGNED VOUCHER CARDS - Modern & Spacious
@@ -15,15 +292,15 @@ $text-light: #ffffff;
     display: flex;
     flex-direction: column;
     background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 16px;
+    border-radius: 12px;
     overflow: hidden;
     box-shadow:
-        0 4px 20px rgba(102, 126, 234, 0.08),
-        0 1px 3px rgba(0, 0, 0, 0.05);
+        0 3px 12px rgba(102, 126, 234, 0.08),
+        0 1px 2px rgba(0, 0, 0, 0.04);
     border: 1px solid rgba(102, 126, 234, 0.12);
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
-    min-height: 180px;
+    min-height: 130px;
     position: relative;
 
     &::before {
@@ -32,18 +309,18 @@ $text-light: #ffffff;
         top: 0;
         left: 0;
         right: 0;
-        height: 4px;
+        height: 3px;
         background: $primary-gradient;
         opacity: 0;
         transition: opacity 0.3s ease;
     }
 
     &:hover {
-        transform: translateY(-6px);
+        transform: translateY(-4px);
         box-shadow:
-            0 12px 40px rgba(102, 126, 234, 0.18),
-            0 4px 12px rgba(0, 0, 0, 0.08);
-        border-color: rgba(102, 126, 234, 0.3);
+            0 8px 24px rgba(102, 126, 234, 0.15),
+            0 3px 8px rgba(0, 0, 0, 0.06);
+        border-color: rgba(102, 126, 234, 0.25);
 
         &::before {
             opacity: 1;
@@ -54,7 +331,7 @@ $text-light: #ffffff;
 .voucher-visual {
     position: relative;
     width: 100%;
-    height: 90px;
+    height: 55px;
     flex-shrink: 0;
     overflow: hidden;
     display: flex;
@@ -118,43 +395,43 @@ $text-light: #ffffff;
 }
 
 .discount-value-large {
-    font-size: 2rem;
+    font-size: 1.4rem;
     font-weight: 900;
     color: $text-light;
     line-height: 1;
     text-shadow:
-        0 2px 4px rgba(0, 0, 0, 0.2),
-        0 4px 12px rgba(0, 0, 0, 0.15);
-    letter-spacing: -0.5px;
+        0 1px 3px rgba(0, 0, 0, 0.2),
+        0 2px 8px rgba(0, 0, 0, 0.12);
+    letter-spacing: -0.3px;
 }
 
 .discount-label-small {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     font-weight: 700;
     color: rgba(255, 255, 255, 0.95);
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    padding: 3px 10px;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    padding: 2px 8px;
     background: rgba(255, 255, 255, 0.15);
-    border-radius: 20px;
+    border-radius: 16px;
     backdrop-filter: blur(4px);
 }
 
 .voucher-info-section {
     flex: 1;
-    padding: 16px 18px 18px;
+    padding: 10px 14px 12px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 6px;
     justify-content: flex-start;
-    min-height: 90px;
+    min-height: 70px;
 }
 
 .voucher-top-row {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
 }
 
@@ -162,33 +439,33 @@ $text-light: #ffffff;
     display: inline-flex;
     align-items: center;
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(157, 78, 221, 0.12) 100%);
-    padding: 6px 12px;
-    border-radius: 8px;
-    border: 1.5px dashed rgba(102, 126, 234, 0.4);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px dashed rgba(102, 126, 234, 0.4);
     flex-shrink: 0;
     position: relative;
 
     &::before {
         content: '🎟️';
-        margin-right: 6px;
-        font-size: 0.85rem;
+        margin-right: 5px;
+        font-size: 0.75rem;
     }
 }
 
 .code-text {
-    font-size: 0.85rem;
-    font-weight: 800;
+    font-size: 0.75rem;
+    font-weight: 700;
     color: $accent-purple;
     font-family: 'JetBrains Mono', 'Courier New', monospace;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
 }
 
 .voucher-title-inline {
-    font-size: 0.95rem;
+    font-size: 0.82rem;
     font-weight: 700;
     color: $text-primary;
-    line-height: 1.4;
+    line-height: 1.35;
     flex: 1;
     min-width: 0;
     display: -webkit-box;
@@ -201,25 +478,25 @@ $text-light: #ffffff;
 .voucher-conditions-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     margin-top: auto;
 }
 
 .condition-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.8rem;
+    gap: 6px;
+    font-size: 0.72rem;
     color: $text-secondary;
-    line-height: 1.5;
-    padding: 4px 0;
+    line-height: 1.4;
+    padding: 2px 0;
 
     &.highlight {
         color: $text-primary;
         background: linear-gradient(90deg, rgba(102, 126, 234, 0.06) 0%, transparent 100%);
-        padding: 6px 10px;
-        border-radius: 8px;
-        margin: 0 -10px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        margin: 0 -8px;
 
         strong {
             color: $accent-purple;
@@ -231,9 +508,9 @@ $text-light: #ffffff;
         color: #e74c3c;
         font-weight: 600;
         background: linear-gradient(90deg, rgba(231, 76, 60, 0.08) 0%, transparent 100%);
-        padding: 6px 10px;
-        border-radius: 8px;
-        margin: 0 -10px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        margin: 0 -8px;
 
         strong {
             color: #c0392b;
@@ -263,9 +540,9 @@ $text-light: #ffffff;
 }
 
 .condition-icon {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     flex-shrink: 0;
-    width: 20px;
+    width: 18px;
     text-align: center;
 }
 
@@ -281,15 +558,15 @@ $text-light: #ffffff;
     display: flex;
     flex-direction: column;
     background: linear-gradient(145deg, #ffffff 0%, #fff5f7 100%);
-    border-radius: 16px;
+    border-radius: 12px;
     overflow: hidden;
     box-shadow:
-        0 4px 20px rgba(240, 147, 251, 0.08),
-        0 1px 3px rgba(0, 0, 0, 0.05);
+        0 3px 12px rgba(240, 147, 251, 0.08),
+        0 1px 2px rgba(0, 0, 0, 0.04);
     border: 1px solid rgba(240, 147, 251, 0.15);
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
-    min-height: 180px;
+    min-height: 130px;
     position: relative;
 
     &::before {
@@ -298,18 +575,18 @@ $text-light: #ffffff;
         top: 0;
         left: 0;
         right: 0;
-        height: 4px;
+        height: 3px;
         background: $secondary-gradient;
         opacity: 0;
         transition: opacity 0.3s ease;
     }
 
     &:hover {
-        transform: translateY(-6px);
+        transform: translateY(-4px);
         box-shadow:
-            0 12px 40px rgba(240, 147, 251, 0.18),
-            0 4px 12px rgba(0, 0, 0, 0.08);
-        border-color: rgba(240, 147, 251, 0.35);
+            0 8px 24px rgba(240, 147, 251, 0.15),
+            0 3px 8px rgba(0, 0, 0, 0.06);
+        border-color: rgba(240, 147, 251, 0.3);
 
         &::before {
             opacity: 1;
@@ -320,7 +597,7 @@ $text-light: #ffffff;
 .promotion-visual {
     position: relative;
     width: 100%;
-    height: 90px;
+    height: 55px;
     flex-shrink: 0;
     overflow: hidden;
     display: flex;
@@ -385,17 +662,17 @@ $text-light: #ffffff;
 
 .promotion-info-section {
     flex: 1;
-    padding: 16px 18px 18px;
+    padding: 10px 14px 12px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    min-height: 90px;
+    gap: 6px;
+    min-height: 70px;
 }
 
 .promotion-top-row {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
 }
 
@@ -403,23 +680,23 @@ $text-light: #ffffff;
     display: inline-flex;
     align-items: center;
     background: linear-gradient(135deg, rgba(240, 147, 251, 0.12) 0%, rgba(245, 87, 108, 0.12) 100%);
-    padding: 6px 12px;
-    border-radius: 8px;
-    border: 1.5px dashed rgba(240, 147, 251, 0.4);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px dashed rgba(240, 147, 251, 0.4);
     flex-shrink: 0;
 
     &::before {
         content: '🔥';
-        margin-right: 6px;
-        font-size: 0.85rem;
+        margin-right: 5px;
+        font-size: 0.75rem;
     }
 }
 
 .promotion-title-inline {
-    font-size: 0.95rem;
+    font-size: 0.82rem;
     font-weight: 700;
     color: $text-primary;
-    line-height: 1.4;
+    line-height: 1.35;
     flex: 1;
     min-width: 0;
     display: -webkit-box;
@@ -430,14 +707,14 @@ $text-light: #ffffff;
 }
 
 .promotion-desc-text {
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     color: $text-secondary;
-    line-height: 1.5;
+    line-height: 1.4;
     margin: 0;
-    padding: 8px 12px;
+    padding: 6px 10px;
     background: rgba(0, 0, 0, 0.02);
-    border-radius: 8px;
-    border-left: 3px solid rgba(240, 147, 251, 0.4);
+    border-radius: 6px;
+    border-left: 2px solid rgba(240, 147, 251, 0.4);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
@@ -448,6 +725,6 @@ $text-light: #ffffff;
 .promotion-conditions-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     margin-top: auto;
 }

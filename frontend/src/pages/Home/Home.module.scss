@@ -107,7 +107,133 @@ $radius-full: 9999px;
     overflow: hidden;
 }
 
-// Voucher & Promotion Section - New Grid Layout
+// Voucher Carousel Section - Horizontal Scroll
+.voucher-carousel-section {
+    width: 100%;
+    padding: 14px 0;
+    background: linear-gradient(180deg, #f8f9fa 0%, #fff 100%);
+    position: relative;
+}
+
+.voucher-carousel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px 10px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.voucher-carousel-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #1a1a1a;
+
+    .title-icon {
+        font-size: 1rem;
+    }
+}
+
+.voucher-carousel-wrapper {
+    position: relative;
+    overflow: hidden;
+
+    // Fade effect on left
+    &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 40px;
+        background: linear-gradient(90deg, #fff 0%, transparent 100%);
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    // Fade effect on right
+    &::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 40px;
+        background: linear-gradient(270deg, #fff 0%, transparent 100%);
+        z-index: 2;
+        pointer-events: none;
+    }
+}
+
+.voucher-carousel-track {
+    display: flex;
+    gap: 14px;
+    padding: 8px 24px 12px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; // Firefox
+    -ms-overflow-style: none; // IE/Edge
+
+    &::-webkit-scrollbar {
+        display: none; // Chrome/Safari
+    }
+}
+
+
+
+.voucher-strip-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.voucher-strip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px;
+}
+
+.voucher-strip-title {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #667eea 0%, #9d4edd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+
+    .title-icon {
+        font-size: 0.95rem;
+    }
+}
+
+.voucher-strip-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+
+    @media (max-width: 992px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 576px) {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+}
+
+// Voucher & Promotion Section - Legacy (keeping for Promotion page compatibility)
 .voucher-promo-section,
 .vouchers-promotions-section {
     width: 100%;
@@ -1311,7 +1437,7 @@ $radius-full: 9999px;
     background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 
+    box-shadow:
         0 4px 20px rgba(102, 126, 234, 0.08),
         0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid rgba(102, 126, 234, 0.12);
@@ -1334,7 +1460,7 @@ $radius-full: 9999px;
 
     &:hover {
         transform: translateY(-6px);
-        box-shadow: 
+        box-shadow:
             0 12px 40px rgba(102, 126, 234, 0.18),
             0 4px 12px rgba(0, 0, 0, 0.08);
         border-color: rgba(102, 126, 234, 0.3);
@@ -1417,7 +1543,7 @@ $radius-full: 9999px;
     font-weight: 900;
     color: $text-light;
     line-height: 1;
-    text-shadow: 
+    text-shadow:
         0 2px 4px rgba(0, 0, 0, 0.2),
         0 4px 12px rgba(0, 0, 0, 0.15);
     letter-spacing: -0.5px;
@@ -1573,8 +1699,15 @@ $radius-full: 9999px;
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
 }
 
 .condition-icon {
@@ -1625,7 +1758,7 @@ $radius-full: 9999px;
     background: linear-gradient(145deg, #ffffff 0%, #fff5f7 100%);
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 
+    box-shadow:
         0 4px 20px rgba(240, 147, 251, 0.08),
         0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid rgba(240, 147, 251, 0.15);
@@ -1648,7 +1781,7 @@ $radius-full: 9999px;
 
     &:hover {
         transform: translateY(-6px);
-        box-shadow: 
+        box-shadow:
             0 12px 40px rgba(240, 147, 251, 0.18),
             0 4px 12px rgba(0, 0, 0, 0.08);
         border-color: rgba(240, 147, 251, 0.35);
