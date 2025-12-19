@@ -4,6 +4,7 @@ import homeStyles from '../Home/Home.module.scss';
 import newProductStyles from './NewProductPage.module.scss';
 import categoryStyles from '../Category/CategoryPage.module.scss';
 import ProductList from '../../components/Common/ProductList/ProductList';
+import Pagination from '../../components/Common/Pagination/Pagination';
 import { getActiveProducts } from '../../services';
 import iconFire from '../../assets/icons/icon_fire.png';
 
@@ -11,11 +12,19 @@ const cxHome = classNames.bind(homeStyles);
 const cxNewProduct = classNames.bind(newProductStyles);
 const cxCategory = classNames.bind(categoryStyles);
 
+const ITEMS_PER_PAGE = 25;
+
 export default function NewProductPage() {
     const [allProducts, setAllProducts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'price-high', 'price-low', 'bestseller'
+    const [currentPage, setCurrentPage] = useState(1);
+
+    // Reset pagination when filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [sortBy]);
 
     // Lọc sách mới phát hành (trong 30 ngày gần đây)
     const newBooks = useMemo(() => {
@@ -81,6 +90,13 @@ export default function NewProductPage() {
 
         return sorted;
     }, [newBooks, sortBy]);
+
+    // Pagination logic
+    const totalPages = Math.ceil(sortedProducts.length / ITEMS_PER_PAGE);
+    const paginatedProducts = useMemo(() => {
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        return sortedProducts.slice(start, start + ITEMS_PER_PAGE);
+    }, [sortedProducts, currentPage]);
 
     // Fetch products từ API
     useEffect(() => {
@@ -179,9 +195,16 @@ export default function NewProductPage() {
                             'SÁCH MỚI PHÁT HÀNH',
                             iconFire,
                             null,
-                            sortedProducts,
+                            paginatedProducts,
                             { minimal: false, isGrid: true, gridColumns: 5 }
                         )}
+
+                        {/* Pagination */}
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                        />
                     </>
                 )}
             </main>

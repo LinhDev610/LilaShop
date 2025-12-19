@@ -5,6 +5,7 @@ import homeStyles from '../Home/Home.module.scss';
 import promoStyles from './Promotion.module.scss';
 import categoryStyles from '../Category/CategoryPage.module.scss';
 import ProductList from '../../components/Common/ProductList/ProductList';
+import Pagination from '../../components/Common/Pagination/Pagination';
 import { getActiveProducts, getApiBaseUrl, formatCurrency } from '../../services';
 import { normalizeMediaUrl } from '../../services/productUtils';
 import iconFire from '../../assets/icons/icon_fire.png';
@@ -14,6 +15,7 @@ const cxPromo = classNames.bind(promoStyles);
 const cxCategory = classNames.bind(categoryStyles);
 
 const API_BASE_URL = getApiBaseUrl();
+const ITEMS_PER_PAGE = 25;
 
 const mapProductToCard = (product, apiBaseUrl) => {
     if (!product) return null;
@@ -68,6 +70,12 @@ export default function PromotionPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'price-high', 'price-low', 'bestseller', 'discount-high'
+    const [currentPage, setCurrentPage] = useState(1);
+
+    // Reset pagination when filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [sortBy]);
 
     // Map và lọc sản phẩm có khuyến mãi
     const productsWithPromotion = useMemo(() => {
@@ -137,6 +145,13 @@ export default function PromotionPage() {
 
         return sorted;
     }, [productsWithPromotion, sortBy]);
+
+    // Pagination logic
+    const totalPages = Math.ceil(sortedProducts.length / ITEMS_PER_PAGE);
+    const paginatedProducts = useMemo(() => {
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        return sortedProducts.slice(start, start + ITEMS_PER_PAGE);
+    }, [sortedProducts, currentPage]);
 
     // Fetch products từ API
     useEffect(() => {
@@ -237,9 +252,16 @@ export default function PromotionPage() {
                             'SẢN PHẨM KHUYẾN MÃI',
                             iconFire,
                             null,
-                            sortedProducts,
+                            paginatedProducts,
                             { minimal: false, isGrid: true, gridColumns: 5 }
                         )}
+
+                        {/* Pagination */}
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                        />
                     </>
                 )}
             </main>

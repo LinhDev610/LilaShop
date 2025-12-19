@@ -1,15 +1,13 @@
 @import 'normalize.css';
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-:root {
-}
+:root {}
 
 * {
     box-sizing: border-box;
 }
 
-html {
-}
+html {}
 
 body {
     text-rendering: optimizeSpeed;
@@ -17,6 +15,9 @@ body {
     font-family: 'Inter', Arial, Helvetica, sans-serif;
 }
 
-button, input, select, textarea {
+button,
+input,
+select,
+textarea {
     font-family: inherit;
 }

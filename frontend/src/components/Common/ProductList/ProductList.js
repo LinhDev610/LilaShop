@@ -159,7 +159,7 @@ const ProductList = memo(function ProductList({
                     style={isGrid ? { display: 'grid', gridTemplateColumns: `repeat(${gridColumns}, 1fr)` } : undefined}
                 >
                     {products.map((product) => (
-                        <ProductCard key={product.id} product={product} />
+                        <ProductCard key={product.id} product={product} fluid={isGrid} />
                     ))}
                 </div>
             </div>
