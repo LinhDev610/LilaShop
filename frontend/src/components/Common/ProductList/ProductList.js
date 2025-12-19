@@ -55,6 +55,9 @@ const ProductList = memo(function ProductList({
     );
 
     const scrollLeft = useCallback(() => {
+        // Allow click but do nothing if at edge
+        if (!canScrollLeft) return;
+
         if (productsRef.current) {
             const container = productsRef.current;
             const cardWidth = container.querySelector('.product-card')?.offsetWidth || 280;
@@ -66,9 +69,12 @@ const ProductList = memo(function ProductList({
                 behavior: 'smooth'
             });
         }
-    }, []);
+    }, [canScrollLeft]);
 
     const scrollRight = useCallback(() => {
+        // Allow click but do nothing if at edge
+        if (!canScrollRight) return;
+
         if (productsRef.current) {
             const container = productsRef.current;
             const cardWidth = container.querySelector('.product-card')?.offsetWidth || 280;
@@ -80,7 +86,7 @@ const ProductList = memo(function ProductList({
                 behavior: 'smooth'
             });
         }
-    }, []);
+    }, [canScrollRight]);
 
     useEffect(() => {
         const container = productsRef.current;
@@ -134,19 +140,15 @@ const ProductList = memo(function ProductList({
                 {showNavigation && !isGrid && (
                     <>
                         <button
-                            className={cx('nav-button', 'nav-left', { disabled: !canScrollLeft })}
+                            className={cx('nav-button', 'nav-left')}
                             onClick={scrollLeft}
-                            disabled={!canScrollLeft}
-                            aria-hidden={!canScrollLeft}
                             aria-label="Scroll left"
                         >
                             <img src={iconLeftArrow} alt="Previous" className={cx('nav-icon')} loading="lazy" />
                         </button>
                         <button
-                            className={cx('nav-button', 'nav-right', { disabled: !canScrollRight })}
+                            className={cx('nav-button', 'nav-right')}
                             onClick={scrollRight}
-                            disabled={!canScrollRight}
-                            aria-hidden={!canScrollRight}
                             aria-label="Scroll right"
                         >
                             <img src={iconRightArrow} alt="Next" className={cx('nav-icon')} loading="lazy" />
