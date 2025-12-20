@@ -187,7 +187,8 @@ function Home() {
                     .map((b) => ({
                         ...b,
                         imageUrl: normalizeMediaUrl(b.imageUrl, API_BASE_URL)
-                    }));
+                    }))
+                    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
                 // Extract just images for the top carousel (Banner1)
                 const images = fullBanners.map(b => b.imageUrl);
@@ -210,71 +211,92 @@ function Home() {
         };
     }, [API_BASE_URL]);
 
-    // ... (keep existing code) ...
+    // State for specific event banner (latest one with products)
+    const [eventBanner, setEventBanner] = useState(null);
+    const [eventProducts, setEventProducts] = useState([]);
 
-    {/* Dynamic Event Banner Section (formerly fixed Christmas section) */ }
-    {
-        activeBanners.length > 0 ? (
-            <motion.section
-                className={cx('featured-section')}
-                style={{ backgroundImage: `url(${activeBanners[0].imageUrl})` }}
-                variants={sectionVariants}
-                whileHover={{ scale: 1.01 }}
-                transition={{ duration: 0.3 }}
-            >
-                <motion.div
-                    className={cx('featured-overlay')}
-                    animate={{
-                        background: [
-                            'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
-                            'radial-gradient(circle at 70% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)',
-                            'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
-                        ],
-                    }}
-                    transition={{ duration: 8, repeat: Infinity }}
-                />
-                <div className={cx('featured-content')}>
-                    <ProductList
-                        products={allProducts}
-                        title={activeBanners[0].name || activeBanners[0].title || "Sự kiện nổi bật"}
-                        showNavigation={true}
-                        showHeader={true} // Show header to see the dynamic title
-                        minimal={true}
-                    />
-                </div>
-            </motion.section>
-        ) : (
-        // Fallback to Christmas standard if no banners
-        <motion.section
-            className={cx('featured-section')}
-            style={{ backgroundImage: `url(${bgChristmas})` }}
-            variants={sectionVariants}
-            whileHover={{ scale: 1.01 }}
-            transition={{ duration: 0.3 }}
-        >
-            <motion.div
-                className={cx('featured-overlay')}
-                animate={{
-                    background: [
-                        'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
-                        'radial-gradient(circle at 70% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)',
-                        'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
-                    ],
-                }}
-                transition={{ duration: 8, repeat: Infinity }}
-            />
-            <div className={cx('featured-content')}>
-                <ProductList
-                    products={allProducts}
-                    title="Tết ông trăng"
-                    showNavigation={true}
-                    showHeader={false}
-                    minimal={true}
-                />
-            </div>
-        </motion.section>
-    )
-    }
+    // Find the latest banner THAT HAS PRODUCTS
+    useEffect(() => {
+        let canceled = false;
+
+        const findEventBanner = async () => {
+            // Only run if we have banners and products loaded
+            if (activeBanners.length === 0 || homeProducts.length === 0) return;
+
+            try {
+                // Check top 3 banners to find one with products
+                const bannersToCheck = activeBanners.slice(0, 3);
+                console.log('Checking banners for event section:', bannersToCheck);
+
+                for (const banner of bannersToCheck) {
+                    if (canceled) return;
+
+                    let targetProductIds = banner.productIds || [];
+                    let bannerDetail = banner;
+
+                    // If productIds missing, try to fetch detail
+                    if (!targetProductIds.length) {
+                        try {
+                            const headers = {};
+                            const token = localStorage.getItem('token') ? JSON.parse(localStorage.getItem('token')) : null;
+                            const sessionToken = sessionStorage.getItem('token');
+                            const validToken = token || sessionToken;
+
+                            if (validToken) {
+                                headers['Authorization'] = `Bearer ${validToken}`;
+                            }
+
+                            const detailResp = await fetch(`${API_BASE_URL}/banners/${banner.id}`, { headers });
+                            if (detailResp.ok) {
+                                const detailData = await detailResp.json();
+                                if (detailData?.result) {
+                                    bannerDetail = detailData.result;
+                                    targetProductIds = bannerDetail.productIds || [];
+                                    console.log(`Fetched detail for ${banner.id}, found IDs:`, targetProductIds);
+                                }
+                            } else {
+                                console.warn(`Failed to fetch detail for ${banner.id}: ${detailResp.status}`);
+                            }
+                        } catch (err) {
+                            console.error('Error fetching banner detail', err);
+                        }
+                    } else {
+                        console.log(`Banner ${banner.id} already has productIds:`, targetProductIds);
+                    }
+
+                    if (targetProductIds.length > 0) {
+                        // Found a banner with products!
+                        const productIdsStr = targetProductIds.map(String);
+                        console.log('Banner has product Ids:', productIdsStr);
+
+                        const matchingProducts = homeProducts.filter(p =>
+                            productIdsStr.includes(String(p.id))
+                        );
+                        console.log('Matching products found:', matchingProducts);
+
+                        if (matchingProducts.length > 0) {
+                            if (!canceled) {
+                                setEventBanner({
+                                    ...banner, // Keep original info
+                                    ...bannerDetail, // Overlay detailed info (title, etc)
+                                    imageUrl: normalizeMediaUrl(bannerDetail.imageUrl || banner.imageUrl, API_BASE_URL) // Ensure URL is normalized
+                                });
+                                setEventProducts(matchingProducts);
+                            }
+                            return; // Stop searching once found
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Error finding event banner', e);
+            }
+        };
+
+        findEventBanner();
+        return () => { canceled = true; };
+    }, [activeBanners, homeProducts, API_BASE_URL]);
+
+    // ... (keep existing code) ...
 
     // Fetch products - direct fetch like LuminaBook
     useEffect(() => {
@@ -474,34 +496,66 @@ function Home() {
                     <FlashSale products={promotionalProducts} />
                 </motion.div>
 
-                <motion.section
-                    className={cx('featured-section')}
-                    style={{ backgroundImage: `url(${bgChristmas})` }}
-                    variants={sectionVariants}
-                    whileHover={{ scale: 1.01 }}
-                    transition={{ duration: 0.3 }}
-                >
-                    <motion.div
-                        className={cx('featured-overlay')}
-                        animate={{
-                            background: [
-                                'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
-                                'radial-gradient(circle at 70% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)',
-                                'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
-                            ],
-                        }}
-                        transition={{ duration: 8, repeat: Infinity }}
-                    />
-                    <div className={cx('featured-content')}>
-                        <ProductList
-                            products={allProducts}
-                            title="Tết ông trăng"
-                            showNavigation={true}
-                            showHeader={false}
-                            minimal={true}
+                {/* Dynamic Event Banner Section */}
+                {eventBanner ? (
+                    <motion.section
+                        className={cx('featured-section')}
+                        style={{ backgroundImage: `url(${eventBanner.imageUrl})` }}
+                        variants={sectionVariants}
+                        whileHover={{ scale: 1.01 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <motion.div
+                            className={cx('featured-overlay')}
+                            animate={{
+                                background: [
+                                    'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
+                                    'radial-gradient(circle at 70% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)',
+                                    'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
+                                ],
+                            }}
+                            transition={{ duration: 8, repeat: Infinity }}
                         />
-                    </div>
-                </motion.section>
+                        <div className={cx('featured-content')}>
+                            <ProductList
+                                products={eventProducts}
+                                title={eventBanner.title || eventBanner.name || "Sự kiện nổi bật"}
+                                showNavigation={true}
+                                showHeader={true}
+                                minimal={true}
+                            />
+                        </div>
+                    </motion.section>
+                ) : (
+                    <motion.section
+                        className={cx('featured-section')}
+                        style={{ backgroundImage: `url(${bgChristmas})` }}
+                        variants={sectionVariants}
+                        whileHover={{ scale: 1.01 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <motion.div
+                            className={cx('featured-overlay')}
+                            animate={{
+                                background: [
+                                    'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
+                                    'radial-gradient(circle at 70% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)',
+                                    'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
+                                ],
+                            }}
+                            transition={{ duration: 8, repeat: Infinity }}
+                        />
+                        <div className={cx('featured-content')}>
+                            <ProductList
+                                products={allProducts}
+                                title="Tết ông trăng"
+                                showNavigation={true}
+                                showHeader={false}
+                                minimal={true}
+                            />
+                        </div>
+                    </motion.section>
+                )}
 
                 <ProductSection title="MỸ PHẨM YÊU THÍCH" products={favoriteProducts} />
                 <ProductSection title="MỸ PHẨM BÁN CHẠY" products={bestSellerProducts} />
