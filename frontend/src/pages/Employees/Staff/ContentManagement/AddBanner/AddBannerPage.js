@@ -276,8 +276,8 @@ export default function AddBannerPage() {
                 ...prev,
                 productIds: [...prev.productIds, product.id],
             }));
+            // Keep modal open for multiple selection
         }
-        setShowProductModal(false);
     };
 
     const handleRemoveProduct = (productId) => {
@@ -653,6 +653,15 @@ export default function AddBannerPage() {
                                             : 'Không còn sản phẩm nào để thêm'}
                                     </p>
                                 )}
+                            </div>
+                            <div className={cx('modal-footer')} style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '10px', borderTop: '1px solid #eee' }}>
+                                <button
+                                    className={cx('btn', 'btn-submit')}
+                                    onClick={() => setShowProductModal(false)}
+                                    style={{ padding: '8px 20px' }}
+                                >
+                                    Hoàn tất
+                                </button>
                             </div>
                         </div>
                     </div>
