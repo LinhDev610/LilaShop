@@ -11,7 +11,6 @@ import {
     getStoredToken,
     uploadVoucherMedia,
     DISCOUNT_VALUE_TYPES,
-    APPLY_SCOPE_OPTIONS,
     INITIAL_FORM_STATE_VOUCHER,
 } from '../../../../../../services';
 import useDebounce from '../../../../../../hooks/useDebounce';
@@ -133,6 +132,18 @@ export default function AddVoucherPage() {
                     discountValueType: value,
                     maxDiscountValue: value === 'PERCENTAGE' ? prev.maxDiscountValue : '',
                 };
+            }
+            if (field === 'discountValue') {
+                if (prev.discountValueType === 'PERCENTAGE') {
+                    // Validate percentage (0-99)
+                    const cleaned = (value || '').replace(/[^0-9]/g, '');
+                    if (cleaned === '') return { ...prev, [field]: '' };
+                    let num = parseInt(cleaned, 10);
+                    if (isNaN(num)) return prev;
+                    if (num < 0) num = 0;
+                    if (num > 99) num = 99;
+                    return { ...prev, [field]: num.toString() };
+                }
             }
             if (field === 'applyScope') {
                 return {
