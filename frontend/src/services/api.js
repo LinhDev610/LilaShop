@@ -339,8 +339,11 @@ export async function deleteUser(userId, token = null) {
 }
 
 export async function createStaff(staffData, token = null) {
-    const { data } = await apiRequest(users.staff, { method: 'POST', body: staffData, token });
-    return extractResult(data);
+    const { data, ok, status } = await apiRequest(users.staff, { method: 'POST', body: staffData, token });
+    if (!ok) {
+        return { ok, status, data };
+    }
+    return { ok, status, data: extractResult(data) };
 }
 
 export async function getUserRole(apiBaseUrl, token) {

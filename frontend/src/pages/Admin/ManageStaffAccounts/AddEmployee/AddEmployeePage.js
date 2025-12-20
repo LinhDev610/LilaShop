@@ -107,14 +107,14 @@ function AddEmployeePage() {
                     setIsLoading(false);
                     return;
                 }
-                let result = await createStaff(formData, token);
+                let response = await createStaff(formData, token);
 
                 // Nếu hết hạn -> thử refresh và gọi lại 1 lần
-                if (!result) {
+                if (!response.ok && response.status === 401) {
                     const newToken = await refreshTokenIfNeeded();
                     if (newToken) {
                         token = newToken;
-                        result = await createStaff(formData, token);
+                        response = await createStaff(formData, token);
                     } else {
                         // Không có refreshToken (user không tick Ghi nhớ) -> buộc đăng nhập lại
                         localStorage.removeItem('token');
@@ -128,11 +128,17 @@ function AddEmployeePage() {
                     }
                 }
 
-                if (result) {
+                if (response.ok) {
                     success('Tạo tài khoản nhân viên thành công! Mật khẩu đã được gửi qua email.');
                     navigate('/admin');
                 } else {
-                    error('Không thể tạo tài khoản. Vui lòng thử lại.');
+                    const errorMsg = response.data?.message || '';
+                    if (errorMsg.toLowerCase().includes('email') && (errorMsg.includes('exist') || errorMsg.includes('tồn tại'))) {
+                        setErrors(prev => ({ ...prev, email: 'Email này đã tồn tại trong hệ thống' }));
+                        error('Email này đã được sử dụng. Vui lòng kiểm tra lại.');
+                    } else {
+                        error(errorMsg || 'Không thể tạo tài khoản. Vui lòng thử lại.');
+                    }
                 }
             } catch (error) {
                 console.error('Error creating staff:', error);
