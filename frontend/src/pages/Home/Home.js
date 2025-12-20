@@ -17,6 +17,7 @@ import bgChristmas from '../../assets/images/img_christmas.png';
 import ProductList from '../../components/Common/ProductList/ProductList';
 import Banner1 from '../../components/Common/Banner/Banner1';
 import { VoucherCard } from '../../components/Common/VoucherPromotionCard';
+import FlashSale from '../../components/Common/FlashSale';
 
 const cx = classNames.bind(styles);
 
@@ -161,6 +162,7 @@ function Home() {
 
     // State for banners
     const [activeBannerImages, setActiveBannerImages] = useState([]);
+    const [activeBanners, setActiveBanners] = useState([]); // Store full banner objects
 
     // State for products
     const [homeProducts, setHomeProducts] = useState([]);
@@ -178,14 +180,28 @@ function Home() {
                 const resp = await fetch(`${API_BASE_URL}/banners/active`);
                 if (!resp.ok || canceled) return;
                 const data = await resp.json().catch(() => ({}));
-                const images = (data?.result || [])
+
+                // Get full banner objects with normalized URLs
+                const fullBanners = (data?.result || [])
                     .filter((b) => b?.imageUrl)
-                    .map((b) => normalizeMediaUrl(b.imageUrl, API_BASE_URL))
-                    .filter(Boolean);
-                if (!canceled) setActiveBannerImages(images);
+                    .map((b) => ({
+                        ...b,
+                        imageUrl: normalizeMediaUrl(b.imageUrl, API_BASE_URL)
+                    }));
+
+                // Extract just images for the top carousel (Banner1)
+                const images = fullBanners.map(b => b.imageUrl);
+
+                if (!canceled) {
+                    setActiveBanners(fullBanners);
+                    setActiveBannerImages(images);
+                }
             } catch (e) {
                 // silent fail for public home
-                if (!canceled) setActiveBannerImages([]);
+                if (!canceled) {
+                    setActiveBannerImages([]);
+                    setActiveBanners([]);
+                }
             }
         };
         fetchActiveBanners();
@@ -193,6 +209,72 @@ function Home() {
             canceled = true;
         };
     }, [API_BASE_URL]);
+
+    // ... (keep existing code) ...
+
+    {/* Dynamic Event Banner Section (formerly fixed Christmas section) */ }
+    {
+        activeBanners.length > 0 ? (
+            <motion.section
+                className={cx('featured-section')}
+                style={{ backgroundImage: `url(${activeBanners[0].imageUrl})` }}
+                variants={sectionVariants}
+                whileHover={{ scale: 1.01 }}
+                transition={{ duration: 0.3 }}
+            >
+                <motion.div
+                    className={cx('featured-overlay')}
+                    animate={{
+                        background: [
+                            'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
+                            'radial-gradient(circle at 70% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)',
+                            'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
+                        ],
+                    }}
+                    transition={{ duration: 8, repeat: Infinity }}
+                />
+                <div className={cx('featured-content')}>
+                    <ProductList
+                        products={allProducts}
+                        title={activeBanners[0].name || activeBanners[0].title || "Sự kiện nổi bật"}
+                        showNavigation={true}
+                        showHeader={true} // Show header to see the dynamic title
+                        minimal={true}
+                    />
+                </div>
+            </motion.section>
+        ) : (
+        // Fallback to Christmas standard if no banners
+        <motion.section
+            className={cx('featured-section')}
+            style={{ backgroundImage: `url(${bgChristmas})` }}
+            variants={sectionVariants}
+            whileHover={{ scale: 1.01 }}
+            transition={{ duration: 0.3 }}
+        >
+            <motion.div
+                className={cx('featured-overlay')}
+                animate={{
+                    background: [
+                        'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
+                        'radial-gradient(circle at 70% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)',
+                        'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
+                    ],
+                }}
+                transition={{ duration: 8, repeat: Infinity }}
+            />
+            <div className={cx('featured-content')}>
+                <ProductList
+                    products={allProducts}
+                    title="Tết ông trăng"
+                    showNavigation={true}
+                    showHeader={false}
+                    minimal={true}
+                />
+            </div>
+        </motion.section>
+    )
+    }
 
     // Fetch products - direct fetch like LuminaBook
     useEffect(() => {
@@ -389,11 +471,7 @@ function Home() {
 
                 {/* Product Sections - Always render, even if empty */}
                 <motion.div variants={sectionVariants}>
-                    <ProductList
-                        products={promotionalProducts}
-                        title="KHUYẾN MÃI HOT"
-                        showNavigation={true}
-                    />
+                    <FlashSale products={promotionalProducts} />
                 </motion.div>
 
                 <motion.section
