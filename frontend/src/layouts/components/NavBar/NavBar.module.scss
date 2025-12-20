@@ -31,6 +31,10 @@
     display: none;
 }
 
+.mobile-dropdown-menu {
+    display: none;
+}
+
 .nav-trigger {
     display: flex;
     align-items: center;
@@ -54,11 +58,11 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        
+
         &:first-child {
             font-size: 18px;
         }
-        
+
         &:last-child {
             font-size: 10px;
             margin-left: 4px;
@@ -71,7 +75,7 @@
 
     &.active {
         background-color: #d6002f;
-        
+
         &:hover {
             background-color: #b91c1c;
         }
@@ -355,6 +359,7 @@
     }
 
     .mobile-dropdown-menu {
+        display: block; // Re-enable display on mobile
         position: absolute;
         top: 100%;
         left: 0;
@@ -405,4 +410,3 @@
         }
     }
 }
-
