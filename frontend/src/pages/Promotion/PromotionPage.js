@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import homeStyles from '../Home/Home.module.scss';
 import promoStyles from './Promotion.module.scss';
 import categoryStyles from '../Category/CategoryPage.module.scss';
 import ProductList from '../../components/Common/ProductList/ProductList';
+import Pagination from '../../components/Common/Pagination/Pagination';
 import { getActiveProducts, getApiBaseUrl, formatCurrency } from '../../services';
 import { normalizeMediaUrl } from '../../services/productUtils';
-import { useVouchers, usePromotions } from '../../hooks/useVouchersPromotions';
 import iconFire from '../../assets/icons/icon_fire.png';
 
 const cxHome = classNames.bind(homeStyles);
@@ -15,6 +15,7 @@ const cxPromo = classNames.bind(promoStyles);
 const cxCategory = classNames.bind(categoryStyles);
 
 const API_BASE_URL = getApiBaseUrl();
+const ITEMS_PER_PAGE = 25;
 
 const mapProductToCard = (product, apiBaseUrl) => {
     if (!product) return null;
@@ -65,34 +66,16 @@ const calculateDiscount = (product) => {
 
 export default function PromotionPage() {
     const location = useLocation();
-    const vouchersSectionRef = useRef(null);
-    const promotionsSectionRef = useRef(null);
     const [allProducts, setAllProducts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'price-high', 'price-low', 'bestseller', 'discount-high'
+    const [currentPage, setCurrentPage] = useState(1);
 
-    // Fetch vouchers & promotions
-    const { vouchers, loading: vouchersLoading } = useVouchers();
-    const { promotions, loading: promotionsLoading } = usePromotions();
-
-    // Scroll tới voucher section khi hash là #vouchers
+    // Reset pagination when filter changes
     useEffect(() => {
-        if (location.hash === '#vouchers' && vouchersSectionRef.current && !vouchersLoading) {
-            setTimeout(() => {
-                vouchersSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-        }
-    }, [location.hash, vouchersLoading]);
-
-    // Scroll tới promotion section khi hash là #promotions
-    useEffect(() => {
-        if (location.hash === '#promotions' && promotionsSectionRef.current && !promotionsLoading) {
-            setTimeout(() => {
-                promotionsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-        }
-    }, [location.hash, promotionsLoading]);
+        setCurrentPage(1);
+    }, [sortBy]);
 
     // Map và lọc sản phẩm có khuyến mãi
     const productsWithPromotion = useMemo(() => {
@@ -163,6 +146,13 @@ export default function PromotionPage() {
         return sorted;
     }, [productsWithPromotion, sortBy]);
 
+    // Pagination logic
+    const totalPages = Math.ceil(sortedProducts.length / ITEMS_PER_PAGE);
+    const paginatedProducts = useMemo(() => {
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        return sortedProducts.slice(start, start + ITEMS_PER_PAGE);
+    }, [sortedProducts, currentPage]);
+
     // Fetch products từ API
     useEffect(() => {
         let ignore = false;
@@ -200,183 +190,6 @@ export default function PromotionPage() {
         </div>
     );
 
-    const formatDiscountValue = (item) => {
-        if (!item) return '';
-        if (item.discountValueType === 'PERCENTAGE') {
-            return `${item.discountValue || 0}%`;
-        }
-        const value = item.discountValue ?? 0;
-        if (!value) return '0đ';
-        return formatCurrency(value);
-    };
-
-    // Promotion Card Component for Promotion Page
-    const PromotionCardCompact = ({ promotion }) => {
-        const discountText = formatDiscountValue(promotion);
-        const hasMinOrder = promotion.minOrderValue && promotion.minOrderValue > 0;
-        const hasMaxDiscount = promotion.maxDiscountValue && promotion.maxDiscountValue > 0;
-
-        const formatDate = (date) => {
-            if (!date) return '';
-            try {
-                const d = new Date(date);
-                const dd = String(d.getDate()).padStart(2, '0');
-                const mm = String(d.getMonth() + 1).padStart(2, '0');
-                const yyyy = d.getFullYear();
-                return `${dd}/${mm}/${yyyy}`;
-            } catch {
-                return '';
-            }
-        };
-
-        return (
-            <div className={cxHome('promotion-card', 'promotion-card-compact', 'promotion-card-enhanced')}>
-                <div className={cxHome('promotion-content', 'promotion-content-compact', 'promotion-content-enhanced')}>
-                    {/* Promotion Image or Discount Badge */}
-                    {promotion.imageUrl ? (
-                        <div className={cxHome('promotion-image-wrapper')}>
-                            <img
-                                src={promotion.imageUrl}
-                                alt={promotion.name}
-                                className={cxHome('promotion-image')}
-                            />
-                            <div className={cxHome('promotion-discount-overlay')}>
-                                <div className={cxHome('discount-value', 'discount-value-promotion')}>
-                                    {discountText}
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className={cxHome('promotion-discount-badge', 'promotion-discount-badge-compact')}>
-                            <div className={cxHome('discount-value', 'discount-value-promotion')}>
-                                {discountText}
-                            </div>
-                            <div className={cxHome('discount-label', 'discount-label-promotion')}>
-                                {promotion.discountValueType === 'PERCENTAGE' ? 'Giảm' : 'Giảm giá'}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Promotion Details */}
-                    <div className={cxHome('promotion-details', 'promotion-details-compact')}>
-                        {/* Promotion Name */}
-                        <h4 className={cxHome('promotion-name', 'promotion-name-compact')}>
-                            {promotion.name || 'Khuyến mãi'}
-                        </h4>
-
-                        {/* Promotion Code if exists */}
-                        {promotion.code && (
-                            <div className={cxHome('promotion-code-main')}>
-                                <span className={cxHome('code-label-main')}>Mã:</span>
-                                <span className={cxHome('code-value-main', 'code-value-main-promotion')}>
-                                    {promotion.code}
-                                </span>
-                            </div>
-                        )}
-
-                        {/* Description if exists */}
-                        {promotion.description && (
-                            <div className={cxHome('promotion-description', 'promotion-description-compact')}>
-                                {promotion.description}
-                            </div>
-                        )}
-
-                        {/* Conditions */}
-                        <div className={cxHome('promotion-conditions', 'promotion-conditions-compact')}>
-                            {hasMinOrder && (
-                                <div className={cxHome('promotion-condition-item')}>
-                                    <span className={cxHome('condition-icon')}>💰</span>
-                                    <span>Đơn tối thiểu: {formatCurrency(promotion.minOrderValue)}</span>
-                                </div>
-                            )}
-                            {hasMaxDiscount && (
-                                <div className={cxHome('promotion-condition-item')}>
-                                    <span className={cxHome('condition-icon')}>🎯</span>
-                                    <span>Giảm tối đa: {formatCurrency(promotion.maxDiscountValue)}</span>
-                                </div>
-                            )}
-                            {(promotion.startDate || promotion.expiryDate) && (
-                                <div className={cxHome('promotion-condition-item')}>
-                                    <span className={cxHome('condition-icon')}>📅</span>
-                                    <span>
-                                        {promotion.startDate && formatDate(promotion.startDate)}
-                                        {promotion.startDate && promotion.expiryDate && ' - '}
-                                        {promotion.expiryDate && formatDate(promotion.expiryDate)}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
-    // Voucher Card Component for Promotion Page
-    const VoucherCardCompact = ({ voucher }) => {
-        const discountText = formatDiscountValue(voucher);
-        const hasMinOrder = voucher.minOrderValue && voucher.minOrderValue > 0;
-        const hasMaxOrder = voucher.maxOrderValue && voucher.maxOrderValue > 0;
-        const hasMaxDiscount = voucher.maxDiscountValue && voucher.maxDiscountValue > 0;
-
-        return (
-            <div className={cxHome('voucher-card', 'voucher-card-compact', 'voucher-card-enhanced')}>
-                <div className={cxHome('voucher-content', 'voucher-content-compact', 'voucher-content-enhanced')}>
-                    {/* Discount Badge */}
-                    <div className={cxHome('voucher-discount-badge')}>
-                        <div className={cxHome('discount-value', 'discount-value-compact')}>
-                            {discountText}
-                        </div>
-                        <div className={cxHome('discount-label', 'discount-label-compact')}>
-                            {voucher.discountValueType === 'PERCENTAGE' ? 'Giảm' : 'Giảm giá'}
-                        </div>
-                    </div>
-
-                    {/* Voucher Info */}
-                    <div className={cxHome('voucher-details')}>
-                        {/* Voucher Code - Prominent */}
-                        <div className={cxHome('voucher-code-main')}>
-                            <span className={cxHome('code-label-main')}>Mã:</span>
-                            <span className={cxHome('code-value-main')}>{voucher.code || '--'}</span>
-                        </div>
-
-                        {/* Voucher Name if exists */}
-                        {voucher.name && (
-                            <div className={cxHome('voucher-name-main')}>{voucher.name}</div>
-                        )}
-
-                        {/* Conditions */}
-                        <div className={cxHome('voucher-conditions')}>
-                            {hasMinOrder && (
-                                <div className={cxHome('voucher-condition-item')}>
-                                    <span className={cxHome('condition-icon')}>💰</span>
-                                    <span>Đơn tối thiểu: {formatCurrency(voucher.minOrderValue)}</span>
-                                </div>
-                            )}
-                            {hasMaxOrder && (
-                                <div className={cxHome('voucher-condition-item')}>
-                                    <span className={cxHome('condition-icon')}>📊</span>
-                                    <span>Đơn tối đa: {formatCurrency(voucher.maxOrderValue)}</span>
-                                </div>
-                            )}
-                            {hasMaxDiscount && (
-                                <div className={cxHome('voucher-condition-item')}>
-                                    <span className={cxHome('condition-icon')}>🎯</span>
-                                    <span>Giảm tối đa: {formatCurrency(voucher.maxDiscountValue)}</span>
-                                </div>
-                            )}
-                            {!hasMinOrder && !hasMaxOrder && !hasMaxDiscount && (
-                                <div className={cxHome('voucher-condition-item', 'no-condition')}>
-                                    Áp dụng cho mọi đơn hàng
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
     const renderSection = (title, icon, colorClass, productList, options = {}) => {
         if (!productList || productList.length === 0) return null;
         const { minimal = true, isGrid = false, gridColumns = 4 } = options;
@@ -402,40 +215,6 @@ export default function PromotionPage() {
     return (
         <div className={cxHome('home-wrapper')}>
             <main className={cxHome('home-content')}>
-                {/* Vouchers Section */}
-                {vouchers.length > 0 && (
-                    <section id="vouchers" ref={vouchersSectionRef} className={cxHome('vouchers-section')}>
-                        <div className={cxHome('section-header')}>
-                            <h2 className={cxHome('section-title')}>
-                                <span className={cxHome('title-icon')}>🎫</span>
-                                VOUCHER
-                            </h2>
-                        </div>
-                        <div className={cxHome('voucher-grid', 'voucher-grid-compact')}>
-                            {vouchers.map((voucher) => (
-                                <VoucherCardCompact key={voucher.id} voucher={voucher} />
-                            ))}
-                        </div>
-                    </section>
-                )}
-
-                {/* Promotions Section */}
-                {promotions.length > 0 && (
-                    <section id="promotions" ref={promotionsSectionRef} className={cxHome('promotions-section')}>
-                        <div className={cxHome('section-header')}>
-                            <h2 className={cxHome('section-title')}>
-                                <span className={cxHome('title-icon')}>🔥</span>
-                                KHUYẾN MÃI
-                            </h2>
-                        </div>
-                        <div className={cxHome('promotion-grid', 'promotion-grid-compact')}>
-                            {promotions.map((promotion) => (
-                                <PromotionCardCompact key={promotion.id} promotion={promotion} />
-                            ))}
-                        </div>
-                    </section>
-                )}
-
                 {/* Products Section */}
                 {loading && renderStateCard('Đang tải dữ liệu khuyến mãi...')}
 
@@ -473,9 +252,16 @@ export default function PromotionPage() {
                             'SẢN PHẨM KHUYẾN MÃI',
                             iconFire,
                             null,
-                            sortedProducts,
+                            paginatedProducts,
                             { minimal: false, isGrid: true, gridColumns: 5 }
                         )}
+
+                        {/* Pagination */}
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                        />
                     </>
                 )}
             </main>

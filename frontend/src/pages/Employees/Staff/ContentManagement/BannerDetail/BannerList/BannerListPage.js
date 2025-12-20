@@ -1,5 +1,5 @@
 import classNames from 'classnames/bind';
-import styles from './BannerBookListPage.module.scss';
+import styles from './BannerListPage.module.scss';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { getApiBaseUrl, getStoredToken } from '../../../../../../services/utils';
@@ -7,7 +7,7 @@ import { useNotification } from '../../../../../../components/Common/Notificatio
 
 const cx = classNames.bind(styles);
 
-export default function BannerBookListPage() {
+export default function BannerListPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { id } = useParams();
@@ -132,9 +132,9 @@ export default function BannerBookListPage() {
                     ) : products.length === 0 ? (
                         <div className={cx('empty')}>Không có sản phẩm nào</div>
                     ) : (
-                        <ol className={cx('book-list')}>
+                        <ol className={cx('product-list')}>
                             {products.map((p, idx) => (
-                                <li key={String(p.id || idx)} className={cx('book-item')}>
+                                <li key={String(p.id || idx)} className={cx('product-item')}>
                                     <span className={cx('index')}>{idx + 1}.</span>
                                     <span className={cx('name')}>{p.name || p.title || 'Sản phẩm'}</span>
                                 </li>

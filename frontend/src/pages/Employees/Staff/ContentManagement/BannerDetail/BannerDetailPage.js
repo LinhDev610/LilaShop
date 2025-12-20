@@ -124,7 +124,7 @@ export default function BannerDetailPage() {
 
     const handleViewBooks = () => {
         if (banner?.productIds?.length) {
-            navigate(`/staff/content/${banner.id}/books`);
+            navigate(`/staff/content/${banner.id}/products`);
         }
     };
 
@@ -303,7 +303,7 @@ export default function BannerDetailPage() {
                             <span className={cx('detail-label')}>Liên kết sản phẩm:</span>
                             {banner.productIds && banner.productIds.length > 0 ? (
                                 <button className={cx('link-btn')} onClick={handleViewBooks}>
-                                    Xem danh sách sách
+                                    Xem danh sách sản phẩm
                                 </button>
                             ) : (
                                 <span className={cx('detail-value')}>-</span>
@@ -313,8 +313,8 @@ export default function BannerDetailPage() {
 
                     <div className={cx('actions')}>
                         {isRejected ? (
-                            <button 
-                                className={cx('btn', 'btn-edit')} 
+                            <button
+                                className={cx('btn', 'btn-edit')}
                                 onClick={handleEdit}
                             >
                                 Sửa lại

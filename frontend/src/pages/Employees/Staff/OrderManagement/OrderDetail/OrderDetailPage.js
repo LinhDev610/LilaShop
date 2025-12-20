@@ -112,7 +112,7 @@ const mapItemsFromOrder = (order) => {
     if (!Array.isArray(rawItems)) return [];
 
     return rawItems.map((item, index) => {
-        const product = item.product || item.book || {};
+        const product = item.product || {};
         const quantity = item.quantity || item.qty || item.amount || 1;
         const unitPrice =
             item.unitPrice ?? item.price ?? item.productPrice ?? product.price ?? product.unitPrice ?? 0;
@@ -125,7 +125,6 @@ const mapItemsFromOrder = (order) => {
                 item.productName ||
                 product.title ||
                 product.name ||
-                product.bookName ||
                 'Sản phẩm',
             quantity,
             unitPrice,

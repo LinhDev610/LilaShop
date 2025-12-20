@@ -2,11 +2,42 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './ContentManagementPage.module.scss';
-import { useSearchAndFilter } from '../../../../hooks';
 import { SearchFilterBar } from '../../../../components/Common';
 import { getApiBaseUrl, getStoredToken, formatDateTime } from '../../../../services/utils';
 
 const cx = classNames.bind(styles);
+
+/**
+ * Helper function to determine banner display status based on dates
+ * @param {string} startDate - Banner start date
+ * @param {string} endDate - Banner end date
+ * @returns {Object} { status: string, statusKey: string }
+ */
+const getBannerTimeStatus = (startDate, endDate) => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // Reset to start of day for fair comparison
+
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+
+    // If no dates set, assume always active
+    if (!start && !end) {
+        return { status: 'Đang hiển thị', statusKey: 'active' };
+    }
+
+    // Future: start date is in the future
+    if (start && start > now) {
+        return { status: 'Sắp hiển thị', statusKey: 'future' };
+    }
+
+    // Expired: end date is in the past
+    if (end && end < now) {
+        return { status: 'Đã kết thúc', statusKey: 'expired' };
+    }
+
+    // Active: we're between start and end date (or no restrictions)
+    return { status: 'Đang hiển thị', statusKey: 'active' };
+};
 
 export default function ContentManagementPage() {
     const navigate = useNavigate();
@@ -45,27 +76,46 @@ export default function ContentManagementPage() {
                     throw new Error(data?.message || 'Không thể tải danh sách banner');
                 }
 
-                // Map backend data to display format
+                // Map backend data to display format with time-based status
                 const mappedBanners = (data?.result || []).map((banner) => {
                     const dateStr = banner.createdAt
                         ? formatDateTime(banner.createdAt).split(' ')[0]
                         : '';
 
-                    const isApproved = banner.status === true;
-                    const isPending = banner.status !== true && banner.pendingReview === true;
-                    const isRejected = banner.status === false && !isPending;
-                    const statusDisplay = isApproved ? 'Đã duyệt' : isRejected ? 'Từ chối' : 'Chờ duyệt';
+                    // Get time-based status
+                    const { status, statusKey } = getBannerTimeStatus(
+                        banner.startDate,
+                        banner.endDate
+                    );
+
+                    // Format date range for display
+                    const startDateStr = banner.startDate
+                        ? new Date(banner.startDate).toLocaleDateString('vi-VN')
+                        : null;
+                    const endDateStr = banner.endDate
+                        ? new Date(banner.endDate).toLocaleDateString('vi-VN')
+                        : null;
+
+                    let dateRange = 'Không giới hạn';
+                    if (startDateStr && endDateStr) {
+                        dateRange = `${startDateStr} - ${endDateStr}`;
+                    } else if (startDateStr) {
+                        dateRange = `Từ ${startDateStr}`;
+                    } else if (endDateStr) {
+                        dateRange = `Đến ${endDateStr}`;
+                    }
 
                     return {
                         id: banner.id,
                         title: banner.title,
                         createDate: dateStr,
-                        status: statusDisplay,
+                        dateRange: dateRange,
+                        status: status,
+                        statusKey: statusKey,
                         creator: banner.createdByName || banner.createdBy || 'N/A',
                         createdAt: banner.createdAt,
-                        updatedAt: banner.updatedAt,
-                        pendingReview: banner.pendingReview === true,
-                        rawStatus: banner.status,
+                        startDate: banner.startDate,
+                        endDate: banner.endDate,
                     };
                 });
 
@@ -81,19 +131,44 @@ export default function ContentManagementPage() {
         fetchBanners();
     }, [API_BASE_URL]);
 
-    // Sử dụng hook dùng chung để filter
-    const filtered = useSearchAndFilter(contents, {
-        searchQuery,
-        statusFilter: sortFilter,
-        dateFilter,
-        searchFields: ['title'], // Tìm kiếm theo title
-        statusField: 'status',
-        statusMap: {
-            pending: 'Chờ duyệt',
-            approved: 'Đã duyệt',
-            rejected: 'Từ chối',
-        },
-    });
+    // Custom filter logic for time-based status
+    const filtered = useMemo(() => {
+        let result = [...contents];
+
+        // Search filter
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase().trim();
+            result = result.filter(item =>
+                item.title?.toLowerCase().includes(query)
+            );
+        }
+
+        // Time-based status filter
+        if (sortFilter && sortFilter !== 'all') {
+            result = result.filter(item => item.statusKey === sortFilter);
+        }
+
+        // Date filter (by creation date)
+        if (dateFilter) {
+            result = result.filter(item => {
+                if (!item.createdAt) return false;
+                const createdDate = new Date(item.createdAt).toISOString().split('T')[0];
+                return createdDate === dateFilter;
+            });
+        }
+
+        // Sort: Active first, then Future, then Expired
+        const statusOrder = { active: 0, future: 1, expired: 2 };
+        result.sort((a, b) => {
+            const orderA = statusOrder[a.statusKey] ?? 3;
+            const orderB = statusOrder[b.statusKey] ?? 3;
+            if (orderA !== orderB) return orderA - orderB;
+            // Within same status, sort by start date (newest first)
+            return new Date(b.startDate || 0) - new Date(a.startDate || 0);
+        });
+
+        return result;
+    }, [contents, searchQuery, sortFilter, dateFilter]);
 
     const handleViewDetail = (id) => {
         navigate(`/staff/content/${id}`);
@@ -105,7 +180,6 @@ export default function ContentManagementPage() {
 
     const handleSearch = () => {
         // Filter đã được tính toán real-time trong filtered
-        // Có thể thêm logic bổ sung nếu cần
     };
 
     return (
@@ -131,17 +205,17 @@ export default function ContentManagementPage() {
             <SearchFilterBar
                 searchQuery={searchQuery}
                 onSearchChange={(e) => setSearchQuery(e.target.value)}
-                searchPlaceholder="Tìm kiếm theo mã voucher, tên khuyến mãi,......"
+                searchPlaceholder="Tìm kiếm theo tiêu đề"
                 dateFilter={dateFilter}
                 onDateChange={(e) => setDateFilter(e.target.value)}
                 onSearchClick={handleSearch}
                 sortFilter={sortFilter}
                 onSortChange={(e) => setSortFilter(e.target.value)}
                 sortOptions={[
-                    { value: 'all', label: 'Tất cả trạng thái' },
-                    { value: 'pending', label: 'Chờ duyệt' },
-                    { value: 'approved', label: 'Đã duyệt' },
-                    { value: 'rejected', label: 'Từ chối' },
+                    { value: 'all', label: 'Tất cả' },
+                    { value: 'active', label: 'Đang hiển thị' },
+                    { value: 'future', label: 'Sắp hiển thị' },
+                    { value: 'expired', label: 'Đã kết thúc' },
                 ]}
                 actionButtons={[
                     { label: 'Thêm Banner/ Slider', onClick: handleAddBanner },
@@ -162,7 +236,7 @@ export default function ContentManagementPage() {
                         <thead>
                             <tr>
                                 <th>Tiêu đề</th>
-                                <th>Ngày tạo</th>
+                                <th>Thời gian hiển thị</th>
                                 <th>Trạng thái</th>
                                 <th>Người tạo</th>
                                 <th>Hành động</th>
@@ -179,13 +253,13 @@ export default function ContentManagementPage() {
                             {filtered.map((content) => (
                                 <tr key={content.id}>
                                     <td className={cx('title-cell')}>{content.title}</td>
-                                    <td className={cx('date-cell')}>{content.createDate}</td>
+                                    <td className={cx('date-cell')}>{content.dateRange}</td>
                                     <td className={cx('status-cell')}>
                                         <span
                                             className={cx('status-badge', {
-                                                pending: content.status === 'Chờ duyệt',
-                                                approved: content.status === 'Đã duyệt',
-                                                rejected: content.status === 'Từ chối',
+                                                active: content.statusKey === 'active',
+                                                future: content.statusKey === 'future',
+                                                expired: content.statusKey === 'expired',
                                             })}
                                         >
                                             {content.status}
@@ -209,4 +283,3 @@ export default function ContentManagementPage() {
         </div>
     );
 }
-

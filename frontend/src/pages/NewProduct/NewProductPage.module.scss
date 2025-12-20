@@ -1,21 +1,25 @@
 /* Mỹ phẩm Mới đang dùng lại toàn bộ style của Home.module.scss.
-   File này để dành cho tuỳ biến riêng cho sách mới (nếu cần sau này). */
+   File này để dành cho tuỳ biến riêng cho sản phẩm mới (nếu cần sau này). */
 
 .newproduct-header {
     display: flex;
     align-items: center;
     gap: 14px;
-    background: #1e40af; /* Blue color for new books */
-    padding: 16px 24px; /* larger height */
+    background: #1e40af;
+    /* Blue color for new products */
+    padding: 16px 24px;
+    /* larger height */
     border-radius: 10px 10px 0 0;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18); /* pop out */
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+    /* pop out */
     position: relative;
     z-index: 1;
     margin-bottom: 8px;
 }
 
 .newproduct-icon {
-    width: 32px; /* bigger icon */
+    width: 32px;
+    /* bigger icon */
     height: 32px;
     object-fit: contain;
 }
@@ -23,7 +27,8 @@
 .newproduct-title {
     margin: 0;
     color: #fff;
-    font-size: 1.4rem; /* larger text */
+    font-size: 1.4rem;
+    /* larger text */
     font-weight: 900;
     letter-spacing: .8px;
 }
@@ -33,20 +38,24 @@
     background: #fff;
     border-radius: 14px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
-    overflow: hidden; /* đảm bảo con không tràn bo góc */
+    overflow: hidden;
+    /* đảm bảo con không tràn bo góc */
 }
 
-/* Biến thể header màu cam (sách sắp phát hành) */
+/* Biến thể header màu cam (sản phẩm sắp phát hành) */
 .header-orange {
-    background: #ea580c; /* orange */
+    background: #ea580c;
+    /* orange */
 }
 
-/* Biến thể header màu xanh dương (sách bán chạy) */
+/* Biến thể header màu xanh dương (sản phẩm bán chạy) */
 .header-blue {
-    background: #2563eb; /* blue */
+    background: #2563eb;
+    /* blue */
 }
 
-/* Biến thể header màu xanh lá (sách nổi bật) */
+/* Biến thể header màu xanh lá (sản phẩm nổi bật) */
 .header-green {
-    background: #16a34a; /* green */
+    background: #16a34a;
+    /* green */
 }

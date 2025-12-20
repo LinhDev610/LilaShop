@@ -1196,18 +1196,6 @@ public class OrderService {
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     public List<Order> getAllOrders() {
-        List<Order> orders = orderRepository.findAll();
-        // Đồng bộ trạng thái từ GHN cho các đơn có shipment
-        for (Order order : orders) {
-            if (order.getShipment() != null && order.getShipment().getOrderCode() != null) {
-                try {
-                    shipmentService.syncOrderStatusFromGhn(order.getId());
-                } catch (Exception e) {
-                    log.warn("Không thể đồng bộ trạng thái từ GHN cho order: {}", order.getId(), e);
-                }
-            }
-        }
-        // Reload để lấy status mới nhất
         return orderRepository.findAll();
     }
 
@@ -1263,6 +1251,36 @@ public class OrderService {
 
         Pageable pageable = PageRequest.of(page, size);
         return orderRepository.findByOrderDateTimeBetween(startDateTime, endDateTime, pageable);
+    }
+
+    /**
+     * Lấy danh sách đơn hàng với filters linh hoạt (server-side pagination).
+     * Hỗ trợ filter theo status, search keyword, và date range.
+     */
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
+    public Page<Order> getOrdersPageFiltered(
+            LocalDate start,
+            LocalDate end,
+            String statusStr,
+            String search,
+            int page,
+            int size) {
+
+        OrderStatus status = null;
+        if (statusStr != null && !statusStr.isBlank()) {
+            try {
+                status = OrderStatus.valueOf(statusStr.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid status value: {}", statusStr);
+            }
+        }
+
+        LocalDateTime startDateTime = start != null ? start.atStartOfDay() : null;
+        LocalDateTime endDateTime = end != null ? end.atTime(23, 59, 59, 999999999) : null;
+
+        Pageable pageable = PageRequest.of(page, size);
+        return orderRepository.findOrdersFiltered(status, search, startDateTime, endDateTime, pageable);
     }
 
     // Danh sách các yêu cầu trả hàng/hoàn tiền.

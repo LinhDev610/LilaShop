@@ -8,7 +8,7 @@ const cx = classNames.bind(styles);
 
 // ProductCard Component
 // Card hiển thị sản phẩm với hình ảnh, tên, giá, rating
-export default function ProductCard({ product = {} }) {
+export default function ProductCard({ product = {}, fluid = false }) {
     const {
         id,
         title,
@@ -101,7 +101,7 @@ export default function ProductCard({ product = {} }) {
     const showDiscount = resolvedDiscount > 0 && showOriginal;
 
     return (
-        <div className={cx('hot-product')}>
+        <div className={cx('hot-product', { fluid })}>
             <Link to={productLink} className={cx('product-link')}>
                 <div className={cx('image-wrapper')}>
                     <img

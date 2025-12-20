@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './ProductDetail.module.scss';
 import { getApiBaseUrl, formatDateTime } from '../../../services/utils';
 import { normalizeMediaUrl } from '../../../services/productUtils';
-import { getMyInfo, getStoredToken, getReviewsByProduct, createReview, addCartItem, getCart, refreshToken } from '../../../services';
+import { getMyInfo, getStoredToken, getReviewsByProduct, createReview, addCartItem, getCart, refreshToken, canReviewProduct } from '../../../services';
 import iconShip from '../../../assets/icons/icon_ship.png';
 import iconPay from '../../../assets/icons/icon_pay.png';
 import iconRefund from '../../../assets/icons/icon_refund.png';
@@ -42,6 +42,8 @@ const ProductDetail = ({ productId }) => {
     const [submittingReview, setSubmittingReview] = useState(false);
     const [activeReviewTab, setActiveReviewTab] = useState('latest'); // 'latest' | 'top'
     const [expandedReviews, setExpandedReviews] = useState({});
+    const [canReview, setCanReview] = useState(false);
+    const [checkingReview, setCheckingReview] = useState(false);
     const descriptionRef = useRef(null);
     const { openLoginModal, openRegisterModal } = useAuth();
     const { success, error: showError } = useNotification();
@@ -357,6 +359,29 @@ const ProductDetail = ({ productId }) => {
 
         fetchReviews();
     }, [productId]);
+
+    // Kiểm tra quyền đánh giá sản phẩm (đã mua và đã giao)
+    useEffect(() => {
+        if (!productId || !isLoggedIn) {
+            setCanReview(false);
+            return;
+        }
+
+        const checkReviewPermission = async () => {
+            try {
+                setCheckingReview(true);
+                const hasPermission = await canReviewProduct(productId);
+                setCanReview(hasPermission);
+            } catch (err) {
+                console.error('Error checking review permission:', err);
+                setCanReview(false);
+            } finally {
+                setCheckingReview(false);
+            }
+        };
+
+        checkReviewPermission();
+    }, [productId, isLoggedIn]);
 
     const handleAddToCart = async () => {
         // Kiểm tra đăng nhập
@@ -1082,6 +1107,14 @@ const ProductDetail = ({ productId }) => {
                                     </button>
                                     {' '}
                                     để viết đánh giá.
+                                </p>
+                            ) : checkingReview ? (
+                                <p className={styles.loginPrompt}>
+                                    Đang kiểm tra quyền đánh giá...
+                                </p>
+                            ) : !canReview ? (
+                                <p className={styles.loginPrompt}>
+                                    Bạn chỉ có thể đánh giá sản phẩm sau khi đã mua và nhận được hàng.
                                 </p>
                             ) : (
                                 <div className={styles.writeReviewContainer}>

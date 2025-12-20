@@ -40,7 +40,7 @@ public interface GhnMapper {
     default GhnOrderItemCategoryRequest buildItemCategory(Product product) {
         String categoryName = product.getCategory() != null 
                 ? product.getCategory().getName() 
-                : "Sách";
+                : "Mỹ phẩm";
         return GhnOrderItemCategoryRequest.builder()
                 .level1(categoryName)
                 .build();

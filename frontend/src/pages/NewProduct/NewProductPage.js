@@ -4,6 +4,7 @@ import homeStyles from '../Home/Home.module.scss';
 import newProductStyles from './NewProductPage.module.scss';
 import categoryStyles from '../Category/CategoryPage.module.scss';
 import ProductList from '../../components/Common/ProductList/ProductList';
+import Pagination from '../../components/Common/Pagination/Pagination';
 import { getActiveProducts } from '../../services';
 import iconFire from '../../assets/icons/icon_fire.png';
 
@@ -11,14 +12,22 @@ const cxHome = classNames.bind(homeStyles);
 const cxNewProduct = classNames.bind(newProductStyles);
 const cxCategory = classNames.bind(categoryStyles);
 
+const ITEMS_PER_PAGE = 25;
+
 export default function NewProductPage() {
     const [allProducts, setAllProducts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'price-high', 'price-low', 'bestseller'
+    const [currentPage, setCurrentPage] = useState(1);
 
-    // Lọc sách mới phát hành (trong 30 ngày gần đây)
-    const newBooks = useMemo(() => {
+    // Reset pagination when filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [sortBy]);
+
+    // Lọc sản phẩm mới phát hành (trong 30 ngày gần đây)
+    const newProducts = useMemo(() => {
         if (!allProducts.length) return [];
 
         const now = new Date();
@@ -36,9 +45,9 @@ export default function NewProductPage() {
 
     // Sắp xếp sản phẩm dựa trên sortBy
     const sortedProducts = useMemo(() => {
-        if (!newBooks.length) return [];
+        if (!newProducts.length) return [];
 
-        const sorted = [...newBooks];
+        const sorted = [...newProducts];
 
         switch (sortBy) {
             case 'price-high':
@@ -80,7 +89,14 @@ export default function NewProductPage() {
         }
 
         return sorted;
-    }, [newBooks, sortBy]);
+    }, [newProducts, sortBy]);
+
+    // Pagination logic
+    const totalPages = Math.ceil(sortedProducts.length / ITEMS_PER_PAGE);
+    const paginatedProducts = useMemo(() => {
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        return sortedProducts.slice(start, start + ITEMS_PER_PAGE);
+    }, [sortedProducts, currentPage]);
 
     // Fetch products từ API
     useEffect(() => {
@@ -97,7 +113,7 @@ export default function NewProductPage() {
                 }
             } catch (err) {
                 if (!ignore) {
-                    setError('Không thể tải dữ liệu sách. Vui lòng thử lại sau.');
+                    setError('Không thể tải dữ liệu sản phẩm. Vui lòng thử lại sau.');
                     setAllProducts([]);
                 }
             } finally {
@@ -144,15 +160,15 @@ export default function NewProductPage() {
     return (
         <div className={cxHome('home-wrapper')}>
             <main className={cxHome('home-content')}>
-                {loading && renderStateCard('Đang tải dữ liệu sách...')}
+                {loading && renderStateCard('Đang tải dữ liệu sản phẩm...')}
 
                 {!loading && error && renderStateCard(error, true)}
 
-                {!loading && !error && newBooks.length === 0 && (
-                    renderStateCard('Hiện tại không có sách mới phát hành nào.')
+                {!loading && !error && newProducts.length === 0 && (
+                    renderStateCard('Hiện tại không có sản phẩm mới phát hành nào.')
                 )}
 
-                {!loading && !error && newBooks.length > 0 && (
+                {!loading && !error && newProducts.length > 0 && (
                     <>
                         {/* Sort Bar */}
                         <div className={cxCategory('filter-bar')}>
@@ -176,12 +192,19 @@ export default function NewProductPage() {
 
                         {/* Hiển thị sách mới phát hành */}
                         {renderSection(
-                            'SÁCH MỚI PHÁT HÀNH',
+                            'SẢN PHẨM MỚI PHÁT HÀNH',
                             iconFire,
                             null,
-                            sortedProducts,
+                            paginatedProducts,
                             { minimal: false, isGrid: true, gridColumns: 5 }
                         )}
+
+                        {/* Pagination */}
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                        />
                     </>
                 )}
             </main>

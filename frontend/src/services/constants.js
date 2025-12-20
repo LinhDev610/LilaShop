@@ -1,5 +1,7 @@
 // Constants
-// Hằng số của ứng dụng
+// routes
+import routes from '../config/routes';
+
 
 // Import icons for Home page service items
 import iconGiaoHang from '../assets/icons/icon_giaohangtannoi.png';
@@ -7,6 +9,27 @@ import iconDoiTra from '../assets/icons/icon_doitrahang.png';
 import iconThanhToan from '../assets/icons/icon_thanhtoanantoan.png';
 import iconHoTro from '../assets/icons/icon_hotro247.png';
 import iconKhuyenMai from '../assets/icons/icon_khuyenmaihapdan.png';
+import {
+    FiAlertCircle,
+    FiBox,
+    FiClipboard,
+    FiEdit3,
+    FiFileText,
+    FiGift,
+    FiGrid,
+    FiHeadphones,
+    FiHome,
+    FiLock,
+    FiMessageSquare,
+    FiPackage,
+    FiPieChart,
+    FiRotateCcw,
+    FiShoppingBag,
+    FiStar,
+    FiTag,
+    FiUser,
+    FiUsers,
+} from 'react-icons/fi';
 
 // =========== API Configuration ===========
 // API Base URL fallback - được cấu hình trong backend/application.yaml: app.frontend.base-url
@@ -367,6 +390,7 @@ export const INITIAL_FORM_STATE_VOUCHER = {
     applyScope: 'CATEGORY', // Default to CATEGORY to match image
     categoryIds: [],
     productIds: [],
+    lossThreshold: '', // Ngưỡng lỗ tối đa (VND)
 };
 
 // Trạng thái ban đầu của form thêm promotion
@@ -384,6 +408,7 @@ export const INITIAL_FORM_STATE_PROMOTION = {
     applyScope: 'CATEGORY',
     categoryIds: [],
     productIds: [],
+    lossThreshold: '', // Ngưỡng lỗ tối đa (VND)
 };
 
 
@@ -460,4 +485,104 @@ export const SERVICE_ITEMS = [
         title: 'Khuyến mãi hấp dẫn',
         desc: 'Chương trình khuyến mãi hấp dẫn',
     },
+];
+
+// =========== Admin Sidebar Menu Items ===========
+export const ADMIN_MENU_ITEMS = [
+    {
+        to: '/admin',
+        label: 'Tài khoản nhân viên',
+        icon: FiUsers,
+        exact: true,
+        matchStart: '/admin/add-employee',
+    },
+    {
+        to: '/admin/customer-accounts',
+        label: 'Tài khoản khách hàng',
+        icon: FiUser,
+    },
+    {
+        to: '/admin/products',
+        label: 'QL Sản phẩm',
+        icon: FiBox,
+    },
+    {
+        to: '/admin/categories',
+        label: 'QL Danh mục',
+        icon: FiGrid,
+    },
+    {
+        to: '/admin/orders',
+        label: 'QL Đơn hàng',
+        icon: FiShoppingBag,
+    },
+    {
+        to: '/admin/vouchers-promotions',
+        label: 'Voucher & Khuyến mãi',
+        icon: FiTag,
+    },
+    {
+        to: '/admin/complaints',
+        label: 'QL Khiếu nại',
+        icon: FiMessageSquare,
+    },
+    {
+        to: '/admin/content',
+        label: 'QL Nội dung',
+        icon: FiFileText,
+    },
+    {
+        to: '/admin/reports',
+        label: 'Báo cáo & Thống kê',
+        icon: FiPieChart,
+    },
+    {
+        to: '/admin/profile',
+        label: 'Hồ sơ cá nhân',
+        icon: FiHome,
+    },
+];
+
+// =========== Framer Motion Variants ===========
+export const SIDEBAR_VARIANTS = {
+    hidden: { opacity: 0, x: -20 },
+    visible: {
+        opacity: 1,
+        x: 0,
+        transition: {
+            duration: 0.5,
+            staggerChildren: 0.05,
+        },
+    },
+};
+
+export const ITEM_VARIANTS = {
+    hidden: { opacity: 0, x: -10 },
+    visible: { opacity: 1, x: 0 },
+};
+
+// =========== Staff Sidebar Menu Items ===========
+export const STAFF_MENU_ITEMS = [
+    { path: routes.staffProducts, label: 'Quản lý sản phẩm', icon: FiPackage },
+    { path: routes.staffContent, label: 'Quản lý nội dung', icon: FiEdit3 },
+    { path: routes.staffVouchersPromotions, label: 'Voucher & Khuyến mãi', icon: FiGift },
+    { path: routes.staffOrders, label: 'Đơn hàng', icon: FiClipboard },
+    { path: routes.staffProfile, label: 'Hồ sơ cá nhân', icon: FiHome },
+];
+
+// =========== Customer Support Sidebar Menu Items ===========
+export const CUSTOMER_SUPPORT_MENU_ITEMS = [
+    { path: routes.customerSupportComplaints, label: 'Quản lý khiếu nại', icon: FiAlertCircle },
+    { path: routes.customerSupportReviews, label: 'Quản lý đánh giá và bình luận', icon: FiStar },
+    { path: routes.customerSupportRefund, label: 'Quản lý Trả hàng/ Hoàn tiền', icon: FiRotateCcw },
+    { path: routes.customerSupportChat, label: 'Hỗ trợ và chăm sóc khách hàng', icon: FiHeadphones },
+    { path: routes.customerSupportProfile, label: 'Hồ sơ cá nhân', icon: FiHome },
+];
+
+// =========== Customer Account Sidebar Menu Items ===========
+export const CUSTOMER_MENU_ITEMS = [
+    { to: routes.customerAccount, label: 'Thông tin cá nhân', icon: FiUser, exact: true },
+    { to: routes.customerAccountOrders, label: 'Lịch sử mua hàng', icon: FiShoppingBag },
+    { to: routes.customerAccountVouchers, label: 'Voucher và khuyến mãi', icon: FiTag },
+    { to: routes.customerAccountPassword, label: 'Đổi mật khẩu', icon: FiLock },
 ];

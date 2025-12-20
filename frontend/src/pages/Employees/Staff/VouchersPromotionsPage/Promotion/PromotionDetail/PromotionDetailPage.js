@@ -292,7 +292,7 @@ function PromotionDetailPage() {
                                 </div>
                             )}
                             <div className={cx('form-group', 'form-group-half')}>
-                                <label className={cx('form-label')}>Loại sách áp dụng</label>
+                                <label className={cx('form-label')}>Danh mục mỹ phẩm áp dụng</label>
                                 <select className={cx('form-select')} value={promotion.categoryIds?.[0] || ''} readOnly>
                                     <option value="">-- Chọn danh mục mỹ phẩm --</option>
                                     {categories.map((category) => (

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './ManageProductsPage.module.scss';
-import SearchAndSort from '../../../components/Common/SearchAndSort';
+import SearchAndSort from '../../../layouts/components/SearchAndSort';
 import { formatDateTime } from '../../../services/utils';
 import { getAllProducts, getActiveCategories } from '../../../services';
 
@@ -11,7 +11,7 @@ const cx = classNames.bind(styles);
 function ManageProductsPage() {
     // ========== Constants ==========
     const navigate = useNavigate();
-    const productSearchPlaceholder = 'Tìm kiếm theo mã đơn, tên sản phẩm,......';
+    const productSearchPlaceholder = 'Tìm kiếm theo mã sản phẩm, tên sản phẩm,......';
     const statusOptions = [
         { value: 'all', label: 'Tất cả trạng thái' },
         { value: 'Chờ duyệt', label: 'Chờ duyệt' },

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './ManageCustomerAccountsPage.module.scss';
-import SearchAndSort from '../../../components/Common/SearchAndSort';
+import SearchAndSort from '../../../layouts/components/SearchAndSort';
 import ConfirmDialog from '../../../components/Common/ConfirmDialog/DeleteAccountDialog';
 import Notification from '../../../components/Common/Notification/Notification';
 import { getAllUsers, updateUser } from '../../../services';

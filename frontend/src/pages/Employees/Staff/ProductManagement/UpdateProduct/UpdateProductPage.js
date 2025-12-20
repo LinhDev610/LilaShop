@@ -2,6 +2,7 @@ import {
     getApiBaseUrl,
     getStoredToken as getStoredTokenUtil,
     getUserRole,
+    updateProductVariant,
 } from '../../../../../services/api';
 import { normalizeMediaUrl } from '../../../../../services/productUtils';
 import { uploadProductMedia } from '../../../../../services';
@@ -12,6 +13,8 @@ import classNames from 'classnames/bind';
 import styles from './UpdateProductPage.module.scss';
 import backIcon from '../../../../../assets/icons/icon_back.png';
 import Notification from '../../../../../components/Common/Notification';
+import RestockProductDialog from '../../../../../components/Common/RestockProductDialog';
+import RestockDialog from '../../../../../components/Common/ConfirmDialog/RestockDialog';
 
 const cx = classNames.bind(styles);
 
@@ -60,6 +63,16 @@ function UpdateProductPage() {
 
     // Track original values để so sánh thay đổi
     const [originalValues, setOriginalValues] = useState({});
+
+    // Variants state
+    const [variants, setVariants] = useState([]);
+
+    // Restock variant state
+    const [restockVariantTarget, setRestockVariantTarget] = useState(null);
+    const [restockVariantOpen, setRestockVariantOpen] = useState(false);
+    const [restockVariantConfirmOpen, setRestockVariantConfirmOpen] = useState(false);
+    const [restockVariantLoading, setRestockVariantLoading] = useState(false);
+    const [pendingVariantQuantity, setPendingVariantQuantity] = useState(null);
 
     // Media state (local files + existing media)
     const [mediaFiles, setMediaFiles] = useState([]); // [{file, type, preview, isDefault, uploadedUrl?}]
@@ -143,7 +156,7 @@ function UpdateProductPage() {
                         ? product.purchasePrice
                         : '',
                 );
-                setTaxPercent(product.tax ? String(Math.round(product.tax * 100)) : '0');
+                setTaxPercent(product.tax ? String(Math.round(product.tax)) : '0');
                 setDiscountValue(product.discountValue || 0.0);
                 setCategoryId(product.categoryId || '');
                 const inventoryQuantity = product.stockQuantity ?? null;
@@ -153,6 +166,40 @@ function UpdateProductPage() {
                         : '',
                 );
                 setStatus(product.status || 'PENDING');
+
+                // Load variants nếu có - chuyển đổi format để có thể chỉnh sửa
+                if (product.variants && Array.isArray(product.variants) && product.variants.length > 0) {
+                    const editableVariants = product.variants.map((v) => {
+                        // Xử lý tax: có thể là percentage (10 = 10%) hoặc decimal (0.1 = 10%)
+                        let taxPercent = '0';
+                        if (v.tax !== undefined && v.tax !== null) {
+                            // Nếu tax < 1, coi như decimal (0.1 = 10%), nhân 100
+                            // Nếu tax >= 1, coi như percentage (10 = 10%), giữ nguyên
+                            if (v.tax < 1) {
+                                taxPercent = String(Math.round(v.tax * 100));
+                            } else {
+                                taxPercent = String(Math.round(v.tax));
+                            }
+                        }
+
+                        return {
+                            id: v.id,
+                            name: v.name || '',
+                            shadeName: v.shadeName || '',
+                            shadeHex: v.shadeHex || '',
+                            unitPrice: v.unitPrice || '',
+                            price: v.price || '',
+                            taxPercent: taxPercent,
+                            purchasePrice: v.purchasePrice || '',
+                            stockQuantity: v.stockQuantity !== undefined && v.stockQuantity !== null ? String(v.stockQuantity) : '',
+                            isDefault: v.isDefault || false,
+                            finalPrice: v.price || '', // Giá cuối cùng (đã gồm thuế)
+                        };
+                    });
+                    setVariants(editableVariants);
+                } else {
+                    setVariants([]);
+                }
 
                 // Lưu giá trị ban đầu để so sánh
                 setOriginalValues({
@@ -312,42 +359,120 @@ function UpdateProductPage() {
         return null;
     };
 
+    // ========== Restock Variant Handlers ==========
+
+    const handleOpenRestockVariant = (variant) => {
+        setRestockVariantTarget(variant);
+        setPendingVariantQuantity(null);
+        setRestockVariantOpen(true);
+        setRestockVariantConfirmOpen(false);
+    };
+
+    const handleRestockVariantFormSubmit = (quantity) => {
+        setPendingVariantQuantity(quantity);
+        setRestockVariantOpen(false);
+        setRestockVariantConfirmOpen(true);
+    };
+
+    const handleRestockVariantSubmit = async () => {
+        if (!restockVariantTarget || !pendingVariantQuantity) return;
+        const token = getStoredToken('token');
+        if (!token) {
+            setNotifyType('error');
+            setNotifyMsg('Vui lòng đăng nhập lại.');
+            setNotifyOpen(true);
+            resetRestockVariantFlow();
+            return;
+        }
+
+        const quantityValue = Number(pendingVariantQuantity);
+        if (!quantityValue || Number.isNaN(quantityValue) || quantityValue <= 0) {
+            setNotifyType('error');
+            setNotifyMsg('Số lượng bổ sung không hợp lệ.');
+            setNotifyOpen(true);
+            setRestockVariantConfirmOpen(false);
+            setRestockVariantOpen(true);
+            return;
+        }
+
+        try {
+            setRestockVariantLoading(true);
+            const currentStock = Number(restockVariantTarget.stockQuantity) || 0;
+            const newStock = currentStock + quantityValue;
+
+            // Update variant với stockQuantity mới
+            const variantData = {
+                name: restockVariantTarget.name || null,
+                shadeName: restockVariantTarget.shadeName || null,
+                shadeHex: restockVariantTarget.shadeHex || null,
+                price: restockVariantTarget.price || 0,
+                unitPrice: restockVariantTarget.unitPrice || null,
+                tax: restockVariantTarget.taxPercent ? Number(restockVariantTarget.taxPercent) : null,
+                purchasePrice: restockVariantTarget.purchasePrice || null,
+                stockQuantity: newStock,
+                isDefault: Boolean(restockVariantTarget.isDefault),
+            };
+
+            const response = await updateProductVariant(id, restockVariantTarget.id, variantData, token);
+
+            if (!response.ok) {
+                throw new Error(response.data?.message || 'Không thể cập nhật tồn kho variant.');
+            }
+
+            // Update local state
+            setVariants((prev) =>
+                prev.map((v) =>
+                    v.id === restockVariantTarget.id
+                        ? { ...v, stockQuantity: String(newStock) }
+                        : v
+                )
+            );
+
+            setNotifyType('success');
+            setNotifyMsg(`Đã bổ sung ${quantityValue} sản phẩm cho "${restockVariantTarget.name || 'variant'}".`);
+            setNotifyOpen(true);
+            resetRestockVariantFlow();
+        } catch (err) {
+            console.error('Error restocking variant:', err);
+            setNotifyType('error');
+            setNotifyMsg(err.message || 'Không thể bổ sung tồn kho. Vui lòng thử lại.');
+            setNotifyOpen(true);
+            setRestockVariantConfirmOpen(false);
+            setRestockVariantOpen(true);
+        } finally {
+            setRestockVariantLoading(false);
+        }
+    };
+
+    const resetRestockVariantFlow = () => {
+        setRestockVariantOpen(false);
+        setRestockVariantConfirmOpen(false);
+        setRestockVariantTarget(null);
+        setPendingVariantQuantity(null);
+    };
+
     // ========== Event Handlers ==========
 
     /**
-     * Kiểm tra xem có thay đổi trường cần duyệt 
-     * Trường cần duyệt: giá cả, danh mục, khuyến mãi, tồn kho (nếu thay đổi lớn hoặc giảm)
+     * Kiểm tra thay đổi cần duyệt: Giá, thuế, hoặc giảm tồn kho
      */
     const checkIfRequiresApproval = () => {
+        if (variants.length > 0) return false; // Variants có logic riêng
+
         const currentPrice = Number(price) || 0;
         const currentTax = Number(taxPercent) / 100 || 0;
-        const currentDiscount = Number(discountValue) || 0;
-        const currentStock = Number(stockQuantity) || 0;
+        const currentStock = stockQuantity !== '' ? Number(stockQuantity) : null;
 
-        // Kiểm tra thay đổi giá cả
-        if (originalValues.unitPrice !== currentPrice) return true;
-        if (originalValues.tax !== currentTax) return true;
-        if (originalValues.discountValue !== currentDiscount) return true;
+        // Kiểm tra thay đổi giá
+        if (Math.abs((originalValues.unitPrice || 0) - currentPrice) > 0.01) return true;
 
-        // Kiểm tra thay đổi danh mục
-        if (originalValues.categoryId !== categoryId) return true;
+        // Kiểm tra thay đổi thuế
+        if (Math.abs((originalValues.tax || 0) - currentTax) > 0.0001) return true;
 
-        // Kiểm tra thay đổi tồn kho
-        const originalStock = originalValues.stockQuantity || 0;
-        if (originalStock !== currentStock) {
-            // Nếu giảm số lượng (currentStock < originalStock): Luôn cần duyệt
+        // Kiểm tra giảm tồn kho
+        if (currentStock !== null) {
+            const originalStock = originalValues.stockQuantity || 0;
             if (currentStock < originalStock) return true;
-
-            // Nếu từ 0 sang > 0: Cần duyệt
-            if (originalStock === 0 && currentStock > 0) return true;
-
-            // Nếu tăng số lượng (currentStock > originalStock): Kiểm tra giới hạn
-            if (currentStock > originalStock) {
-                const addedQuantity = currentStock - originalStock;
-
-                // Kiểm tra giới hạn tuyệt đối (100 sản phẩm)
-                if (addedQuantity > STAFF_STOCK_ADD_LIMIT) return true;
-            }
         }
 
         return false;
@@ -499,6 +624,11 @@ function UpdateProductPage() {
                 }
             }
 
+            // Tính tax decimal từ taxPercent (%)
+            const taxDecimal = (Number(taxPercent) || 0) / 100;
+            // Tính giá cuối = unitPrice * (1 + tax)
+            const calculatedFinalPrice = Math.round((Number(price) || 0) * (1 + taxDecimal));
+
             const payload = {
                 name: (name || '').trim(),
                 description: (description || '').trim() || null,
@@ -513,8 +643,8 @@ function UpdateProductPage() {
                 usageInstructions: (usageInstructions || '').trim() || null,
                 safetyNote: (safetyNote || '').trim() || null,
                 unitPrice: Number(price) || 0,
-                price: Number.isFinite(finalPrice) ? finalPrice : 0,
-                tax: taxDecimal || 0,
+                price: calculatedFinalPrice,
+                tax: taxDecimal,
                 categoryId: (categoryId || '').trim(),
             };
 
@@ -622,12 +752,58 @@ function UpdateProductPage() {
                 const result = data?.result || data;
                 const requiresApproval = checkIfRequiresApproval();
 
-                setNotifyType('success');
-                if (requiresApproval) {
-                    setNotifyMsg('Cập nhật sản phẩm thành công. Sản phẩm đã được gửi lại để duyệt do có thay đổi về giá cả, danh mục hoặc tồn kho.');
+                // Update variants nếu có - chỉ cập nhật các trường tự động cập nhật (tên, màu sắc, isDefault)
+                if (variants.length > 0) {
+                    try {
+                        const variantUpdatePromises = variants.map((v) => {
+                            // Convert taxPercent (%) to decimal (0.xx)
+                            const taxDecimal = v.taxPercent ? Number(v.taxPercent) / 100 : 0;
+                            const unitPriceNum = v.unitPrice ? Number(v.unitPrice) : 0;
+                            // Calculate price = unitPrice * (1 + tax)
+                            const calculatedPrice = unitPriceNum > 0 ? Math.round(unitPriceNum * (1 + taxDecimal)) : null;
+
+                            const variantData = {
+                                name: (v.name || '').trim() || null,
+                                shadeName: (v.shadeName || '').trim() || null,
+                                shadeHex: (v.shadeHex || '').trim() || null,
+                                unitPrice: unitPriceNum || null,
+                                price: calculatedPrice,
+                                tax: taxDecimal || null,
+                                purchasePrice: v.purchasePrice ? Number(v.purchasePrice) : null,
+                                stockQuantity: v.stockQuantity !== '' ? Number(v.stockQuantity) : null,
+                                isDefault: Boolean(v.isDefault),
+                            };
+                            return updateProductVariant(id, v.id, variantData, token);
+                        });
+
+                        const variantResults = await Promise.all(variantUpdatePromises);
+                        const failedVariants = variantResults.filter((r) => !r.ok);
+                        if (failedVariants.length > 0) {
+                            console.error('Some variants failed to update:', failedVariants);
+                            setNotifyType('warning');
+                            setNotifyMsg('Cập nhật sản phẩm thành công, nhưng một số lựa chọn không thể cập nhật. Vui lòng thử lại.');
+                        } else {
+                            setNotifyType('success');
+                            if (requiresApproval) {
+                                setNotifyMsg('Cập nhật sản phẩm và lựa chọn thành công. Sản phẩm đã được gửi lại để duyệt do có thay đổi về giá cả hoặc tồn kho.');
+                            } else {
+                                setNotifyMsg('Cập nhật sản phẩm và lựa chọn thành công.');
+                            }
+                        }
+                    } catch (variantError) {
+                        console.error('Error updating variants:', variantError);
+                        setNotifyType('warning');
+                        setNotifyMsg('Cập nhật sản phẩm thành công, nhưng có lỗi khi cập nhật lựa chọn. Vui lòng thử lại.');
+                    }
                 } else {
-                    setNotifyMsg('Cập nhật sản phẩm thành công.');
+                    setNotifyType('success');
+                    if (requiresApproval) {
+                        setNotifyMsg('Cập nhật sản phẩm thành công. Sản phẩm đã được gửi lại để duyệt do có thay đổi về giá cả, danh mục hoặc tồn kho.');
+                    } else {
+                        setNotifyMsg('Cập nhật sản phẩm thành công.');
+                    }
                 }
+
                 setNotifyOpen(true);
                 // Navigate back to product detail after delay (thêm thời gian để đọc thông báo nếu cần duyệt)
                 setTimeout(() => {
@@ -698,13 +874,11 @@ function UpdateProductPage() {
             <div className={cx('card')}>
                 <h3>Chỉnh sửa sản phẩm</h3>
                 <form ref={formRef} className={cx('form')} onSubmit={handleSubmit}>
-                    {/* ========== PHẦN 1: TỰ ĐỘNG CẬP NHẬT (KHÔNG CẦN DUYỆT) ========== */}
+                    {/* Thông tin sản phẩm */}
                     <div className={cx('section')}>
-                        <div className={cx('section-header', 'section-auto')}>
-                            <h4>Thông tin sản phẩm (Tự động cập nhật)</h4>
-                            <span className={cx('section-badge', 'badge-auto')}>
-                                Cập nhật ngay, không cần duyệt
-                            </span>
+                        <div className={cx('section-header')}>
+                            <h4>Thông tin sản phẩm</h4>
+                            <span className={cx('section-badge', 'badge-auto')}>Tự động lưu</span>
                         </div>
                         <div className={cx('section-content')}>
                             <div className={cx('row')}>
@@ -948,10 +1122,10 @@ function UpdateProductPage() {
                                 {/* Show existing media */}
                                 {existingMediaUrls.filter((url) => !removedExistingMediaUrls.includes(url)).length > 0 && (
                                     <div className={cx('existingMedia')}>
-                                        <div className={cx('existingMediaLabel')}>
+                                        <div className={cx('mediaLabel')}>
                                             Ảnh/video hiện tại:
                                         </div>
-                                        <div className={cx('mediaList')}>
+                                        <div className={cx('mediaGrid')}>
                                             {existingMediaUrls
                                                 .filter((url) => !removedExistingMediaUrls.includes(url))
                                                 .map((url, idx) => {
@@ -1051,7 +1225,7 @@ function UpdateProductPage() {
                                 )}
                                 {/* Show new media files */}
                                 {mediaFiles.length > 0 && (
-                                    <div className={cx('mediaList')}>
+                                    <div className={cx('mediaGrid')}>
                                         {mediaFiles.map((m, idx) => (
                                             <div key={idx} className={cx('mediaItem')}>
                                                 {m.type === 'IMAGE' ? (
@@ -1122,138 +1296,317 @@ function UpdateProductPage() {
                         </div>
                     </div>
 
-                    {/* ========== PHẦN 2: CẦN DUYỆT (STAFF CÓ THỂ CHỈNH SỬA NHƯNG CẦN GỬI DUYỆT) ========== */}
+                    {/* Giá cả & Danh mục */}
                     <div className={cx('section')}>
-                        <div className={cx('section-header', 'section-approval')}>
-                            <h4>Thông tin cần duyệt</h4>
-                            <span className={cx('section-badge', 'badge-approval')}>
-                                {!isAdmin && 'Cần gửi admin duyệt'}
-                            </span>
+                        <div className={cx('section-header')}>
+                            <h4>Giá cả & Danh mục</h4>
                         </div>
-                        {!isAdmin && (
-                            <div className={cx('approvalNotice')}>
-                                <div className={cx('noticeIcon')}>ℹ️</div>
-                                <div className={cx('noticeContent')}>
-                                    <strong>Lưu ý:</strong> Các trường dưới đây có thể chỉnh sửa, nhưng thay đổi sẽ cần được admin duyệt trước khi áp dụng.
-                                </div>
-                            </div>
-                        )}
                         <div className={cx('section-content')}>
-                            <div className={cx('row')}>
-                                <label>Giá niêm yết (VND)</label>
-                                <input
-                                    placeholder="VD: 150000"
-                                    inputMode="numeric"
-                                    value={price}
-                                    onChange={(e) =>
-                                        setPrice(
-                                            Number(e.target.value.replace(/[^0-9]/g, '')) || 0,
-                                        )
-                                    }
-                                />
-                                {errors.price && (
-                                    <div className={cx('errorText')}>{errors.price}</div>
-                                )}
-                            </div>
-                            <div className={cx('grid3')}>
-                                <div className={cx('row')}>
-                                    <label>Danh mục mỹ phẩm</label>
-                                    <select
-                                        value={categoryId}
-                                        onChange={(e) => setCategoryId(e.target.value)}
-                                    >
-                                        <option value="">--Chọn danh mục--</option>
-                                        {categories.map((c) => (
-                                            <option
-                                                key={c.id || c.categoryId}
-                                                value={c.id || c.categoryId}
-                                            >
-                                                {c.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.categoryId && (
-                                        <div className={cx('errorText')}>{errors.categoryId}</div>
-                                    )}
-                                </div>
-                                <div className={cx('row')}>
-                                    <label>Thuế (%)</label>
-                                    <div className={cx('inputSuffix')}>
+                            {/* Chỉ hiển thị giá niêm yết và thuế khi KHÔNG có variants */}
+                            {variants.length === 0 && (
+                                <>
+                                    <div className={cx('row')}>
+                                        <label>Giá niêm yết (VND)</label>
                                         <input
-                                            placeholder="Ví dụ: 5 hoặc 10"
+                                            placeholder="VD: 150000"
                                             inputMode="numeric"
-                                            value={taxPercent}
-                                            onChange={(e) => setTaxPercent(e.target.value)}
+                                            value={price}
+                                            onChange={(e) =>
+                                                setPrice(
+                                                    Number(e.target.value.replace(/[^0-9]/g, '')) || 0,
+                                                )
+                                            }
                                         />
-                                        <span className={cx('suffix')}>%</span>
+                                        {errors.price && (
+                                            <div className={cx('errorText')}>{errors.price}</div>
+                                        )}
                                     </div>
-                                </div>
+                                    <div className={cx('row')}>
+                                        <label>Thuế (%)</label>
+                                        <div className={cx('inputSuffix')}>
+                                            <input
+                                                placeholder="Ví dụ: 5 hoặc 10"
+                                                inputMode="numeric"
+                                                value={taxPercent}
+                                                onChange={(e) => setTaxPercent(e.target.value)}
+                                            />
+                                            <span className={cx('suffix')}>%</span>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                            {/* Danh mục: Tự động cập nhật khi có variants, cần duyệt khi không có variants */}
+                            <div className={cx('row')}>
+                                <label>Danh mục mỹ phẩm</label>
+                                <select
+                                    value={categoryId}
+                                    onChange={(e) => setCategoryId(e.target.value)}
+                                >
+                                    <option value="">--Chọn danh mục--</option>
+                                    {categories.map((c) => (
+                                        <option
+                                            key={c.id || c.categoryId}
+                                            value={c.id || c.categoryId}
+                                        >
+                                            {c.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.categoryId && (
+                                    <div className={cx('errorText')}>{errors.categoryId}</div>
+                                )}
+                                {variants.length > 0 && (
+                                    <div className={cx('categoryNote')}>
+                                        <span className={cx('noteIcon')}>ℹ️</span>
+                                        <span className={cx('noteText')}>
+                                            Khi sản phẩm có variants, thay đổi danh mục sẽ được cập nhật tự động, không cần admin duyệt.
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                             <div className={cx('row')}>
                                 <label>Giá cuối cùng (đã gồm thuế)</label>
                                 <input placeholder="Tự động tính" value={finalPrice} readOnly />
                             </div>
-                            <div className={cx('row')}>
-                                <label>Số lượng tồn kho</label>
-                                <input
-                                    inputMode="numeric"
-                                    placeholder="VD: 100"
-                                    value={stockQuantity}
-                                    onChange={(e) => {
-                                        const cleaned = (e.target.value || '').replace(
-                                            /[^0-9]/g,
-                                            '',
-                                        );
-                                        setStockQuantity(cleaned);
-                                    }}
-                                />
-                                {!isAdmin && (
-                                    <div className={cx('stockHint')}>
-                                        <span className={cx('hintIcon')}>💡</span>
-                                        <span className={cx('hintText')}>
-                                            Bạn có thể thêm tối đa <strong>{STAFF_STOCK_ADD_LIMIT}</strong> sản phẩm mà không cần duyệt.
-                                            {(() => {
-                                                const originalStock = originalValues.stockQuantity || 0;
-                                                const currentStock = Number(stockQuantity) || 0;
-                                                if (currentStock > originalStock) {
-                                                    const addedQuantity = currentStock - originalStock;
-                                                    if (addedQuantity > STAFF_STOCK_ADD_LIMIT) {
+                            {/* Chỉ hiển thị stockQuantity nếu sản phẩm KHÔNG có variants */}
+                            {variants.length === 0 && (
+                                <div className={cx('row')}>
+                                    <label>Số lượng tồn kho</label>
+                                    <input
+                                        inputMode="numeric"
+                                        placeholder="VD: 100"
+                                        value={stockQuantity}
+                                        onChange={(e) => {
+                                            const cleaned = (e.target.value || '').replace(
+                                                /[^0-9]/g,
+                                                '',
+                                            );
+                                            setStockQuantity(cleaned);
+                                        }}
+                                    />
+                                    {!isAdmin && (
+                                        <div className={cx('stockHint')}>
+                                            <span className={cx('hintIcon')}>💡</span>
+                                            <span className={cx('hintText')}>
+                                                Bạn có thể thêm tối đa <strong>{STAFF_STOCK_ADD_LIMIT}</strong> sản phẩm mà không cần duyệt.
+                                                {(() => {
+                                                    const originalStock = originalValues.stockQuantity || 0;
+                                                    const currentStock = Number(stockQuantity) || 0;
+                                                    if (currentStock > originalStock) {
+                                                        const addedQuantity = currentStock - originalStock;
+                                                        if (addedQuantity > STAFF_STOCK_ADD_LIMIT) {
+                                                            return (
+                                                                <span className={cx('hintWarning')}>
+                                                                    {' '}⚠️ Vượt quá giới hạn, cần admin duyệt.
+                                                                </span>
+                                                            );
+                                                        }
+                                                    }
+                                                    if (currentStock < originalStock) {
                                                         return (
                                                             <span className={cx('hintWarning')}>
-                                                                {' '}⚠️ Vượt quá giới hạn, cần admin duyệt.
+                                                                {' '}⚠️ Giảm số lượng cần admin duyệt.
                                                             </span>
                                                         );
                                                     }
-                                                }
-                                                if (currentStock < originalStock) {
-                                                    return (
-                                                        <span className={cx('hintWarning')}>
-                                                            {' '}⚠️ Giảm số lượng cần admin duyệt.
-                                                        </span>
-                                                    );
-                                                }
-                                                return null;
-                                            })()}
+                                                    return null;
+                                                })()}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {errors.stockQuantity && (
+                                        <div className={cx('errorText')}>
+                                            {errors.stockQuantity}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {/* Hiển thị thông báo nếu sản phẩm có variants */}
+                            {variants.length > 0 && (
+                                <div className={cx('row')}>
+                                    <div className={cx('variantsNotice')}>
+                                        <span className={cx('noticeIcon')}>ℹ️</span>
+                                        <span className={cx('noticeText')}>
+                                            Sản phẩm này có <strong>{variants.length}</strong> lựa chọn (variants).
+                                            Số lượng tồn kho được quản lý ở từng lựa chọn riêng biệt.
+                                            Xem chi tiết ở phần "Lựa chọn sản phẩm" bên dưới.
                                         </span>
                                     </div>
-                                )}
-                                {errors.stockQuantity && (
-                                    <div className={cx('errorText')}>
-                                        {errors.stockQuantity}
-                                    </div>
-                                )}
-                            </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
-                    {/* ========== PHẦN 3: CHỈ ADMIN (STAFF KHÔNG ĐƯỢC THAY ĐỔI) ========== */}
-                    <div className={cx('section')}>
-                        <div className={cx('section-header', 'section-admin')}>
-                            <h4>Thông tin chỉ quản trị viên</h4>
-                            <span className={cx('section-badge', 'badge-admin')}>
-                                Chỉ admin mới có quyền thay đổi
-                            </span>
+                    {/* Variants */}
+                    {variants.length > 0 && (
+                        <div className={cx('section')}>
+                            <div className={cx('section-header')}>
+                                <h4>Lựa chọn sản phẩm</h4>
+                                <span className={cx('section-badge', 'badge-auto')}>{variants.length} variants</span>
+                            </div>
+                            <div className={cx('section-content')}>
+                                <div className={cx('variantsList')}>
+                                    {variants.map((v, idx) => {
+                                        // Helper để update variant field
+                                        const updateVariant = (field, value) => {
+                                            setVariants((prev) =>
+                                                prev.map((x) => (x.id === v.id ? { ...x, [field]: value } : x))
+                                            );
+                                        };
+
+                                        // Helper để tính giá cuối cùng
+                                        const calculateFinalPrice = (unitPrice, taxPercent) => {
+                                            if (!unitPrice) return '';
+                                            const taxDecimal = (Number(taxPercent) || 0) / 100;
+                                            return Math.round(Number(unitPrice) * (1 + taxDecimal));
+                                        };
+
+                                        // Helper xử lý số nguyên
+                                        const handleNumericInput = (value, max = null) => {
+                                            const cleaned = (value || '').replace(/[^0-9]/g, '');
+                                            if (cleaned === '') return '';
+                                            const num = parseInt(cleaned, 10);
+                                            if (isNaN(num)) return '';
+                                            if (max !== null && num > max) return max.toString();
+                                            return num < 0 ? '0' : num.toString();
+                                        };
+
+                                        // Helper xử lý giá tiền
+                                        const handlePriceInput = (value) => {
+                                            const cleaned = (value || '').replace(/[^0-9]/g, '');
+                                            return cleaned === '' ? '' : Number(cleaned);
+                                        };
+
+                                        return (
+                                            <div key={v.id || idx} className={cx('variantCard')}>
+                                                <div className={cx('variantHeader')}>
+                                                    <span className={cx('variantNumber')}>Lựa chọn #{idx + 1}: {v.name || '(Chưa đặt tên)'}</span>
+                                                    <div className={cx('variantActions')}>
+                                                        <label className={cx('defaultCheckbox')}>
+                                                            <input
+                                                                type="radio"
+                                                                name="defaultVariant"
+                                                                checked={v.isDefault}
+                                                                onChange={() =>
+                                                                    setVariants((prev) =>
+                                                                        prev.map((x) => ({ ...x, isDefault: x.id === v.id }))
+                                                                    )
+                                                                }
+                                                            />
+                                                            <span>Mặc định</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                <div className={cx('variantBody')}>
+                                                    {/* ===== PHẦN TỰ ĐỘNG CẬP NHẬT ===== */}
+                                                    <div className={cx('variantSection', 'auto-update')}>
+                                                        <div className={cx('variantGroup', 'grid2')}>
+                                                            <div className={cx('row')}>
+                                                                <label>Tên/Nhãn</label>
+                                                                <input
+                                                                    placeholder="VD: 30ml, 50ml, Coral, Nude"
+                                                                    value={v.name}
+                                                                    onChange={(e) => updateVariant('name', e.target.value)}
+                                                                />
+                                                            </div>
+                                                            <div className={cx('row')}>
+                                                                <label>Tồn kho</label>
+                                                                <div className={cx('stockControl')}>
+                                                                    <span className={cx('stockValue')}>
+                                                                        {v.stockQuantity || 0}
+                                                                    </span>
+                                                                    <button
+                                                                        type="button"
+                                                                        className={cx('btn', 'restockBtn')}
+                                                                        onClick={() => handleOpenRestockVariant(v)}
+                                                                    >
+                                                                        Bổ sung kho
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        {/* Màu sắc */}
+                                                        <div className={cx('variantGroup', 'grid2')}>
+                                                            <div className={cx('row')}>
+                                                                <label>Shade/Màu (hiển thị)</label>
+                                                                <input
+                                                                    placeholder="VD: Coral, Nude, Pink"
+                                                                    value={v.shadeName || ''}
+                                                                    onChange={(e) => updateVariant('shadeName', e.target.value)}
+                                                                />
+                                                            </div>
+                                                            <div className={cx('row')}>
+                                                                <label>Mã màu (Hex)</label>
+                                                                <input
+                                                                    placeholder="#FF8899"
+                                                                    value={v.shadeHex || ''}
+                                                                    onChange={(e) => updateVariant('shadeHex', e.target.value)}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* ===== PHẦN CẦN DUYỆT ===== */}
+                                                    <div className={cx('variantSection', 'needs-approval')}>
+                                                        <div className={cx('variantSectionHeader')}>
+                                                            <span className={cx('sectionLabel', 'approval')}>Cần admin duyệt</span>
+                                                        </div>
+                                                        <div className={cx('variantGroup', 'grid2')}>
+                                                            <div className={cx('row')}>
+                                                                <label>Giá niêm yết (VND)</label>
+                                                                <input
+                                                                    type="text"
+                                                                    inputMode="numeric"
+                                                                    placeholder="VD: 150000"
+                                                                    value={v.unitPrice || ''}
+                                                                    onChange={(e) => updateVariant('unitPrice', handlePriceInput(e.target.value))}
+                                                                />
+                                                            </div>
+                                                            <div className={cx('row')}>
+                                                                <label>Thuế (%)</label>
+                                                                <div className={cx('inputSuffix')}>
+                                                                    <input
+                                                                        type="text"
+                                                                        inputMode="numeric"
+                                                                        placeholder="VD: 10"
+                                                                        value={v.taxPercent || ''}
+                                                                        onChange={(e) => updateVariant('taxPercent', handleNumericInput(e.target.value, 100))}
+                                                                    />
+                                                                    <span className={cx('suffix')}>%</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className={cx('variantGroup')}>
+                                                            <div className={cx('row')}>
+                                                                <label>Giá cuối cùng (tự động tính)</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={calculateFinalPrice(v.unitPrice, v.taxPercent) ? new Intl.NumberFormat('vi-VN').format(calculateFinalPrice(v.unitPrice, v.taxPercent)) + ' VND' : 'Chưa có'}
+                                                                    readOnly
+                                                                    className={cx('readonly')}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         </div>
+                    )}
+
+                    {/* Thông tin nội bộ (chỉ Admin) */}
+                    <div className={cx('section')}>
+                        <div className={cx('section-header')}>
+                            <h4>Thông tin nội bộ</h4>
+                            <span className={cx('section-badge', 'badge-admin')}>Chỉ admin</span>
+                        </div>
+                        {!isAdmin && (
+                            <div className={cx('adminNotice')}>Bạn không có quyền chỉnh sửa mục này.</div>
+                        )}
                         <div className={cx('section-content')}>
                             <div className={cx('row')}>
                                 <label>Giá nhập (VND)</label>
@@ -1326,6 +1679,40 @@ function UpdateProductPage() {
                 }
                 message={notifyMsg}
                 onClose={() => setNotifyOpen(false)}
+            />
+            {/* Restock Variant Dialogs */}
+            <RestockProductDialog
+                open={restockVariantOpen}
+                product={{
+                    id: restockVariantTarget?.id,
+                    name: restockVariantTarget?.name || 'Lựa chọn',
+                    stockQuantity: Number(restockVariantTarget?.stockQuantity) || 0,
+                }}
+                defaultQuantity={pendingVariantQuantity}
+                loading={restockVariantLoading}
+                onSubmit={handleRestockVariantFormSubmit}
+                onCancel={() => {
+                    if (!restockVariantLoading) {
+                        resetRestockVariantFlow();
+                    }
+                }}
+            />
+            <RestockDialog
+                open={restockVariantConfirmOpen}
+                product={{
+                    id: restockVariantTarget?.id,
+                    name: restockVariantTarget?.name || 'Lựa chọn',
+                    stockQuantity: Number(restockVariantTarget?.stockQuantity) || 0,
+                }}
+                quantity={pendingVariantQuantity}
+                loading={restockVariantLoading}
+                onConfirm={handleRestockVariantSubmit}
+                onCancel={() => {
+                    if (!restockVariantLoading) {
+                        setRestockVariantConfirmOpen(false);
+                        setRestockVariantOpen(true);
+                    }
+                }}
             />
         </div>
     );

@@ -564,7 +564,7 @@ export default function AddBannerPage() {
                     </div>
 
                     <div className={cx('form-group')}>
-                        <label className={cx('form-label')}>Danh sách sách trong banner</label>
+                        <label className={cx('form-label')}>Danh sách sản phẩm trong banner</label>
                         {selectedProducts.length > 0 && (
                             <div className={cx('product-list')}>
                                 {selectedProducts.map((product) => (
@@ -587,7 +587,7 @@ export default function AddBannerPage() {
                             onClick={handleAddProduct}
                         >
                             <span className={cx('plus-icon')}>+</span>
-                            Thêm sách
+                            Thêm sản phẩm
                         </button>
                     </div>
 
@@ -616,7 +616,7 @@ export default function AddBannerPage() {
                 <div className={cx('modal-overlay')} onClick={() => setShowProductModal(false)}>
                     <div className={cx('modal')} onClick={(e) => e.stopPropagation()}>
                         <div className={cx('modal-header')}>
-                            <h3 className={cx('modal-title')}>Chọn sách</h3>
+                            <h3 className={cx('modal-title')}>Chọn sản phẩm</h3>
                             <button
                                 className={cx('modal-close')}
                                 onClick={() => setShowProductModal(false)}
@@ -629,7 +629,7 @@ export default function AddBannerPage() {
                                 <input
                                     type="text"
                                     className={cx('search-input')}
-                                    placeholder="Tìm kiếm sách theo tên..."
+                                    placeholder="Tìm kiếm sản phẩm theo tên..."
                                     value={productSearchTerm}
                                     onChange={(e) => setProductSearchTerm(e.target.value)}
                                     autoFocus
@@ -649,8 +649,8 @@ export default function AddBannerPage() {
                                 ) : (
                                     <p className={cx('no-products')}>
                                         {productSearchTerm.trim()
-                                            ? 'Không tìm thấy sách nào phù hợp'
-                                            : 'Không còn sách nào để thêm'}
+                                            ? 'Không tìm thấy sản phẩm nào phù hợp'
+                                            : 'Không còn sản phẩm nào để thêm'}
                                     </p>
                                 )}
                             </div>

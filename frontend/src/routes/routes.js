@@ -58,7 +58,7 @@ import StaffUpdateProductPage from '../pages/Employees/Staff/ProductManagement/U
 import ContentManagementPage from '../pages/Employees/Staff/ContentManagement';
 import AddBannerPage from '../pages/Employees/Staff/ContentManagement/AddBanner';
 import BannerDetailPage from '../pages/Employees/Staff/ContentManagement/BannerDetail';
-import BannerBookListPage from '../pages/Employees/Staff/ContentManagement/BannerDetail/BannerBookList';
+import BannerBookListPage from '../pages/Employees/Staff/ContentManagement/BannerDetail/BannerList';
 import UpdateContentPage from '../pages/Employees/Staff/ContentManagement/UpdateContent';
 import VouchersPromotionsPage from '../pages/Employees/Staff/VouchersPromotionsPage';
 import OrderManagementPage from '../pages/Employees/Staff/OrderManagement';
@@ -163,7 +163,7 @@ const privateRoutes = [
     { path: '/admin/content', component: ManageContentPage, layout: AdminLayout },
     { path: '/admin/content/:id', component: ContentDetailPage, layout: AdminLayout },
     {
-        path: '/admin/content/:id/books',
+        path: '/admin/content/:id/products',
         component: BannerBookListPage,
         layout: AdminLayout,
     },
@@ -197,7 +197,7 @@ const privateRoutes = [
     { path: '/staff/content/add-banner', component: AddBannerPage, layout: StaffLayout },
     { path: '/staff/content/:id', component: BannerDetailPage, layout: StaffLayout },
     { path: '/staff/content/:id/edit', component: UpdateContentPage, layout: StaffLayout },
-    { path: '/staff/content/:id/books', component: BannerBookListPage, layout: StaffLayout },
+    { path: '/staff/content/:id/products', component: BannerBookListPage, layout: StaffLayout },
 
     { path: '/staff/vouchers', component: VouchersPromotionsPage, layout: StaffLayout },
     { path: '/staff/vouchers-promotions', component: VouchersPromotionsPage, layout: StaffLayout },

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ReviewAndCommentPage.module.scss';
-import SearchAndSort from '../../../../components/Common/SearchAndSort';
+import SearchAndSort from '../../../../layouts/components/SearchAndSort';
 import { formatDateTime } from '../../../../services/utils';
 import { useNotification } from '../../../../components/Common/Notification';
 import { getStoredToken, getAllReviews, deleteReview } from '../../../../services';
@@ -186,7 +186,7 @@ export default function ReviewAndCommentPage() {
         <div className={cx('review-page')}>
             <div className={cx('tabs-placeholder')} />
             <SearchAndSort
-                searchPlaceholder="Tìm kiếm theo tiêu đề,......"
+                searchPlaceholder="Tìm kiếm theo tiêu đề"
                 searchValue={searchTerm}
                 onSearchChange={(e) => setSearchTerm(e.target.value)}
                 onSearchClick={handleSearchClick}

@@ -8,7 +8,7 @@ import { SERVICE_ITEMS } from '../../services/constants';
 import { getApiBaseUrl, formatCurrency } from '../../services/utils';
 import { normalizeMediaUrl } from '../../services/productUtils';
 import { normalizePromotionImageUrl } from '../../services/voucherPromotionUtils';
-import { useVouchers, usePromotions } from '../../hooks/useVouchersPromotions';
+import { useVouchers } from '../../hooks/useVouchersPromotions';
 import styles from './Home.module.scss';
 
 import heroImage from '../../assets/images/img_qc.png';
@@ -16,6 +16,7 @@ import bgChristmas from '../../assets/images/img_christmas.png';
 
 import ProductList from '../../components/Common/ProductList/ProductList';
 import Banner1 from '../../components/Common/Banner/Banner1';
+import { VoucherCard } from '../../components/Common/VoucherPromotionCard';
 
 const cx = classNames.bind(styles);
 
@@ -166,9 +167,8 @@ function Home() {
     const [productLoading, setProductLoading] = useState(true);
     const [productError, setProductError] = useState('');
 
-    // Fetch vouchers and promotions
+    // Fetch vouchers
     const { vouchers, loading: vouchersLoading } = useVouchers();
-    const { promotions, loading: promotionsLoading } = usePromotions();
 
     // Fetch banners - direct fetch like LuminaBook
     useEffect(() => {
@@ -316,142 +316,6 @@ function Home() {
         }
     };
 
-    // Get limited vouchers and promotions for home page
-    const displayedVouchers = useMemo(() => {
-        return vouchers.slice(0, 5);
-    }, [vouchers]);
-
-    const displayedPromotions = useMemo(() => {
-        return promotions.slice(0, 5);
-    }, [promotions]);
-
-    // Voucher Card Component
-    const VoucherCard = ({ voucher }) => {
-        const discountText = formatDiscountValue(voucher);
-        const hasMinOrder = voucher.minOrderValue && voucher.minOrderValue > 0;
-        const hasMaxOrder = voucher.maxOrderValue && voucher.maxOrderValue > 0;
-        const hasMaxDiscount = voucher.maxDiscountValue && voucher.maxDiscountValue > 0;
-
-        return (
-            <div className={cx('voucher-card', 'voucher-card-home')}>
-                <div className={cx('voucher-content', 'voucher-content-home')}>
-                    <div className={cx('voucher-discount-badge-home')}>
-                        <div className={cx('discount-value')}>{discountText}</div>
-                        <div className={cx('discount-label')}>
-                            {voucher.discountValueType === 'PERCENTAGE' ? 'Giảm' : 'Giảm giá'}
-                        </div>
-                    </div>
-                    <div className={cx('voucher-details-home')}>
-                        <div className={cx('voucher-code-main-home')}>
-                            <span className={cx('code-label-main-home')}>Mã:</span>
-                            <span className={cx('code-value-main-home')}>{voucher.code || '--'}</span>
-                        </div>
-                        {voucher.name && (
-                            <div className={cx('voucher-name-main-home')}>{voucher.name}</div>
-                        )}
-                        <div className={cx('voucher-conditions-home')}>
-                            {hasMinOrder && (
-                                <div className={cx('voucher-condition-item-home')}>
-                                    <span className={cx('condition-icon-home')}>💰</span>
-                                    <span>Đơn tối thiểu: {formatCurrency(voucher.minOrderValue)}</span>
-                                </div>
-                            )}
-                            {hasMaxOrder && (
-                                <div className={cx('voucher-condition-item-home')}>
-                                    <span className={cx('condition-icon-home')}>📊</span>
-                                    <span>Đơn tối đa: {formatCurrency(voucher.maxOrderValue)}</span>
-                                </div>
-                            )}
-                            {hasMaxDiscount && (
-                                <div className={cx('voucher-condition-item-home')}>
-                                    <span className={cx('condition-icon-home')}>🎯</span>
-                                    <span>Giảm tối đa: {formatCurrency(voucher.maxDiscountValue)}</span>
-                                </div>
-                            )}
-                            {!hasMinOrder && !hasMaxOrder && !hasMaxDiscount && (
-                                <div className={cx('voucher-condition-item-home', 'no-condition-home')}>
-                                    Áp dụng cho mọi đơn hàng
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
-    // Promotion Card Component
-    const PromotionCard = ({ promotion }) => {
-        const discountText = formatDiscountValue(promotion);
-        const hasMinOrder = promotion.minOrderValue && promotion.minOrderValue > 0;
-        const hasMaxDiscount = promotion.maxDiscountValue && promotion.maxDiscountValue > 0;
-        const promotionImageUrl = promotion.imageUrl
-            ? normalizePromotionImageUrl(promotion.imageUrl, API_BASE_URL)
-            : null;
-
-        return (
-            <div className={cx('promotion-card', 'promotion-card-home')}>
-                <div className={cx('promotion-content', 'promotion-content-home')}>
-                    {promotionImageUrl ? (
-                        <div className={cx('promotion-image-wrapper-home')}>
-                            <img
-                                src={promotionImageUrl}
-                                alt={promotion.name}
-                                className={cx('promotion-image-home')}
-                            />
-                        </div>
-                    ) : (
-                        <div className={cx('promotion-discount-badge-home')}>
-                            <div className={cx('discount-value')}>{discountText}</div>
-                            <div className={cx('discount-label')}>
-                                {promotion.discountValueType === 'PERCENTAGE' ? 'Giảm' : 'Giảm giá'}
-                            </div>
-                        </div>
-                    )}
-                    <div className={cx('promotion-details-home')}>
-                        <h4 className={cx('promotion-name-home')}>{promotion.name || 'Khuyến mãi'}</h4>
-                        {promotion.code && (
-                            <div className={cx('promotion-code-main')}>
-                                <span className={cx('code-label-main')}>Mã:</span>
-                                <span className={cx('code-value-main')}>{promotion.code}</span>
-                            </div>
-                        )}
-                        {promotion.description && (
-                            <div className={cx('promotion-description')}>
-                                {promotion.description.length > 100
-                                    ? `${promotion.description.substring(0, 100)}...`
-                                    : promotion.description}
-                            </div>
-                        )}
-                        <div className={cx('promotion-conditions')}>
-                            {hasMinOrder && (
-                                <div className={cx('promotion-condition-item')}>
-                                    <span className={cx('condition-icon')}>💰</span>
-                                    <span>Đơn tối thiểu: {formatCurrency(promotion.minOrderValue)}</span>
-                                </div>
-                            )}
-                            {hasMaxDiscount && (
-                                <div className={cx('promotion-condition-item')}>
-                                    <span className={cx('condition-icon')}>🎯</span>
-                                    <span>Giảm tối đa: {formatCurrency(promotion.maxDiscountValue)}</span>
-                                </div>
-                            )}
-                            {(promotion.startDate || promotion.expiryDate) && (
-                                <div className={cx('promotion-condition-item')}>
-                                    <span className={cx('condition-icon')}>📅</span>
-                                    <span>
-                                        {promotion.startDate && formatDate(promotion.startDate)}
-                                        {promotion.startDate && promotion.expiryDate && ' - '}
-                                        {promotion.expiryDate && formatDate(promotion.expiryDate)}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    };
 
     return (
         <motion.div
@@ -479,54 +343,34 @@ function Home() {
                     </div>
                 </motion.section>
 
-                {/* Vouchers and Promotions Section */}
-                {!vouchersLoading && !promotionsLoading && (displayedVouchers.length > 0 || displayedPromotions.length > 0) && (
+                {/* Horizontal Voucher Carousel */}
+                {!vouchersLoading && vouchers.length > 0 && (
                     <motion.section
-                        className={cx('vouchers-promotions-section')}
+                        className={cx('voucher-carousel-section')}
                         variants={sectionVariants}
                         initial="hidden"
                         animate="visible"
                     >
-                        <div className={cx('vouchers-promotions-container')}>
-                            {/* Vouchers Column */}
-                            {displayedVouchers.length > 0 && (
-                                <div className={cx('voucher-column')}>
-                                    <div className={cx('section-header')}>
-                                        <h3 className={cx('section-title')}>
-                                            <span className={cx('title-icon')}>🎫</span>
-                                            VOUCHER
-                                        </h3>
-                                        <Link to="/promotion#vouchers" className={cx('view-all-link')}>
-                                            Xem tất cả →
-                                        </Link>
-                                    </div>
-                                    <div className={cx('voucher-grid')}>
-                                        {displayedVouchers.map((voucher) => (
-                                            <VoucherCard key={voucher.id} voucher={voucher} />
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Promotions Column */}
-                            {displayedPromotions.length > 0 && (
-                                <div className={cx('promotion-column')}>
-                                    <div className={cx('section-header')}>
-                                        <h3 className={cx('section-title')}>
-                                            <span className={cx('title-icon')}>🔥</span>
-                                            KHUYẾN MÃI
-                                        </h3>
-                                        <Link to="/promotion#promotions" className={cx('view-all-link')}>
-                                            Xem tất cả →
-                                        </Link>
-                                    </div>
-                                    <div className={cx('promotion-grid')}>
-                                        {displayedPromotions.map((promotion) => (
-                                            <PromotionCard key={promotion.id} promotion={promotion} />
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                        <div className={cx('voucher-carousel-header')}>
+                            <h3 className={cx('voucher-carousel-title')}>
+                                <span className={cx('title-icon')}>🎫</span>
+                                MÃ GIẢM GIÁ
+                            </h3>
+                        </div>
+                        <div className={cx('voucher-carousel-wrapper')}>
+                            <div className={cx('voucher-carousel-track')}>
+                                {vouchers.map((voucher) => (
+                                    <VoucherCard
+                                        key={voucher.id}
+                                        voucher={voucher}
+                                        formatDiscountValue={formatDiscountValue}
+                                        formatCurrency={formatCurrency}
+                                        formatDate={formatDate}
+                                        normalizeImageUrl={normalizePromotionImageUrl}
+                                        apiBaseUrl={API_BASE_URL}
+                                    />
+                                ))}
+                            </div>
                         </div>
                     </motion.section>
                 )}

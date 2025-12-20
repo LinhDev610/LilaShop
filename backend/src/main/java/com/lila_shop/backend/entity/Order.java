@@ -19,7 +19,10 @@ import java.util.List;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "orders")
+@Table(name = "orders", indexes = {
+        @Index(name = "idx_order_datetime_status", columnList = "order_date_time, status"),
+        @Index(name = "idx_order_user_id", columnList = "user_id")
+})
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

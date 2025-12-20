@@ -6,16 +6,19 @@
     align-items: center;
     gap: 14px;
     background: #b91c1c;
-    padding: 16px 24px; /* larger height */
+    padding: 16px 24px;
+    /* larger height */
     border-radius: 10px 10px 0 0;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18); /* pop out */
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+    /* pop out */
     position: relative;
     z-index: 1;
     margin-bottom: 8px;
 }
 
 .promo-icon {
-    width: 32px; /* bigger icon */
+    width: 32px;
+    /* bigger icon */
     height: 32px;
     object-fit: contain;
 }
@@ -23,7 +26,8 @@
 .promo-title {
     margin: 0;
     color: #fff;
-    font-size: 1.4rem; /* larger text */
+    font-size: 1.4rem;
+    /* larger text */
     font-weight: 900;
     letter-spacing: .8px;
 }
@@ -33,16 +37,17 @@
     background: #fff;
     border-radius: 14px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
-    overflow: hidden; /* đảm bảo con không tràn bo góc */
+    overflow: hidden;
+    /* đảm bảo con không tràn bo góc */
 }
 
 /* Biến thể header màu xanh (combo ưu đãi) */
 .header-green {
-    background: #2f855a; /* green */
+    background: #2f855a;
+    /* green */
 }
 
 /* Biến thể header màu xanh dương (mỹ phẩm giáo dục) */
 .header-blue {
     background: #4f7cac;
 }
-

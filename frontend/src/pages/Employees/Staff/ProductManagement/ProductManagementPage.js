@@ -1,6 +1,6 @@
 import classNames from 'classnames/bind';
 import styles from './ProductManagementPage.scss';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useLocalStorage from '../../../../hooks/useLocalStorage';
 import { useProducts } from '../../../../hooks/useProducts';
@@ -13,11 +13,13 @@ import {
     sortByDate,
     STATUS_MAP, FALLBACK_THUMB,
     restockProduct,
+    getProductVariants,
+    updateProductVariant,
 } from '../../../../services';
-import SearchAndSort from '../../../../components/Common/SearchAndSort';
+import SearchAndSort from '../../../../layouts/components/SearchAndSort';
 import StatusBadge from '../../../../components/Common/StatusBadge';
 import RestockProductDialog from '../../../../components/Common/RestockProductDialog';
-import RestockDialog from '../../../../components/Common/ConfirmDialog/RestockDialog';
+import Notification from '../../../../components/Common/Notification';
 
 const cx = classNames.bind(styles);
 
@@ -29,17 +31,19 @@ export default function ProductManagementPage() {
     const [dateFilter, setDateFilter] = useState('');
     const [tab, setTab] = useState('all');
     const [productsData, setProductsData] = useState([]);
-    const [restockTarget, setRestockTarget] = useState(null);
+
+    // Restock state
     const [restockOpen, setRestockOpen] = useState(false);
-    const [restockConfirmOpen, setRestockConfirmOpen] = useState(false);
+    const [restockTarget, setRestockTarget] = useState(null);
+    const [restockVariants, setRestockVariants] = useState([]);
     const [restockLoading, setRestockLoading] = useState(false);
-    const [restockSuccess, setRestockSuccess] = useState('');
-    const [restockErrorMsg, setRestockErrorMsg] = useState('');
-    const [pendingQuantity, setPendingQuantity] = useState(null);
+    const [notifyOpen, setNotifyOpen] = useState(false);
+    const [notifyType, setNotifyType] = useState('success');
+    const [notifyMsg, setNotifyMsg] = useState('');
 
     // Fetch data using custom hooks (API endpoint (backend)
     const { products: allProducts, loading, error } = useProducts({
-        endpoint: '/products/my-products', // API endpoint để lấy sản phẩm của staff hiện tại
+        endpoint: '/products/my-products',
         token,
     });
     const { activeCategoryIdSet, activeCategoryNameSet, loaded: activeLoaded } = useActiveCategories(token);
@@ -49,8 +53,6 @@ export default function ProductManagementPage() {
     }, [allProducts]);
 
     // ========== Filter Logic ==========
-
-    // Filter products using utility functions
     const filtered = useMemo(() => {
         let result = productsData;
         if (activeLoaded) {
@@ -62,92 +64,99 @@ export default function ProductManagementPage() {
         return sortByDate(result);
     }, [productsData, tab, keyword, dateFilter, activeCategoryIdSet, activeCategoryNameSet, activeLoaded]);
 
-    const resetRestockFlow = () => {
-        setRestockOpen(false);
-        setRestockConfirmOpen(false);
-        setRestockTarget(null);
-        setPendingQuantity(null);
-    };
-
-    const handleOpenRestock = (product) => {
+    // ========== Restock Logic ==========
+    const handleOpenRestock = useCallback(async (product) => {
         setRestockTarget(product);
-        setPendingQuantity(null);
+        setRestockVariants([]);
         setRestockOpen(true);
-        setRestockConfirmOpen(false);
-        setRestockErrorMsg('');
-        setRestockSuccess('');
-    };
 
-    const handleDialogCancel = () => {
-        if (restockLoading) return;
-        resetRestockFlow();
-    };
-
-    const handleConfirmCancel = () => {
-        if (restockLoading) return;
-        setRestockConfirmOpen(false);
-        setRestockOpen(true);
-    };
-
-    const clearRestockAlert = () => {
-        setRestockSuccess('');
-        setRestockErrorMsg('');
-    };
-
-    const handleRestockFormSubmit = (quantity) => {
-        setPendingQuantity(quantity);
-        setRestockOpen(false);
-        setRestockConfirmOpen(true);
-        setRestockErrorMsg('');
-    };
-
-    const handleRestockSubmit = async () => {
-        if (!restockTarget) return;
-        if (!token) {
-            setRestockErrorMsg('Vui lòng đăng nhập để bổ sung tồn kho.');
-            setRestockConfirmOpen(false);
-            setRestockOpen(true);
-            return;
+        // Fetch variants if product might have them
+        if (product?.id && token) {
+            try {
+                const variants = await getProductVariants(product.id, token);
+                if (variants && Array.isArray(variants) && variants.length > 0) {
+                    setRestockVariants(variants);
+                }
+            } catch (err) {
+                console.warn('Could not fetch variants:', err);
+            }
         }
+    }, [token]);
 
-        const quantityValue = Number(pendingQuantity);
-        if (!quantityValue || Number.isNaN(quantityValue) || quantityValue <= 0) {
-            setRestockErrorMsg('Số lượng bổ sung không hợp lệ.');
-            setRestockConfirmOpen(false);
-            setRestockOpen(true);
-            return;
-        }
-
-        const targetId = restockTarget.id;
-        const targetName = restockTarget.name;
+    const handleRestockSubmit = useCallback(async (quantity, selectedVariant) => {
+        if (!restockTarget || !quantity) return;
 
         try {
             setRestockLoading(true);
-            const response = await restockProduct(targetId, quantityValue, token);
 
-            if (!response?.ok) {
-                throw new Error(response?.data?.message || 'Không thể cập nhật tồn kho.');
+            if (selectedVariant) {
+                // Restock variant
+                const currentStock = Number(selectedVariant.stockQuantity) || 0;
+                const newStock = currentStock + quantity;
+
+                const variantData = {
+                    name: selectedVariant.name || null,
+                    shadeName: selectedVariant.shadeName || null,
+                    shadeHex: selectedVariant.shadeHex || null,
+                    price: selectedVariant.price || 0,
+                    unitPrice: selectedVariant.unitPrice || selectedVariant.price || 0,
+                    tax: selectedVariant.tax || selectedVariant.taxPercent || null,
+                    purchasePrice: selectedVariant.purchasePrice || null,
+                    stockQuantity: newStock,
+                    isDefault: Boolean(selectedVariant.isDefault),
+                };
+
+                const response = await updateProductVariant(
+                    restockTarget.id,
+                    selectedVariant.id,
+                    variantData,
+                    token
+                );
+
+                if (!response?.ok) {
+                    throw new Error(response?.data?.message || 'Không thể cập nhật tồn kho variant.');
+                }
+
+                setNotifyType('success');
+                setNotifyMsg(`Đã bổ sung ${quantity} sản phẩm cho "${selectedVariant.name || selectedVariant.shadeName || 'variant'}".`);
+            } else {
+                // Restock product
+                const response = await restockProduct(restockTarget.id, quantity, token);
+
+                if (!response?.ok) {
+                    throw new Error(response?.data?.message || 'Không thể cập nhật tồn kho.');
+                }
+
+                const updatedStock = response?.data?.stockQuantity ??
+                    ((restockTarget.stockQuantity ?? 0) + quantity);
+
+                setProductsData((prev) =>
+                    prev.map((p) => p.id === restockTarget.id ? { ...p, stockQuantity: updatedStock } : p)
+                );
+
+                setNotifyType('success');
+                setNotifyMsg(`Đã bổ sung ${quantity} sản phẩm cho "${restockTarget.name}".`);
             }
 
-            const updatedStock =
-                typeof response?.data?.stockQuantity === 'number'
-                    ? response.data.stockQuantity
-                    : (restockTarget.stockQuantity ?? 0) + quantityValue;
-
-            setProductsData((prev) =>
-                prev.map((p) => (p.id === targetId ? { ...p, stockQuantity: updatedStock } : p)),
-            );
-            setRestockSuccess(`Đã bổ sung ${quantityValue} sản phẩm cho "${targetName}".`);
-            setRestockErrorMsg('');
-            resetRestockFlow();
+            setNotifyOpen(true);
+            setRestockOpen(false);
+            setRestockTarget(null);
+            setRestockVariants([]);
         } catch (err) {
-            setRestockErrorMsg(err.message || 'Không thể bổ sung tồn kho. Vui lòng thử lại.');
-            setRestockConfirmOpen(false);
-            setRestockOpen(true);
+            setNotifyType('error');
+            setNotifyMsg(err.message || 'Không thể bổ sung tồn kho. Vui lòng thử lại.');
+            setNotifyOpen(true);
         } finally {
             setRestockLoading(false);
         }
-    };
+    }, [restockTarget, token]);
+
+    const handleRestockCancel = useCallback(() => {
+        if (restockLoading) return;
+        setRestockOpen(false);
+        setRestockTarget(null);
+        setRestockVariants([]);
+    }, [restockLoading]);
 
     // ========== Render States ==========
 
@@ -207,20 +216,6 @@ export default function ProductManagementPage() {
                     onDateChange={(value) => setDateFilter(value)}
                     dateLabel="Ngày"
                 />
-
-                {(restockSuccess || restockErrorMsg) && (
-                    <div className={cx('alert', restockErrorMsg ? 'error' : 'success')}>
-                        <span>{restockErrorMsg || restockSuccess}</span>
-                        <button
-                            type="button"
-                            className={cx('alert-close')}
-                            onClick={clearRestockAlert}
-                            aria-label="Đóng"
-                        >
-                            ×
-                        </button>
-                    </div>
-                )}
 
                 {/* Action Buttons */}
                 <div className={cx('bottom-actions')}>
@@ -339,21 +334,22 @@ export default function ProductManagementPage() {
                 </div>
             </div>
 
+            {/* Restock Dialog */}
             <RestockProductDialog
                 open={restockOpen}
                 product={restockTarget}
-                defaultQuantity={pendingQuantity}
+                variants={restockVariants}
                 loading={restockLoading}
-                onSubmit={handleRestockFormSubmit}
-                onCancel={handleDialogCancel}
+                onSubmit={handleRestockSubmit}
+                onCancel={handleRestockCancel}
             />
-            <RestockDialog
-                open={restockConfirmOpen}
-                product={restockTarget}
-                quantity={pendingQuantity}
-                loading={restockLoading}
-                onConfirm={handleRestockSubmit}
-                onCancel={handleConfirmCancel}
+
+            {/* Notification */}
+            <Notification
+                open={notifyOpen}
+                type={notifyType}
+                message={notifyMsg}
+                onClose={() => setNotifyOpen(false)}
             />
         </div>
     );

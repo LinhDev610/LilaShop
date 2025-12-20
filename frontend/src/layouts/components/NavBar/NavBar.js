@@ -209,6 +209,20 @@ function NavBar() {
         };
     }, []);
 
+    // Handle resize to close mobile menu
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth > 1400 && isMobileMenuOpen) {
+                setIsMobileMenuOpen(false);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, [isMobileMenuOpen]);
+
     // Dropdown handlers
     const openDropdown = () => {
         setIsDropdownOpen(true);

@@ -66,7 +66,7 @@ function BestSeller({ timeMode = 'day', customDateRange = null }) {
         <div className={cx('card')}>
             <div className={cx('cardTitle')}>Top bán chạy</div>
             <div className={cx('cardSubtitle')}>
-                Top sách theo doanh thu
+                Top sản phẩm theo doanh thu
                 {!loading && (
                     <span className={cx('dateRangeInfo')}>
                         {' '}({currentDateRange.start} đến {currentDateRange.end})
@@ -84,7 +84,7 @@ function BestSeller({ timeMode = 'day', customDateRange = null }) {
                         <thead>
                             <tr>
                                 <th>STT</th>
-                                <th>Tên sách</th>
+                                <th>Tên sản phẩm</th>
                                 <th>Số lượng</th>
                                 <th>Doanh thu</th>
                             </tr>
