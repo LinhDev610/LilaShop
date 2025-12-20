@@ -105,7 +105,7 @@ export const validatePassword = (password, confirmPassword = null) => {
     if (!(hasLowercase && hasUppercase && hasDigit && hasSpecial)) {
         return {
             isValid: false,
-            error: 'Mật khẩu ít nhất phải chứa một chữ cái thường, 1 chữ cái in hoa,1 số và 1 kí tự đặc biệt',
+            error: 'Mật khẩu ít nhất phải chứa một chữ cái thường, 1 chữ cái in hoa, 1 số và 1 kí tự đặc biệt',
         };
     }
 

@@ -6,7 +6,7 @@ import lockIcon from '../../../assets/icons/icon_lock.png';
 import Notification from '../../../components/Common/Notification/Notification';
 import iconVisible from '../../../assets/icons/icon-visible.png';
 import iconInvisible from '../../../assets/icons/icon-invisible.png';
-import { changePassword } from '../../../services';
+import { changePassword, validatePassword } from '../../../services';
 
 const cx = classNames.bind(styles);
 
@@ -49,10 +49,13 @@ export default function CustomerChangePasswordPage() {
             setNotif({ open: true, type: 'error', title: 'Thiếu thông tin', message: 'Vui lòng nhập đủ các trường', duration: 3000 });
             return;
         }
-        if (newPassword !== confirmPassword) {
-            setNotif({ open: true, type: 'error', title: 'Không khớp', message: 'Mật khẩu xác nhận không khớp', duration: 3000 });
+
+        const validation = validatePassword(newPassword, confirmPassword);
+        if (!validation.isValid) {
+            setNotif({ open: true, type: 'error', title: 'Mật khẩu không hợp lệ', message: validation.error, duration: 4000 });
             return;
         }
+
         try {
             setLoading(true);
             const tk = (typeof token === 'string' ? token : null) || getStoredToken();
