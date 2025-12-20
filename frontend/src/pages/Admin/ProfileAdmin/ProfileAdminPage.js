@@ -8,6 +8,7 @@ import {
     updateUser,
     changePassword,
     uploadMediaProfile,
+    validatePassword,
 } from '../../../services';
 
 const cx = classNames.bind(styles);
@@ -188,12 +189,13 @@ function ProfileAdminPage() {
             return;
         }
 
-        if (changePasswordData.newPassword !== changePasswordData.confirmPassword) {
+        const validation = validatePassword(changePasswordData.newPassword, changePasswordData.confirmPassword);
+        if (!validation.isValid) {
             setNotif({
                 open: true,
                 type: 'error',
-                title: 'Không khớp',
-                message: 'Mật khẩu xác nhận không khớp',
+                title: 'Mật khẩu không hợp lệ',
+                message: validation.error,
                 duration: 3000,
             });
             return;
