@@ -457,7 +457,6 @@ function Home() {
                     >
                         <div className={cx('voucher-carousel-header')}>
                             <h3 className={cx('voucher-carousel-title')}>
-                                <span className={cx('title-icon')}>🎫</span>
                                 MÃ GIẢM GIÁ
                             </h3>
                         </div>

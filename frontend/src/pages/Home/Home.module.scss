@@ -117,24 +117,43 @@ $radius-full: 9999px;
 
 .voucher-carousel-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
-    padding: 0 24px 10px;
-    max-width: 1400px;
+    padding: 10px 0; // Removed side padding
+    width: 96%; // Match Flash Sale width
+    max-width: 1600px; // Match Flash Sale max-width
     margin: 0 auto;
 }
 
 .voucher-carousel-title {
     margin: 0;
-    font-size: 0.95rem;
-    font-weight: 700;
+    font-size: 1.8rem;
+    font-weight: 800; // Bold but rounded font preferred
+    font-family: 'Space Grotesk', sans-serif; // Ensure soft font
     display: flex;
     align-items: center;
-    gap: 6px;
-    color: #1a1a1a;
+    gap: 12px;
+    // New "Sunset/Fire" Gradient
+    background: linear-gradient(to right, #ff512f, #dd2476);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+    position: relative;
+    padding-left: 16px;
 
-    .title-icon {
-        font-size: 1rem;
+    // Decorative Left Accent Line
+    &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 70%;
+        width: 6px;
+        background: linear-gradient(to bottom, #ff512f, #dd2476);
+        border-radius: 4px;
     }
 }
 

@@ -17,15 +17,22 @@ $voucher-yellow: #fdd835;
     display: flex;
     flex-direction: row;
     background: #ffffff;
-    border-radius: 8px;
-    overflow: visible;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    border: 1px solid #e0e0e0;
+    border-radius: 16px; // Softer, bigger radius
+    overflow: hidden; // Ensure children respect radius
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    border: none; // Remove hard border
     cursor: pointer;
     min-width: 300px;
     max-width: 340px;
     flex-shrink: 0;
     position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    font-family: 'Space Grotesk', sans-serif; // Soft font
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
 }
 
 .voucher-ticket-left {
@@ -37,21 +44,9 @@ $voucher-yellow: #fdd835;
     justify-content: center;
     padding: 12px 6px;
     position: relative;
-
-    &::after {
-        content: '';
-        position: absolute;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        width: 1px;
-        background: repeating-linear-gradient(to bottom,
-                transparent,
-                transparent 4px,
-                #ccc 4px,
-                #ccc 8px);
-    }
+    // Border radius is handled by parent overflow: hidden
 }
+
 
 .voucher-ticket-discount {
     display: flex;
