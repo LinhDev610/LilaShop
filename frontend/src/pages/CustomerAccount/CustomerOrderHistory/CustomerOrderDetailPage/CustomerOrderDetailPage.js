@@ -166,10 +166,10 @@ const getCancellationSourceLabel = (source) => {
 const sumProductValue = (items) =>
     Array.isArray(items)
         ? items.reduce(
-              (sum, item) =>
-                  sum + Number(item.unitPrice || item.price || 0) * (item.quantity || 1),
-              0,
-          )
+            (sum, item) =>
+                sum + Number(item.unitPrice || item.price || 0) * (item.quantity || 1),
+            0,
+        )
         : 0;
 
 const buildRefundSummary = (apiOrder, mappedItems = []) => {
@@ -192,10 +192,10 @@ const buildRefundSummary = (apiOrder, mappedItems = []) => {
         0,
         Math.round(
             apiOrder.refundSecondShippingFee ??
-                apiOrder.refundReturnFee ??
-                apiOrder.estimatedReturnShippingFee ??
-                apiOrder.shippingFee ??
-                0,
+            apiOrder.refundReturnFee ??
+            apiOrder.estimatedReturnShippingFee ??
+            apiOrder.shippingFee ??
+            0,
         ),
     );
     const returnPenalty = Math.max(0, Math.round(apiOrder.refundPenaltyAmount ?? 0));
@@ -225,12 +225,13 @@ const mapOrderFromApi = (apiOrder) => {
     // Map items từ API response
     const items = Array.isArray(apiOrder.items)
         ? apiOrder.items.map((item, index) => ({
-              id: item.id || String(index),
-              name: item.name || 'Sản phẩm',
-              quantity: item.quantity || 1,
-              price: item.unitPrice || 0,
-              image: item.imageUrl || 'https://via.placeholder.com/80x100',
-          }))
+            id: item.id || String(index),
+            name: item.name || 'Sản phẩm',
+            quantity: item.quantity || 1,
+            price: item.unitPrice || 0,
+            image: item.imageUrl || 'https://via.placeholder.com/80x100',
+            productId: item.productId || item.product?.id || null,
+        }))
         : [];
 
     const orderDateValue = apiOrder.orderDateTime || apiOrder.orderDate || null;
@@ -406,8 +407,7 @@ function OrderDetailPage() {
             } catch (err) {
                 console.error('CustomerOrderDetail: Lỗi khi tải chi tiết đơn hàng:', err);
                 setError(
-                    `Không thể tải chi tiết đơn hàng từ server: ${
-                        err.message || 'Lỗi không xác định'
+                    `Không thể tải chi tiết đơn hàng từ server: ${err.message || 'Lỗi không xác định'
                     }.`,
                 );
             } finally {
@@ -472,10 +472,10 @@ function OrderDetailPage() {
             setOrder((prev) =>
                 prev
                     ? {
-                          ...prev,
-                          status: 'CANCELLED',
-                          rawStatus: 'CANCELLED',
-                      }
+                        ...prev,
+                        status: 'CANCELLED',
+                        rawStatus: 'CANCELLED',
+                    }
                     : prev,
             );
             navigate('/customer-account/orders?tab=cancelled');
@@ -517,8 +517,8 @@ function OrderDetailPage() {
         rejectionSourceRaw === 'STAFF'
             ? 'Nhân viên kiểm tra'
             : rejectionSourceRaw === 'CS'
-            ? 'CSKH'
-            : 'Hệ thống';
+                ? 'CSKH'
+                : 'Hệ thống';
     const cancellationReason = order?.cancellationReason || '';
     const cancellationSourceLabel = order?.cancellationSource || '';
 
@@ -788,74 +788,85 @@ function OrderDetailPage() {
                         </button>
                     )}
                     {order.status === 'DELIVERED' && (
-                        <button
-                            className={cx('contact-btn')}
-                            onClick={() =>
-                                navigate(
-                                    `/customer-account/orders/${
-                                        order.id || order.code
-                                    }/refund`,
-                                    {
-                                        state: {
-                                            orderCode: order.code,
-                                            orderId: order.id,
-                                        },
-                                    },
-                                )
-                            }
-                        >
-                            Trả hàng/ Hoàn tiền
-                        </button>
-                    )}
-                    {(order.status === 'RETURN_REQUESTED' ||
-                        order.rawStatus === 'RETURN_REQUESTED') && (
-                        <button
-                            className={cx('contact-btn', 'refund-detail-btn')}
-                            onClick={() =>
-                                navigate(
-                                    `/customer-account/orders/${
-                                        order.id || order.code
-                                    }/refund-detail`,
-                                )
-                            }
-                        >
-                            Xem yêu cầu hoàn tiền
-                        </button>
-                    )}
-                    {(order.status === 'RETURN_REJECTED' ||
-                        order.rawStatus === 'RETURN_REJECTED') && (
                         <>
-
+                            {order.items && order.items.length > 0 && order.items[0]?.productId && (
+                                <button
+                                    className={cx('contact-btn', 'review-btn')}
+                                    onClick={() => {
+                                        // Điều hướng đến trang chi tiết sản phẩm đầu tiên trong đơn hàng
+                                        const firstProductId = order.items[0].productId;
+                                        navigate(`/product/${firstProductId}`);
+                                    }}
+                                >
+                                    Đánh giá sản phẩm
+                                </button>
+                            )}
                             <button
-                                className={cx('contact-btn', 'cancel-btn')}
-                                disabled={cancelling}
-                                onClick={handleCancelOrder}
-                            >
-                                {cancelling ? 'Đang hủy...' : 'Hủy đơn hàng'}
-                            </button>
-                            
-                            <button
-                                className={cx('contact-btn', 'resubmit-btn')}
+                                className={cx('contact-btn')}
                                 onClick={() =>
                                     navigate(
-                                        `/customer-account/orders/${
-                                            order.id || order.code
+                                        `/customer-account/orders/${order.id || order.code
                                         }/refund`,
                                         {
                                             state: {
                                                 orderCode: order.code,
                                                 orderId: order.id,
-                                                isResubmit: true,
                                             },
                                         },
                                     )
                                 }
                             >
-                                Sửa lại và gửi lại yêu cầu
+                                Trả hàng/ Hoàn tiền
                             </button>
-                            
                         </>
                     )}
+                    {(order.status === 'RETURN_REQUESTED' ||
+                        order.rawStatus === 'RETURN_REQUESTED') && (
+                            <button
+                                className={cx('contact-btn', 'refund-detail-btn')}
+                                onClick={() =>
+                                    navigate(
+                                        `/customer-account/orders/${order.id || order.code
+                                        }/refund-detail`,
+                                    )
+                                }
+                            >
+                                Xem yêu cầu hoàn tiền
+                            </button>
+                        )}
+                    {(order.status === 'RETURN_REJECTED' ||
+                        order.rawStatus === 'RETURN_REJECTED') && (
+                            <>
+
+                                <button
+                                    className={cx('contact-btn', 'cancel-btn')}
+                                    disabled={cancelling}
+                                    onClick={handleCancelOrder}
+                                >
+                                    {cancelling ? 'Đang hủy...' : 'Hủy đơn hàng'}
+                                </button>
+
+                                <button
+                                    className={cx('contact-btn', 'resubmit-btn')}
+                                    onClick={() =>
+                                        navigate(
+                                            `/customer-account/orders/${order.id || order.code
+                                            }/refund`,
+                                            {
+                                                state: {
+                                                    orderCode: order.code,
+                                                    orderId: order.id,
+                                                    isResubmit: true,
+                                                },
+                                            },
+                                        )
+                                    }
+                                >
+                                    Sửa lại và gửi lại yêu cầu
+                                </button>
+
+                            </>
+                        )}
                 </div>
                 <CancelOrderDialog
                     open={showCancelDialog}

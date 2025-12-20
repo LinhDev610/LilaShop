@@ -855,6 +855,60 @@ export async function deleteReview(reviewId, token = null) {
     return { ok, status, data: extractResult(data) };
 }
 
+/**
+ * Kiểm tra xem khách hàng có thể đánh giá sản phẩm không (đã mua và đã giao)
+ * @param {string} productId - ID của sản phẩm
+ * @param {string} token - Authentication token
+ * @returns {Promise<boolean>} - true nếu khách hàng có thể đánh giá, false nếu không
+ */
+export async function canReviewProduct(productId, token = null) {
+    if (!productId) return false;
+
+    try {
+        const tokenToUse = token || getStoredToken('token');
+        if (!tokenToUse) return false;
+
+        const { data } = await apiRequest(orders.myOrders, { token: tokenToUse });
+        const ordersList = extractResult(data, true) || [];
+
+        // Lọc các đơn hàng đã giao (DELIVERED)
+        const deliveredOrders = ordersList.filter(order => {
+            const status = String(order.status || '').toUpperCase();
+            return status === 'DELIVERED';
+        });
+
+        // Kiểm tra xem có đơn hàng nào chứa sản phẩm này không
+        // Vì OrderResponse không có items, cần gọi API chi tiết cho từng đơn hàng
+        for (const order of deliveredOrders) {
+            try {
+                const orderId = order.id || order.code;
+                if (!orderId) continue;
+
+                const { data: orderDetailData } = await apiRequest(orders.detail(orderId), { token: tokenToUse });
+                const orderDetail = extractResult(orderDetailData);
+
+                if (orderDetail && Array.isArray(orderDetail.items)) {
+                    for (const item of orderDetail.items) {
+                        const itemProductId = item.productId || item.product?.id;
+                        if (itemProductId === productId) {
+                            return true;
+                        }
+                    }
+                }
+            } catch (err) {
+                // Bỏ qua lỗi khi gọi API chi tiết đơn hàng, tiếp tục với đơn hàng tiếp theo
+                console.warn(`Error fetching order detail ${order.id}:`, err);
+                continue;
+            }
+        }
+
+        return false;
+    } catch (error) {
+        console.error('Error checking review eligibility:', error);
+        return false;
+    }
+}
+
 // ========== CART API ==========
 export async function addCartItem(productId, quantity, token = null, variantId = null) {
     const url = `/cart/items?productId=${encodeURIComponent(productId)}&quantity=${quantity}${variantId ? `&variantId=${encodeURIComponent(variantId)}` : ''
