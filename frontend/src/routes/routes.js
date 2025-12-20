@@ -163,7 +163,7 @@ const privateRoutes = [
     { path: '/admin/content', component: ManageContentPage, layout: AdminLayout },
     { path: '/admin/content/:id', component: ContentDetailPage, layout: AdminLayout },
     {
-        path: '/admin/content/:id/books',
+        path: '/admin/content/:id/products',
         component: BannerBookListPage,
         layout: AdminLayout,
     },
@@ -197,7 +197,7 @@ const privateRoutes = [
     { path: '/staff/content/add-banner', component: AddBannerPage, layout: StaffLayout },
     { path: '/staff/content/:id', component: BannerDetailPage, layout: StaffLayout },
     { path: '/staff/content/:id/edit', component: UpdateContentPage, layout: StaffLayout },
-    { path: '/staff/content/:id/books', component: BannerBookListPage, layout: StaffLayout },
+    { path: '/staff/content/:id/products', component: BannerBookListPage, layout: StaffLayout },
 
     { path: '/staff/vouchers', component: VouchersPromotionsPage, layout: StaffLayout },
     { path: '/staff/vouchers-promotions', component: VouchersPromotionsPage, layout: StaffLayout },

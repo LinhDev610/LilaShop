@@ -537,7 +537,7 @@ export default function MangageOrderDetailPage() {
                         <table className={cx('itemsTable')}>
                             <thead>
                                 <tr>
-                                    <th>Tên sách</th>
+                                    <th>Tên sản phẩm</th>
                                     <th>Số lượng</th>
                                     <th>Giá</th>
                                     <th>Thành tiền</th>

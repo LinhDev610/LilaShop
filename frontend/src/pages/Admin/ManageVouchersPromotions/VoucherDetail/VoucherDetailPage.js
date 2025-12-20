@@ -407,7 +407,7 @@ function VoucherDetailPage() {
                     {/* 5. Danh mục mỹ phẩm áp dụng - chỉ hiện khi chọn "Theo danh mục mỹ phẩm" */}
                     {voucher.applyScope === 'CATEGORY' && !isOrderByMinValue && (
                         <div className={cx('form-group')}>
-                            <label className={cx('form-label')}>Loại sách áp dụng</label>
+                            <label className={cx('form-label')}>Loại sản phẩm áp dụng</label>
                             <select className={cx('form-select')} value={voucher.categoryIds?.[0] || ''} readOnly>
                                 <option value="">-- Chọn danh mục mỹ phẩm --</option>
                                 {categories.map((category) => (
@@ -422,7 +422,7 @@ function VoucherDetailPage() {
                     {/* Tên sản phẩm cụ thể - chỉ hiện khi chọn "Theo sản phẩm cụ thể" */}
                     {voucher.applyScope === 'PRODUCT' && !isOrderByMinValue && (
                         <div className={cx('form-group')}>
-                            <label className={cx('form-label')}>Tên sách cụ thể</label>
+                            <label className={cx('form-label')}>Tên sản phẩm cụ thể</label>
                             <div className={cx('product-list')}>
                                 {productNames.length > 0 ? (
                                     <div className={cx('product-names')}>

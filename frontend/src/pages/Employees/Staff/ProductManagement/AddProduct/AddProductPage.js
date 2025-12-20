@@ -1006,7 +1006,7 @@ export default function AddProductPage() {
                             <div className={cx('row')}>
                                 <label>Mã sản phẩm</label>
                                 <input
-                                    placeholder="VD: BK001"
+                                    placeholder="VD: SP001"
                                     value={productId}
                                     onChange={(e) => handleProductIdInput(e.target.value)}
                                 />

@@ -191,7 +191,7 @@ function AddCategoryPage() {
                             <input
                                 type="text"
                                 className={cx('form-input', { error: errors.name })}
-                                placeholder="VD: Sách Giáo Khoa"
+                                placeholder="VD: Chăm sóc da"
                                 value={formData.name}
                                 onChange={(e) => handleInputChange('name', e.target.value)}
                             />
@@ -202,7 +202,7 @@ function AddCategoryPage() {
                             <label className={cx('form-label')}>Mô tả</label>
                             <textarea
                                 className={cx('form-textarea', { error: errors.description })}
-                                placeholder="VD: Danh mục chứa các sách giáo khoa phổ thông."
+                                placeholder="VD: Danh mục chứa các sản phẩm chăm sóc da."
                                 value={formData.description}
                                 onChange={(e) => handleInputChange('description', e.target.value)}
                                 rows={4}

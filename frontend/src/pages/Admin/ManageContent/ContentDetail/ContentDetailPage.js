@@ -119,11 +119,11 @@ export default function ContentDetailPage() {
             }
 
             notifySuccess('Đã duyệt banner thành công!');
-            
+
             // Gửi thông báo cho nhân viên
             const bannerName = updateData?.result?.name || updateData?.name || banner?.name || 'Banner';
             await notifyStaffOnApproval('banner', bannerName, token);
-            
+
             setTimeout(() => {
                 navigate('/admin/content');
             }, 1500);
@@ -173,7 +173,7 @@ export default function ContentDetailPage() {
 
             // Sử dụng dữ liệu từ update response nếu có, nếu không thì fetch lại
             let bannerData = updateData?.result;
-            
+
             if (!bannerData || !bannerData.rejectionReason) {
                 // Fetch lại banner để lấy dữ liệu mới nhất từ server
                 const fetchResponse = await fetch(`${API_BASE_URL}/banners/${id}`, {
@@ -224,7 +224,7 @@ export default function ContentDetailPage() {
             const reason = rejectReason;
             setRejectReason('');
             notifySuccess('Đã từ chối banner');
-            
+
             // Gửi thông báo cho nhân viên
             const bannerName = bannerData?.title || banner?.title || 'Banner';
             await notifyStaffOnRejection('banner', bannerName, reason, token);
@@ -261,11 +261,11 @@ export default function ContentDetailPage() {
             }
 
             notifySuccess('Đã xóa banner thành công!');
-            
+
             // Gửi thông báo cho nhân viên
             const bannerName = banner?.title || 'Banner';
             await notifyStaffOnDelete('banner', bannerName, token);
-            
+
             setTimeout(() => {
                 navigate('/admin/content');
             }, 1500);
@@ -412,10 +412,10 @@ export default function ContentDetailPage() {
                         {banner.productIds && banner.productIds.length > 0 ? (
                             <button
                                 type="button"
-                                onClick={() => navigate(`/admin/content/${id}/books`)}
+                                onClick={() => navigate(`/admin/content/${id}/products`)}
                                 className={cx('product-link')}
                             >
-                                Xem danh sách sách
+                                Xem danh sách sản phẩm
                             </button>
                         ) : (
                             '-'

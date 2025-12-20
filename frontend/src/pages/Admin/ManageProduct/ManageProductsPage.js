@@ -11,7 +11,7 @@ const cx = classNames.bind(styles);
 function ManageProductsPage() {
     // ========== Constants ==========
     const navigate = useNavigate();
-    const productSearchPlaceholder = 'Tìm kiếm theo mã đơn, tên sản phẩm,......';
+    const productSearchPlaceholder = 'Tìm kiếm theo mã sản phẩm, tên sản phẩm,......';
     const statusOptions = [
         { value: 'all', label: 'Tất cả trạng thái' },
         { value: 'Chờ duyệt', label: 'Chờ duyệt' },

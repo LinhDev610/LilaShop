@@ -26,8 +26,8 @@ export default function NewProductPage() {
         setCurrentPage(1);
     }, [sortBy]);
 
-    // Lọc sách mới phát hành (trong 30 ngày gần đây)
-    const newBooks = useMemo(() => {
+    // Lọc sản phẩm mới phát hành (trong 30 ngày gần đây)
+    const newProducts = useMemo(() => {
         if (!allProducts.length) return [];
 
         const now = new Date();
@@ -45,9 +45,9 @@ export default function NewProductPage() {
 
     // Sắp xếp sản phẩm dựa trên sortBy
     const sortedProducts = useMemo(() => {
-        if (!newBooks.length) return [];
+        if (!newProducts.length) return [];
 
-        const sorted = [...newBooks];
+        const sorted = [...newProducts];
 
         switch (sortBy) {
             case 'price-high':
@@ -89,7 +89,7 @@ export default function NewProductPage() {
         }
 
         return sorted;
-    }, [newBooks, sortBy]);
+    }, [newProducts, sortBy]);
 
     // Pagination logic
     const totalPages = Math.ceil(sortedProducts.length / ITEMS_PER_PAGE);
@@ -113,7 +113,7 @@ export default function NewProductPage() {
                 }
             } catch (err) {
                 if (!ignore) {
-                    setError('Không thể tải dữ liệu sách. Vui lòng thử lại sau.');
+                    setError('Không thể tải dữ liệu sản phẩm. Vui lòng thử lại sau.');
                     setAllProducts([]);
                 }
             } finally {
@@ -160,15 +160,15 @@ export default function NewProductPage() {
     return (
         <div className={cxHome('home-wrapper')}>
             <main className={cxHome('home-content')}>
-                {loading && renderStateCard('Đang tải dữ liệu sách...')}
+                {loading && renderStateCard('Đang tải dữ liệu sản phẩm...')}
 
                 {!loading && error && renderStateCard(error, true)}
 
-                {!loading && !error && newBooks.length === 0 && (
-                    renderStateCard('Hiện tại không có sách mới phát hành nào.')
+                {!loading && !error && newProducts.length === 0 && (
+                    renderStateCard('Hiện tại không có sản phẩm mới phát hành nào.')
                 )}
 
-                {!loading && !error && newBooks.length > 0 && (
+                {!loading && !error && newProducts.length > 0 && (
                     <>
                         {/* Sort Bar */}
                         <div className={cxCategory('filter-bar')}>
@@ -192,7 +192,7 @@ export default function NewProductPage() {
 
                         {/* Hiển thị sách mới phát hành */}
                         {renderSection(
-                            'SÁCH MỚI PHÁT HÀNH',
+                            'SẢN PHẨM MỚI PHÁT HÀNH',
                             iconFire,
                             null,
                             paginatedProducts,

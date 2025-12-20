@@ -1,12 +1,12 @@
 /* Mỹ phẩm Mới đang dùng lại toàn bộ style của Home.module.scss.
-   File này để dành cho tuỳ biến riêng cho sách mới (nếu cần sau này). */
+   File này để dành cho tuỳ biến riêng cho sản phẩm mới (nếu cần sau này). */
 
 .newproduct-header {
     display: flex;
     align-items: center;
     gap: 14px;
     background: #1e40af;
-    /* Blue color for new books */
+    /* Blue color for new products */
     padding: 16px 24px;
     /* larger height */
     border-radius: 10px 10px 0 0;
@@ -42,19 +42,19 @@
     /* đảm bảo con không tràn bo góc */
 }
 
-/* Biến thể header màu cam (sách sắp phát hành) */
+/* Biến thể header màu cam (sản phẩm sắp phát hành) */
 .header-orange {
     background: #ea580c;
     /* orange */
 }
 
-/* Biến thể header màu xanh dương (sách bán chạy) */
+/* Biến thể header màu xanh dương (sản phẩm bán chạy) */
 .header-blue {
     background: #2563eb;
     /* blue */
 }
 
-/* Biến thể header màu xanh lá (sách nổi bật) */
+/* Biến thể header màu xanh lá (sản phẩm nổi bật) */
 .header-green {
     background: #16a34a;
     /* green */

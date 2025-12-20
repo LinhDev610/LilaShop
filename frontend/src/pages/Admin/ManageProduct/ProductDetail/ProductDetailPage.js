@@ -467,7 +467,7 @@ function ProductDetailPage() {
                             </div>
                             {product.size && (
                                 <div className={cx('info-row')}>
-                                    <span className={cx('info-label')}>Kích thước sách:</span>
+                                    <span className={cx('info-label')}>Kích thước sản phẩm:</span>
                                     <span className={cx('info-value')}>
                                         {product.size}
                                     </span>

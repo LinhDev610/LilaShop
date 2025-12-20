@@ -132,9 +132,9 @@ export default function BannerListPage() {
                     ) : products.length === 0 ? (
                         <div className={cx('empty')}>Không có sản phẩm nào</div>
                     ) : (
-                        <ol className={cx('book-list')}>
+                        <ol className={cx('product-list')}>
                             {products.map((p, idx) => (
-                                <li key={String(p.id || idx)} className={cx('book-item')}>
+                                <li key={String(p.id || idx)} className={cx('product-item')}>
                                     <span className={cx('index')}>{idx + 1}.</span>
                                     <span className={cx('name')}>{p.name || p.title || 'Sản phẩm'}</span>
                                 </li>

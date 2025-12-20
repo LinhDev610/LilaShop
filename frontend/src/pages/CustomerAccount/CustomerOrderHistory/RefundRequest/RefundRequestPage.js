@@ -49,14 +49,14 @@ export default function RefundRequestPage() {
     const { id } = useParams();
     const orderCode = location.state?.orderCode || '';
     const { success: showSuccess, error: showError } = useNotification();
-    
+
     const [step, setStep] = useState(1); // 1: Select reason, 2: Fill form
     const [selectedReasonType, setSelectedReasonType] = useState(null); // 'store' or 'customer'
     const [order, setOrder] = useState(null);
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [attachedFiles, setAttachedFiles] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
-    
+
     const [formData, setFormData] = useState({
         customerName: '',
         description: '',
@@ -68,7 +68,7 @@ export default function RefundRequestPage() {
         accountNumber: '',
         accountHolder: '',
     });
-    
+
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -95,7 +95,7 @@ export default function RefundRequestPage() {
             try {
                 setLoading(true);
                 const apiBaseUrl = getApiBaseUrl();
-                
+
                 // Fetch user info
                 const userInfo = await getMyInfo(token);
                 if (userInfo) {
@@ -138,19 +138,19 @@ export default function RefundRequestPage() {
                     if (orderResp.ok) {
                         const orderData = await orderResp.json();
                         const rawOrder = orderData?.result || orderData;
-                        
+
                         if (rawOrder) {
                             const items = Array.isArray(rawOrder.items)
                                 ? rawOrder.items.map((item, index) => ({
-                                      id: item.id || String(index),
-                                      productId: item.productId || item.product?.id,
-                                      name: item.name || item.product?.name || 'Sản phẩm',
-                                      quantity: item.quantity || 1,
-                                      unitPrice: item.unitPrice || item.unit_price || 0,
-                                      totalPrice: (item.totalPrice || item.finalPrice || item.unitPrice || 0) * (item.quantity || 1),
-                                      image: item.imageUrl || item.product?.defaultMedia?.mediaUrl || 'https://via.placeholder.com/80x100',
-                                      productCode: item.productCode || item.product?.code || `SP${String(index + 1).padStart(3, '0')}`,
-                                  }))
+                                    id: item.id || String(index),
+                                    productId: item.productId || item.product?.id,
+                                    name: item.name || item.product?.name || 'Sản phẩm',
+                                    quantity: item.quantity || 1,
+                                    unitPrice: item.unitPrice || item.unit_price || 0,
+                                    totalPrice: (item.totalPrice || item.finalPrice || item.unitPrice || 0) * (item.quantity || 1),
+                                    image: item.imageUrl || item.product?.defaultMedia?.mediaUrl || 'https://via.placeholder.com/80x100',
+                                    productCode: item.productCode || item.product?.code || `SP${String(index + 1).padStart(3, '0')}`,
+                                }))
                                 : [];
 
                             setOrder({
@@ -164,12 +164,12 @@ export default function RefundRequestPage() {
                             // Nếu đơn đã bị từ chối (RETURN_REJECTED), load dữ liệu cũ
                             if (rawOrder.status === 'RETURN_REJECTED') {
                                 setIsRejected(true);
-                                
+
                                 // Parse lý do từ chối từ nhiều nguồn
-                                let parsedRejectionReason = rawOrder.refundRejectionReason || 
-                                                           rawOrder.refund_rejection_reason || 
-                                                           '';
-                                
+                                let parsedRejectionReason = rawOrder.refundRejectionReason ||
+                                    rawOrder.refund_rejection_reason ||
+                                    '';
+
                                 // Nếu không có refundRejectionReason, parse từ note field
                                 // Format: "Yêu cầu hoàn tiền đã bị từ chối. Lý do: ..."
                                 if (!parsedRejectionReason && rawOrder.note) {
@@ -188,7 +188,7 @@ export default function RefundRequestPage() {
                                         }
                                     }
                                 }
-                                
+
                                 // Set rejection reason nếu có
                                 if (parsedRejectionReason) {
                                     setRejectionReason(parsedRejectionReason);
@@ -199,7 +199,7 @@ export default function RefundRequestPage() {
                                     setSelectedReasonType(rawOrder.refundReasonType);
                                     setStep(2); // Chuyển thẳng sang step 2
                                 }
-                                
+
                                 // Load selected products
                                 if (rawOrder.refundSelectedProductIds) {
                                     try {
@@ -236,7 +236,7 @@ export default function RefundRequestPage() {
                                             // Normalize URLs để hiển thị đúng
                                             const apiBaseUrl = getApiBaseUrl();
                                             const baseUrlForStatic = apiBaseUrl.replace('/api', '');
-                                            
+
                                             // Set previews từ URLs (không upload lại)
                                             setImagePreviews(mediaUrls.map((url, idx) => {
                                                 const normalizedUrl = normalizeMediaUrl(url, baseUrlForStatic);
@@ -285,7 +285,7 @@ export default function RefundRequestPage() {
     };
 
     const handleProductToggle = (productId) => {
-        setSelectedProducts(prev => 
+        setSelectedProducts(prev =>
             prev.includes(productId)
                 ? prev.filter(id => id !== productId)
                 : [...prev, productId]
@@ -295,7 +295,7 @@ export default function RefundRequestPage() {
     const handleFileChange = (e) => {
         const newFiles = Array.from(e.target.files);
         const remainingSlots = 5 - attachedFiles.length;
-        
+
         if (remainingSlots <= 0) {
             e.target.value = ''; // Reset input
             return;
@@ -352,7 +352,7 @@ export default function RefundRequestPage() {
                 if (imageToRemove.url && imageToRemove.url.startsWith('blob:')) {
                     URL.revokeObjectURL(imageToRemove.url);
                 }
-                setAttachedFiles(prevFiles => 
+                setAttachedFiles(prevFiles =>
                     prevFiles.filter(file => file !== imageToRemove.file)
                 );
             }
@@ -494,12 +494,12 @@ export default function RefundRequestPage() {
 
             // Step 1: Upload media files if any
             let mediaUrls = [];
-            
+
             // Lấy existing media URLs từ imagePreviews (nếu có URL từ lần trước)
             const existingMediaUrls = imagePreviews
                 .filter(preview => preview.url && !preview.file) // Chỉ lấy URLs, không phải files mới
                 .map(preview => preview.url);
-            
+
             // Upload files mới nếu có
             if (attachedFiles.length > 0) {
                 try {
@@ -537,7 +537,7 @@ export default function RefundRequestPage() {
             }
 
             // Also include note for backward compatibility
-            const reasonText = selectedReasonType === 'store' 
+            const reasonText = selectedReasonType === 'store'
                 ? 'Sản phẩm gặp sự cố từ cửa hàng'
                 : 'Thay đổi nhu cầu / Mua nhầm';
             const contentParts = [
@@ -613,8 +613,8 @@ export default function RefundRequestPage() {
                         <div className={cx('conditions-box')}>
                             <h3 className={cx('conditions-title')}>Điều kiện áp dụng trả hàng</h3>
                             <ul className={cx('conditions-list')}>
-                                <li>Yêu cầu gửi trong vòng 7 ngày kể từ khi nhận sách.</li>
-                                <li>Sách còn nguyên trạng (không rách, không viết/đánh dấu).</li>
+                                <li>Yêu cầu gửi trong vòng 7 ngày kể từ khi nhận sản phẩm.</li>
+                                <li>Sản phẩm còn nguyên trạng (không rách, không viết/đánh dấu).</li>
                                 <li>Cung cấp ảnh/video làm bằng chứng.</li>
                             </ul>
                         </div>
@@ -623,7 +623,7 @@ export default function RefundRequestPage() {
                         <div className={cx('reason-section')}>
                             <h2 className={cx('section-title')}>Lý do trả hàng / hoàn tiền</h2>
                             <div className={cx('reason-cards')}>
-                                <div 
+                                <div
                                     className={cx('reason-card', { selected: selectedReasonType === 'store' })}
                                     onClick={() => handleReasonSelect('store')}
                                 >
@@ -634,7 +634,7 @@ export default function RefundRequestPage() {
                                     <button className={cx('reason-badge', 'free')}>Miễn phí trả hàng</button>
                                 </div>
 
-                                <div 
+                                <div
                                     className={cx('reason-card', { selected: selectedReasonType === 'customer' })}
                                     onClick={() => handleReasonSelect('customer')}
                                 >
@@ -680,8 +680,8 @@ export default function RefundRequestPage() {
                                 <div className={cx('conditions-box')}>
                                     <h3 className={cx('conditions-title')}>Điều kiện áp dụng trả hàng</h3>
                                     <ul className={cx('conditions-list')}>
-                                        <li>Yêu cầu gửi trong vòng 7 ngày kể từ khi nhận sách.</li>
-                                        <li>Sách còn nguyên trạng (không rách, không viết/đánh dấu).</li>
+                                        <li>Yêu cầu gửi trong vòng 7 ngày kể từ khi nhận sản phẩm.</li>
+                                        <li>Sản phẩm còn nguyên trạng (không rách, không viết/đánh dấu).</li>
                                         <li>Cung cấp ảnh/video làm bằng chứng.</li>
                                     </ul>
                                 </div>
@@ -690,7 +690,7 @@ export default function RefundRequestPage() {
                                 <div className={cx('reason-section')} data-field="reasonType">
                                     <h2 className={cx('section-title')}>Lý do trả hàng / hoàn tiền</h2>
                                     <div className={cx('reason-cards')}>
-                                        <div 
+                                        <div
                                             className={cx('reason-card', { selected: selectedReasonType === 'store' })}
                                             onClick={() => {
                                                 handleReasonSelect('store');
@@ -710,7 +710,7 @@ export default function RefundRequestPage() {
                                             <button className={cx('reason-badge', 'free')}>Miễn phí trả hàng</button>
                                         </div>
 
-                                        <div 
+                                        <div
                                             className={cx('reason-card', { selected: selectedReasonType === 'customer' })}
                                             onClick={() => {
                                                 handleReasonSelect('customer');
@@ -780,7 +780,7 @@ export default function RefundRequestPage() {
                                     />
                                     <span className={cx('file-button')}>Chọn tệp</span>
                                     <span className={cx('file-text')}>
-                                        {imagePreviews.length > 0 
+                                        {imagePreviews.length > 0
                                             ? `${imagePreviews.length}/5 tệp đã chọn`
                                             : 'Chưa có tệp nào được chọn'}
                                     </span>
@@ -804,8 +804,8 @@ export default function RefundRequestPage() {
                                                     <>
                                                         {isVideo ? (
                                                             <div className={cx('video-wrapper')}>
-                                                                <video 
-                                                                    src={preview.url} 
+                                                                <video
+                                                                    src={preview.url}
                                                                     className={cx('preview-image', 'preview-video')}
                                                                     preload="metadata"
                                                                     muted
@@ -814,7 +814,7 @@ export default function RefundRequestPage() {
                                                                         setSelectedImagePreview(preview);
                                                                     }}
                                                                     onMouseEnter={(e) => {
-                                                                        e.target.play().catch(() => {});
+                                                                        e.target.play().catch(() => { });
                                                                     }}
                                                                     onMouseLeave={(e) => {
                                                                         e.target.pause();
@@ -831,8 +831,8 @@ export default function RefundRequestPage() {
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            <img 
-                                                                src={preview.url} 
+                                                            <img
+                                                                src={preview.url}
                                                                 alt={preview.name}
                                                                 className={cx('preview-image')}
                                                                 onClick={() => setSelectedImagePreview(preview)}
@@ -844,7 +844,7 @@ export default function RefundRequestPage() {
                                                         )}
                                                     </>
                                                 ) : (
-                                                    <div 
+                                                    <div
                                                         className={cx('preview-placeholder')}
                                                         onClick={() => {
                                                             // Nếu có file, tạo blob URL tạm thời để xem
@@ -1226,8 +1226,8 @@ export default function RefundRequestPage() {
                             ×
                         </button>
                         {selectedImagePreview.isVideo || /\.(mp4|webm|ogg|mov|avi|mkv|flv|wmv)$/i.test(selectedImagePreview.url || '') ? (
-                            <video 
-                                src={selectedImagePreview.url} 
+                            <video
+                                src={selectedImagePreview.url}
                                 controls
                                 autoPlay
                                 className={cx('image-modal-media')}
@@ -1235,8 +1235,8 @@ export default function RefundRequestPage() {
                                 Trình duyệt của bạn không hỗ trợ video.
                             </video>
                         ) : (
-                            <img 
-                                src={selectedImagePreview.url} 
+                            <img
+                                src={selectedImagePreview.url}
                                 alt={selectedImagePreview.name}
                                 className={cx('image-modal-image')}
                             />

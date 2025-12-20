@@ -531,7 +531,7 @@ export default function CheckoutDetailPage() {
                             height: Math.max(height, GHN_DEFAULT_DIMENSION),
                             weight: Math.max(weightGrams, GHN_DEFAULT_WEIGHT),
                             category: {
-                                level1: product.category?.name || 'Sách',
+                                level1: product.category?.name || 'Sản phẩm',
                             },
                         };
                     });
@@ -547,7 +547,7 @@ export default function CheckoutDetailPage() {
                             width: GHN_DEFAULT_DIMENSION,
                             height: GHN_DEFAULT_DIMENSION,
                             weight: GHN_DEFAULT_WEIGHT,
-                            category: { level1: 'Sách' },
+                            category: { level1: 'Sản phẩm' },
                         });
                     }
 
