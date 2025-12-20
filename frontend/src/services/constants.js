@@ -149,6 +149,16 @@ export const API_ROUTES = {
         verifyPayment: (orderId) => `/orders/${orderId}/verify-payment`,
         statistics: (start, end) => `/orders/statistics?start=${start}&end=${end}`,
         recent: (start, end, page = 0, size = 20) => `/orders/recent?start=${start}&end=${end}&page=${page}&size=${size}`,
+        search: (params) => {
+            const query = new URLSearchParams();
+            if (params.start) query.append('start', params.start);
+            if (params.end) query.append('end', params.end);
+            if (params.status) query.append('status', params.status);
+            if (params.search) query.append('search', params.search);
+            query.append('page', params.page || 0);
+            query.append('size', params.size || 20);
+            return `/orders/recent?${query.toString()}`;
+        },
     },
     chat: {
         send: '/chat/send',

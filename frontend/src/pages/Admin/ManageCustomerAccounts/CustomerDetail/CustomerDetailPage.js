@@ -5,10 +5,24 @@ import styles from './CustomerDetailPage.module.scss';
 import guestAvatar from '../../../../assets/icons/icon_img_guest.png';
 import Notification from '../../../../components/Common/Notification/Notification';
 import ConfirmDialog from '../../../../components/Common/ConfirmDialog/DeleteAccountDialog';
-import { getUserById, updateUser, deleteUser } from '../../../../services';
+import { getUserById, updateUser, deleteUser, searchOrders } from '../../../../services';
 
 const cx = classNames.bind(styles);
 
+const STATUS_MAP = {
+    CREATED: { label: 'Chờ thanh toán', css: 'pending' },
+    PENDING: { label: 'Chờ xác nhận', css: 'pending' },
+    CONFIRMED: { label: 'Đang xử lý', css: 'processing' },
+    PAID: { label: 'Đã thanh toán', css: 'processing' },
+    SHIPPING: { label: 'Đang giao', css: 'shipping' },
+    DELIVERED: { label: 'Đã giao', css: 'delivered' },
+    CANCELLED: { label: 'Đã hủy', css: 'cancel' },
+    RETURN_REQUESTED: { label: 'Yêu cầu trả hàng', css: 'return-requested' },
+    RETURN_CS_CONFIRMED: { label: 'CSKH đã xác nhận', css: 'return-requested' },
+    RETURN_STAFF_CONFIRMED: { label: 'Kho đã nhận', css: 'processing' },
+    REFUNDED: { label: 'Hoàn tiền thành công', css: 'refunded' },
+    RETURN_REJECTED: { label: 'Từ chối trả hàng', css: 'return-rejected' },
+};
 
 function CustomerDetailPage() {
     const navigate = useNavigate();
@@ -43,6 +57,35 @@ function CustomerDetailPage() {
         }
     }, []);
 
+    const fetchOrders = async (email) => {
+        if (!email) return;
+        try {
+            const token = getStoredToken();
+            // Fetch all recent orders for this email
+            const result = await searchOrders({ search: email, page: 0, size: 50 }, token);
+            if (result && Array.isArray(result.orders)) {
+                const mappedOrders = result.orders.map(order => {
+                    const statusConfig = STATUS_MAP[order.status] || { label: order.status, css: 'pending' };
+                    // Prioritize formatting totalAmount
+                    const total = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount);
+                    return {
+                        id: order.id,
+                        code: order.code,
+                        date: order.orderDate,
+                        total,
+                        statusText: statusConfig.label,
+                        statusClass: statusConfig.css,
+                        // Keep raw status if needed for logic
+                        rawStatus: order.status
+                    };
+                });
+                setOrders(mappedOrders);
+            }
+        } catch (err) {
+            console.error('Failed to fetch orders', err);
+        }
+    };
+
     const fetchCustomer = async () => {
         setLoading(true);
         setError(null);
@@ -62,6 +105,9 @@ function CustomerDetailPage() {
                     phoneNumber: result.phoneNumber || '',
                     address: result.address || '',
                 });
+                if (result.email) {
+                    fetchOrders(result.email);
+                }
             }
         } catch (e) {
             setError(e.message || 'Không thể tải thông tin khách hàng');
@@ -73,6 +119,7 @@ function CustomerDetailPage() {
     useEffect(() => {
         fetchCustomer();
         setOrders([]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
     const handleBack = () => {

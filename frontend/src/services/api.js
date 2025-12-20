@@ -432,6 +432,11 @@ export async function getAllOrders(token = null) {
     return extractResult(data, true);
 }
 
+export async function searchOrders(params, token = null) {
+    const { data } = await apiRequest(orders.search(params), { token });
+    return extractResult(data); // Returns OrderPageResponse object (containing orders array)
+}
+
 export async function cancelOrder(orderId, reason = '', token = null) {
     const { data, ok, status } = await apiRequest(orders.cancel(orderId), {
         method: 'POST',
