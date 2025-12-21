@@ -117,26 +117,30 @@ export default function CategoryPage() {
 
                 if (ignore) return;
 
-                setCategoryInfo(categoryData);
-                setProducts(Array.isArray(productData) ? productData : []);
-
-                // Nếu category có parentId, fetch thông tin parent category
-                if (categoryData?.parentId) {
-                    try {
-                        const parentData = await getCategoryById(categoryData.parentId).catch(() => null);
-                        if (!ignore && parentData) {
-                            setParentCategoryInfo(parentData);
-                        }
-                    } catch (err) {
-                        // Ignore error khi fetch parent category
-                        console.warn('Failed to fetch parent category:', err);
-                    }
-                }
-
-                if (!categoryData) {
+                if (!categoryData || categoryData.status === false) {
                     setError('Danh mục không tồn tại hoặc đã bị ẩn.');
-                } else if (!productData?.length) {
-                    setError('');
+                    setCategoryInfo(null);
+                    setProducts([]);
+                } else {
+                    setCategoryInfo(categoryData);
+                    setProducts(Array.isArray(productData) ? productData : []);
+
+                    // Nếu category có parentId, fetch thông tin parent category
+                    if (categoryData?.parentId) {
+                        try {
+                            const parentData = await getCategoryById(categoryData.parentId).catch(() => null);
+                            if (!ignore && parentData) {
+                                setParentCategoryInfo(parentData);
+                            }
+                        } catch (err) {
+                            // Ignore error khi fetch parent category
+                            console.warn('Failed to fetch parent category:', err);
+                        }
+                    }
+
+                    if (!productData?.length) {
+                        setError('');
+                    }
                 }
             } catch (err) {
                 if (!ignore) {

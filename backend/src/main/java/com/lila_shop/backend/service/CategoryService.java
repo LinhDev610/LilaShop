@@ -108,6 +108,17 @@ public class CategoryService {
                 .findById(categoryId)
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
 
+        // Kiểm tra nếu tên danh mục đã tồn tại (loại trừ danh mục hiện tại)
+        if (request.getName() != null && !request.getName().trim().isEmpty()) {
+            categoryRepository.findByName(request.getName())
+                    .ifPresent(existingCategory -> {
+                        // Chỉ throw error nếu danh mục hiện tại khác với danh mục đã tồn tại
+                        if (!existingCategory.getId().equals(categoryId)) {
+                            throw new AppException(ErrorCode.CATEGORY_ALREADY_EXISTS);
+                        }
+                    });
+        }
+
         // Update category using mapper
         categoryMapper.updateCategory(category, request);
         category.setUpdatedAt(LocalDateTime.now());
@@ -124,10 +135,13 @@ public class CategoryService {
             }
         }
 
-        Category savedCategory = categoryRepository.save(category);
-        log.info("Category updated: {}", categoryId);
-
-        return categoryMapper.toResponse(savedCategory);
+        try {
+            Category savedCategory = categoryRepository.save(category);
+            return categoryMapper.toResponse(savedCategory);
+        } catch (DataIntegrityViolationException e) {
+            log.error("Data integrity violation when updating category", e);
+            throw new AppException(ErrorCode.CATEGORY_ALREADY_EXISTS);
+        }
     }
 
     @Transactional
