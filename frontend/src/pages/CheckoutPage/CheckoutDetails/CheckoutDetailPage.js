@@ -31,6 +31,13 @@ import {
     GHN_DEFAULT_DIMENSION,
     GHN_DEFAULT_WEIGHT,
 } from '../../../services/constants';
+import {
+    validateVoucher,
+    filterApplicableVouchers,
+    formatPrice,
+    validateVoucherCodeFormat,
+    calculateVoucherDiscount,
+} from '../../../utils/voucherValidation';
 
 const cx = classNames.bind(styles);
 
@@ -237,6 +244,7 @@ export default function CheckoutDetailPage() {
                     imageUrl: normalizedImage,
                     currentPrice,
                     originalUnitPrice,
+                    categoryId: directProduct?.categoryId || directProduct?.category?.id || null,
                 },
             });
             return;
@@ -290,6 +298,7 @@ export default function CheckoutDetailPage() {
                         imageUrl: normalizedImage,
                         currentPrice,
                         originalUnitPrice,
+                        categoryId: product?.categoryId || product?.category?.id || null,
                     };
                     setProductMeta((prev) => ({ ...prev, ...metaMap }));
                 })
@@ -298,6 +307,7 @@ export default function CheckoutDetailPage() {
                         imageUrl: defaultProductImage,
                         currentPrice: item.unitPrice || 0,
                         originalUnitPrice: item.unitPrice || 0,
+                        categoryId: null,
                     };
                     setProductMeta((prev) => ({ ...prev, ...metaMap }));
                 });
@@ -747,61 +757,73 @@ export default function CheckoutDetailPage() {
 
         const now = new Date();
 
-        const filtered = availableVouchers.filter(voucher => {
-            // Check expiry
-            if (voucher.expiryDate && new Date(voucher.expiryDate) < now) {
-                return false;
-            }
+        const productIds = checkoutItems.map((item) => item.productId);
+        const categoryIds = checkoutItems
+            .map((item) => productMeta[item.productId]?.categoryId)
+            .filter(Boolean);
 
-            // Check minimum order value
-            if (voucher.minOrderValue && itemsSubtotal < voucher.minOrderValue) {
-                return false;
-            }
+        // Special case for direct checkout if meta not yet populated but directProduct is available
+        // (Though useEffect above should have populated it)
+        if (directCheckout && directProduct && categoryIds.length === 0) {
+            const directCatId = directProduct.categoryId || directProduct.category?.id;
+            if (directCatId) categoryIds.push(directCatId);
+        }
 
-            // Check maximum order value (if exists)
-            if (voucher.maxOrderValue && itemsSubtotal > voucher.maxOrderValue) {
-                return false;
-            }
-
-            return true;
-        });
-
-        // Sort by estimated discount (highest first)
-        filtered.sort((a, b) => {
-            const discountA = a.discountValueType === 'PERCENTAGE'
-                ? Math.min(
-                    (itemsSubtotal * a.discountValue / 100),
-                    a.maxDiscountValue || Infinity
-                )
-                : a.discountValue;
-            const discountB = b.discountValueType === 'PERCENTAGE'
-                ? Math.min(
-                    (itemsSubtotal * b.discountValue / 100),
-                    b.maxDiscountValue || Infinity
-                )
-                : b.discountValue;
-            return discountB - discountA;
+        const filtered = filterApplicableVouchers(availableVouchers, itemsSubtotal, {
+            productIds,
+            categoryIds,
         });
 
         setApplicableVouchers(filtered.slice(0, 3)); // Top 3 vouchers
     }, [availableVouchers, checkoutItems, itemsSubtotal, selectedVoucherCode]);
 
-    const formatPrice = (value) =>
-        new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND',
-        }).format(value || 0);
-
     const handleApplyVoucher = async () => {
-        const code = (voucherCodeInput || '').trim().toUpperCase();
-        if (!code) {
-            showError('Vui lòng nhập mã giảm giá');
+        // Kiểm tra định dạng mã giảm giá
+        const codeFormatCheck = validateVoucherCodeFormat(voucherCodeInput);
+        if (!codeFormatCheck.isValid) {
+            showError(codeFormatCheck.error);
             return;
         }
+        const code = codeFormatCheck.normalizedCode;
 
         if (!checkoutItems.length) {
             showError('Vui lòng chọn sản phẩm ở trang giỏ hàng trước khi áp dụng mã');
             navigate('/cart');
+            return;
+        }
+
+        if (itemsSubtotal <= 0) {
+            showError('Giá trị đơn hàng phải lớn hơn 0 để áp dụng mã giảm giá');
+            return;
+        }
+
+        // Tìm voucher trong danh sách có thể áp dụng
+        const voucherToApply = availableVouchers.find((v) => v.code === code);
+        if (!voucherToApply) {
+            showError(`Mã giảm giá "${code}" không tồn tại hoặc không khả dụng`);
+            return;
+        }
+
+        // Kiểm tra tính hợp lệ của voucher
+        const productIds = checkoutItems.map((item) => item.productId);
+        const categoryIds = checkoutItems
+            .map((item) => productMeta[item.productId]?.categoryId)
+            .filter(Boolean);
+
+        if (directCheckout && directProduct) {
+            const directCatId = directProduct.categoryId || directProduct.category?.id;
+            if (directCatId && !categoryIds.includes(directCatId)) {
+                categoryIds.push(directCatId);
+            }
+        }
+
+        const { isValid, error } = validateVoucher(voucherToApply, itemsSubtotal, {
+            productIds,
+            categoryIds,
+        });
+
+        if (!isValid) {
+            showError(error);
             return;
         }
 
@@ -850,7 +872,8 @@ export default function CheckoutDetailPage() {
             }
 
             // Regular cart-based checkout
-            const { ok, status, data } = await applyVoucherToCart(code, token);
+            // Fix: pass orderValue here too so backend knows the selected items subtotal
+            const { ok, status, data } = await applyVoucherToCart(code, token, { orderValue: itemsSubtotal });
 
             if (!ok) {
                 if (status === 401) {
@@ -1363,16 +1386,11 @@ export default function CheckoutDetailPage() {
                                                             ? `${voucher.discountValue}%`
                                                             : formatPrice(voucher.discountValue);
 
-                                                    const estimatedDiscount =
-                                                        voucher.discountValueType === 'PERCENTAGE'
-                                                            ? Math.min(
-                                                                (itemsSubtotal *
-                                                                    voucher.discountValue) /
-                                                                100,
-                                                                voucher.maxDiscountValue ||
-                                                                Infinity
-                                                            )
-                                                            : voucher.discountValue;
+                                                    // Sử dụng calculateVoucherDiscount để tính toán giá trị giảm giá
+                                                    const estimatedDiscount = calculateVoucherDiscount(
+                                                        voucher,
+                                                        itemsSubtotal,
+                                                    );
 
                                                     return (
                                                         <div

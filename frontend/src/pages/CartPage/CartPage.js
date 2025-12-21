@@ -16,6 +16,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../components/Common/Notification';
 // Fallback image for products - TODO: Replace with cosmetic product placeholder image
 import defaultProductImage from '../../assets/images/img_qc.png';
+import {
+    validateVoucher,
+    filterApplicableVouchers,
+    formatPrice,
+    validateVoucherCodeFormat,
+} from '../../utils/voucherValidation';
 
 const cx = classNames.bind(styles);
 
@@ -332,13 +338,15 @@ export default function CartPage() {
             return;
         }
 
-        const code = (voucherCode || '').trim().toUpperCase();
-        if (!code) {
-            showError('Vui lòng nhập mã giảm giá');
+        // Validate voucher code format first
+        const codeFormatCheck = validateVoucherCodeFormat(voucherCode);
+        if (!codeFormatCheck.isValid) {
+            showError(codeFormatCheck.error);
             return;
         }
+        const code = codeFormatCheck.normalizedCode;
 
-        // Validate voucher trước khi apply: kiểm tra xem voucher có trong danh sách hợp lệ không
+        // Calculate subtotal for selected items
         const selectedItemsForCheck = items.filter((item) => selectedItems.has(item.id));
         const subtotalForCheck = selectedItemsForCheck.reduce((sum, item) => {
             const meta = productMeta[item.productId] || {};
@@ -348,47 +356,32 @@ export default function CartPage() {
             return sum + (unitPrice * quantity);
         }, 0);
 
-        // Tìm voucher trong danh sách available
-        const voucherToApply = availableVouchers.find((v) => v.code === code);
-        if (voucherToApply) {
-            // Kiểm tra minOrderValue
-            if (voucherToApply.minOrderValue && subtotalForCheck < voucherToApply.minOrderValue) {
-                showError(`Mã giảm giá "${code}" chỉ áp dụng cho đơn hàng từ ${formatPrice(voucherToApply.minOrderValue)}. Đơn hàng hiện tại: ${formatPrice(subtotalForCheck)}`);
-                return;
-            }
-            // Kiểm tra maxOrderValue
-            if (voucherToApply.maxOrderValue && subtotalForCheck > voucherToApply.maxOrderValue) {
-                showError(`Mã giảm giá "${code}" chỉ áp dụng cho đơn hàng đến ${formatPrice(voucherToApply.maxOrderValue)}. Đơn hàng hiện tại: ${formatPrice(subtotalForCheck)}`);
-                return;
-            }
+        if (subtotalForCheck <= 0) {
+            showError('Giá trị đơn hàng phải lớn hơn 0 để áp dụng mã giảm giá');
+            return;
+        }
 
-            // Kiểm tra applyScope
-            const applyScope = voucherToApply.applyScope || 'ORDER';
-            if (applyScope === 'PRODUCT') {
-                const productApply = voucherToApply.productApply || [];
-                if (productApply.length > 0) {
-                    const productApplyIds = new Set(productApply.map((p) => (typeof p === 'string' ? p : p.id)));
-                    const selectedProductIds = selectedItemsForCheck.map((item) => item.productId);
-                    const hasMatchingProduct = selectedProductIds.some((id) => productApplyIds.has(id));
-                    if (!hasMatchingProduct) {
-                        showError(`Mã giảm giá "${code}" không áp dụng cho các sản phẩm đã chọn`);
-                        return;
-                    }
-                }
-            } else if (applyScope === 'CATEGORY') {
-                const categoryApply = voucherToApply.categoryApply || [];
-                if (categoryApply.length > 0) {
-                    const categoryApplyIds = new Set(categoryApply.map((c) => (typeof c === 'string' ? c : c.id)));
-                    const selectedCategoryIds = selectedItemsForCheck
-                        .map((item) => productMeta[item.productId]?.categoryId)
-                        .filter(Boolean);
-                    const hasMatchingCategory = selectedCategoryIds.some((id) => categoryApplyIds.has(id));
-                    if (!hasMatchingCategory) {
-                        showError(`Mã giảm giá "${code}" không áp dụng cho danh mục của các sản phẩm đã chọn`);
-                        return;
-                    }
-                }
-            }
+        // Find voucher in available list and validate comprehensively
+        const voucherToApply = availableVouchers.find((v) => v.code === code);
+        if (!voucherToApply) {
+            showError(`Mã giảm giá "${code}" không tồn tại hoặc không khả dụng`);
+            return;
+        }
+
+        // Kiểm tra tính hợp lệ của voucher trước khi áp dụng
+        const productIds = selectedItemsForCheck.map((item) => item.productId);
+        const categoryIds = selectedItemsForCheck
+            .map((item) => productMeta[item.productId]?.categoryId)
+            .filter(Boolean);
+
+        const { isValid, error } = validateVoucher(voucherToApply, subtotalForCheck, {
+            productIds,
+            categoryIds,
+        });
+
+        if (!isValid) {
+            showError(error);
+            return;
         }
 
         try {
@@ -490,7 +483,7 @@ export default function CartPage() {
         return { subtotal, items: selected };
     }, [cart, selectedItems, productMeta]);
 
-    // Tự động hủy voucher nếu tổng tiền các sản phẩm được chọn không còn đủ điều kiện minOrderValue
+    // Tự động hủy voucher nếu không còn đủ điều kiện
     useEffect(() => {
         if (!cart) return;
 
@@ -502,23 +495,38 @@ export default function CartPage() {
 
         // Tìm voucher hiện đang áp dụng trong danh sách vouchers đã load
         const currentVoucher = availableVouchers.find((v) => v.code === currentCode);
-        if (!currentVoucher || !currentVoucher.minOrderValue) return;
+        if (!currentVoucher) return;
 
         const subtotal = selectedItemsData.subtotal || 0;
+        if (subtotal <= 0) {
+            handleClearVoucher();
+            return;
+        }
 
-        // Nếu subtotal nhỏ hơn minOrderValue thì tự động gỡ voucher
-        if (subtotal > 0 && subtotal < currentVoucher.minOrderValue) {
+        // Validate voucher với điều kiện hiện tại
+        const items = cart?.items || [];
+        const selectedItemsForCheck = items.filter((item) => selectedItems.has(item.id));
+        const productIds = selectedItemsForCheck.map((item) => item.productId);
+        const categoryIds = selectedItemsForCheck
+            .map((item) => productMeta[item.productId]?.categoryId)
+            .filter(Boolean);
+
+        const { isValid, error } = validateVoucher(currentVoucher, subtotal, {
+            productIds,
+            categoryIds,
+        });
+
+        // Nếu voucher không còn hợp lệ, tự động gỡ
+        if (!isValid) {
             showError(
-                `Mã giảm giá ${currentCode} chỉ áp dụng cho đơn hàng từ ${formatPrice(
-                    currentVoucher.minOrderValue,
-                )}. Hệ thống đã tự động gỡ mã giảm giá vì không còn đủ điều kiện.`,
+                `Mã giảm giá ${currentCode} không còn đủ điều kiện: ${error}. Hệ thống đã tự động gỡ mã giảm giá.`,
             );
             handleClearVoucher();
         }
-    }, [cart, selectedItemsData, selectedVoucherCode, availableVouchers]);
+    }, [cart, selectedItemsData, selectedItems, selectedVoucherCode, availableVouchers, productMeta]);
 
-    const formatPrice = (price) =>
-        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price || 0);
+    // const formatPrice = (price) =>
+    //     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price || 0);
 
     const voucherDiscount = cart?.voucherDiscount || 0;
     const totalAmount = selectedItemsData.subtotal - voucherDiscount;
@@ -557,69 +565,14 @@ export default function CartPage() {
 
         if (isDev) console.log('Subtotal for voucher check:', subtotal);
 
-        const selectedProductIds = new Set(itemsToCheck.map((item) => item.productId));
-        const selectedCategoryIds = new Set();
+        const productIds = itemsToCheck.map((item) => item.productId);
+        const categoryIds = itemsToCheck
+            .map((item) => productMeta[item.productId]?.categoryId)
+            .filter(Boolean);
 
-        // Lấy categoryIds từ productMeta
-        itemsToCheck.forEach((item) => {
-            const meta = productMeta[item.productId];
-            if (meta?.categoryId) {
-                selectedCategoryIds.add(meta.categoryId);
-            }
-        });
-
-        const filtered = availableVouchers.filter((voucher) => {
-            // Kiểm tra minOrderValue
-            if (voucher.minOrderValue && subtotal < voucher.minOrderValue) {
-                if (isDev) console.log(`Voucher ${voucher.code}: REJECTED - subtotal ${subtotal} < min ${voucher.minOrderValue}`);
-                return false;
-            }
-
-            // Kiểm tra maxOrderValue
-            if (voucher.maxOrderValue && subtotal > voucher.maxOrderValue) {
-                if (isDev) console.log(`Voucher ${voucher.code}: REJECTED - subtotal ${subtotal} > max ${voucher.maxOrderValue}`);
-                return false;
-            }
-
-            // Kiểm tra applyScope
-            const applyScope = voucher.applyScope || 'ORDER';
-
-            if (applyScope === 'ORDER') {
-                return true; // Áp dụng cho toàn bộ đơn hàng
-            } else if (applyScope === 'PRODUCT') {
-                // Kiểm tra xem có sản phẩm nào trong giỏ nằm trong productApply không
-                const productApply = voucher.productApply || [];
-                if (productApply.length === 0) {
-                    // Empty productApply means applies to all products
-                    if (isDev) console.log(`Voucher ${voucher.code}: ACCEPTED - PRODUCT scope (all products)`);
-                    return true;
-                }
-
-                const productApplyIds = new Set(
-                    productApply.map((p) => (typeof p === 'string' ? p : p.id))
-                );
-                const hasMatchingProduct = Array.from(selectedProductIds).some((id) => productApplyIds.has(id));
-                if (isDev) console.log(`Voucher ${voucher.code}: ${hasMatchingProduct ? 'ACCEPTED' : 'REJECTED'} - PRODUCT scope`);
-                return hasMatchingProduct;
-            } else if (applyScope === 'CATEGORY') {
-                // Kiểm tra xem có sản phẩm nào trong giỏ thuộc categoryApply không
-                const categoryApply = voucher.categoryApply || [];
-                if (categoryApply.length === 0) {
-                    // Empty categoryApply means applies to all categories
-                    if (isDev) console.log(`Voucher ${voucher.code}: ACCEPTED - CATEGORY scope (all categories)`);
-                    return true;
-                }
-
-                const categoryApplyIds = new Set(
-                    categoryApply.map((c) => (typeof c === 'string' ? c : c.id))
-                );
-                const hasMatchingCategory = Array.from(selectedCategoryIds).some((id) => categoryApplyIds.has(id));
-                if (isDev) console.log(`Voucher ${voucher.code}: ${hasMatchingCategory ? 'ACCEPTED' : 'REJECTED'} - CATEGORY scope (categoryIds: ${Array.from(selectedCategoryIds).join(', ')})`);
-                return hasMatchingCategory;
-            }
-
-            if (isDev) console.log(`Voucher ${voucher.code}: REJECTED - Unknown scope ${applyScope}`);
-            return false;
+        const filtered = filterApplicableVouchers(availableVouchers, subtotal, {
+            productIds,
+            categoryIds,
         });
 
         if (isDev) console.log('Applicable vouchers:', filtered.map(v => v.code));
