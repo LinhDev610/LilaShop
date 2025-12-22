@@ -453,18 +453,7 @@ function ProductDetailPage() {
                                     </div>
                                 </div>
                             )}
-                            <div className={cx('info-row')}>
-                                <span className={cx('info-label')}>Tác giả:</span>
-                                <span className={cx('info-value')}>
-                                    {product.author || '-'}
-                                </span>
-                            </div>
-                            <div className={cx('info-row')}>
-                                <span className={cx('info-label')}>Nhà xuất bản:</span>
-                                <span className={cx('info-value')}>
-                                    {product.publisher || '-'}
-                                </span>
-                            </div>
+
                             {product.size && (
                                 <div className={cx('info-row')}>
                                     <span className={cx('info-label')}>Kích thước sản phẩm:</span>
@@ -505,18 +494,7 @@ function ProductDetailPage() {
                                     </span>
                                 </div>
                             )}
-                            {product.publicationDate && (
-                                <div className={cx('info-row')}>
-                                    <span className={cx('info-label')}>
-                                        Ngày xuất bản:
-                                    </span>
-                                    <span className={cx('info-value')}>
-                                        {new Date(
-                                            product.publicationDate,
-                                        ).toLocaleDateString('vi-VN')}
-                                    </span>
-                                </div>
-                            )}
+
                             {(product.length || product.width || product.height) && (
                                 <div className={cx('info-row')}>
                                     <span className={cx('info-label')}>

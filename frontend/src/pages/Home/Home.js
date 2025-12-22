@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import AdminRedirectHandler from '../../components/AdminRedirectHandler';
