@@ -322,9 +322,24 @@ export default function AddBannerPage() {
             return;
         }
 
-        // Validation đặc biệt cho Bộ sưu tập: cần có ít nhất 1 sản phẩm
         if (contentType === 'seasonal' && (!formData.productIds || formData.productIds.length === 0)) {
             notifyError('Bộ sưu tập cần có ít nhất 1 sản phẩm. Vui lòng thêm sản phẩm.');
+            return;
+        }
+
+        // Validation ngày tháng
+        if (!formData.startDate) {
+            notifyError('Vui lòng chọn ngày bắt đầu');
+            return;
+        }
+
+        if (!formData.endDate) {
+            notifyError('Vui lòng chọn ngày kết thúc');
+            return;
+        }
+
+        if (new Date(formData.endDate) <= new Date(formData.startDate)) {
+            notifyError('Ngày kết thúc phải sau ngày bắt đầu');
             return;
         }
 
