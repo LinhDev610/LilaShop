@@ -131,6 +131,7 @@ export default function AddVoucherPage() {
                     ...prev,
                     discountValueType: value,
                     maxDiscountValue: value === 'PERCENTAGE' ? prev.maxDiscountValue : '',
+                    discountValue: '', // Reset discount value when type changes to prevent invalid values
                 };
             }
             if (field === 'discountValue') {
