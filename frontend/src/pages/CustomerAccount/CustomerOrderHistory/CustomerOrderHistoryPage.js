@@ -413,7 +413,7 @@ function CustomerOrderHistoryPage() {
                             <input
                                 type="text"
                                 className={cx('search-input')}
-                                placeholder="Tìm kiếm theo mã đơn, tên sản phẩm,......"
+                                placeholder="Nhập mã đơn để tìm kiếm"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -514,7 +514,7 @@ function CustomerOrderHistoryPage() {
                                                     <p className={cx('order-total')}>
                                                         {formatCurrency(
                                                             order.refundSummary?.total ??
-                                                                order.totalAmount,
+                                                            order.totalAmount,
                                                         )}
                                                     </p>
                                                 </div>

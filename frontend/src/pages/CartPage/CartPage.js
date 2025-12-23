@@ -90,9 +90,7 @@ export default function CartPage() {
                     return;
                 }
 
-                console.log('Fetching cart with token:', token ? 'Token exists' : 'No token');
                 const { ok, status, data } = await getCart(token);
-                console.log('Cart API response:', { ok, status, data });
 
                 if (!ok) {
                     if (status === 401) {
@@ -204,13 +202,10 @@ export default function CartPage() {
                     return;
                 }
 
-                console.log('Fetching vouchers with token...');
                 const vouchers = await getActiveVouchers(token);
-                console.log('Voucher API result:', vouchers);
 
                 // getActiveVouchers đã dùng extractResult(data, true), nên trả về array trực tiếp
                 if (Array.isArray(vouchers)) {
-                    console.log('Parsed vouchers:', vouchers.length, vouchers);
                     setAvailableVouchers(vouchers);
                 } else {
                     console.warn('Voucher API did not return array:', vouchers);
@@ -525,17 +520,12 @@ export default function CartPage() {
         }
     }, [cart, selectedItemsData, selectedItems, selectedVoucherCode, availableVouchers, productMeta]);
 
-    // const formatPrice = (price) =>
-    //     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price || 0);
-
     const voucherDiscount = cart?.voucherDiscount || 0;
     const totalAmount = selectedItemsData.subtotal - voucherDiscount;
 
     // Lọc các voucher phù hợp với đơn hàng
     // Sử dụng toàn bộ giỏ hàng nếu chưa chọn sản phẩm nào, hoặc các sản phẩm đã chọn
     const applicableVouchers = useMemo(() => {
-        const isDev = process.env.NODE_ENV === 'development';
-        if (isDev) console.log('=== CALCULATING APPLICABLE VOUCHERS ===');
 
         if (!availableVouchers.length) {
             return [];
@@ -563,8 +553,6 @@ export default function CartPage() {
             return sum + (unitPrice * quantity);
         }, 0);
 
-        if (isDev) console.log('Subtotal for voucher check:', subtotal);
-
         const productIds = itemsToCheck.map((item) => item.productId);
         const categoryIds = itemsToCheck
             .map((item) => productMeta[item.productId]?.categoryId)
@@ -575,20 +563,11 @@ export default function CartPage() {
             categoryIds,
         });
 
-        if (isDev) console.log('Applicable vouchers:', filtered.map(v => v.code));
         return filtered;
     }, [availableVouchers, cart, selectedItemsData, productMeta]);
 
     // Debug log - can be removed in production
-    useEffect(() => {
-        if (process.env.NODE_ENV === 'development') {
-            console.log('=== VOUCHER SUMMARY ===');
-            console.log('Available:', availableVouchers.length);
-            console.log('Applicable:', applicableVouchers.length, applicableVouchers.map(v => v.code));
-            console.log('Subtotal:', selectedItemsData.subtotal);
-            console.log('========================');
-        }
-    }, [availableVouchers, applicableVouchers, selectedItemsData]);
+
 
     // Handle buy now
     const handleBuyNow = () => {

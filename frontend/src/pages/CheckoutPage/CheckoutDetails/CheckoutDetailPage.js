@@ -750,14 +750,13 @@ export default function CheckoutDetailPage() {
         }
 
         const filtered = filterApplicableVouchers(availableVouchers, itemsSubtotal, voucherFilterParams);
-        const top3 = filtered.slice(0, 3);
+        const allApplicable = filtered;
 
-        // Only update if the result actually changed
         setApplicableVouchers((prev) => {
-            if (prev.length !== top3.length) return top3;
+            if (prev.length !== allApplicable.length) return allApplicable;
             const prevCodes = prev.map((v) => v.code).sort().join(',');
-            const newCodes = top3.map((v) => v.code).sort().join(',');
-            if (prevCodes !== newCodes) return top3;
+            const newCodes = allApplicable.map((v) => v.code).sort().join(',');
+            if (prevCodes !== newCodes) return allApplicable;
             return prev;
         });
     }, [availableVouchers, checkoutItems, itemsSubtotal, selectedVoucherCode, voucherFilterParams]);
@@ -1364,59 +1363,58 @@ export default function CheckoutDetailPage() {
                                     )}
                                     {/* Voucher Suggestions */}
                                     {applicableVouchers.length > 0 && !selectedVoucherCode && (
-                                        <div className={cx('voucher-suggestions')}>
-                                            <h4 className={cx('suggestions-title')}>
-                                                💎 Mã giảm giá khả dụng
+                                        <div className={cx('applicable-vouchers')}>
+                                            <h4 className={cx('applicable-vouchers-title')}>
+                                                Voucher phù hợp với đơn hàng
                                             </h4>
-                                            <div className={cx('suggestions-list')}>
+                                            <div className={cx('voucher-list')}>
                                                 {applicableVouchers.map((voucher) => {
-                                                    const discountValue =
+                                                    const isSelected = selectedVoucherCode === voucher.code;
+                                                    const discountText =
                                                         voucher.discountValueType === 'PERCENTAGE'
-                                                            ? `${voucher.discountValue}%`
-                                                            : formatPrice(voucher.discountValue);
-
-                                                    // Sử dụng calculateVoucherDiscount để tính toán giá trị giảm giá
-                                                    const estimatedDiscount = calculateVoucherDiscount(
-                                                        voucher,
-                                                        itemsSubtotal,
-                                                    );
+                                                            ? `Giảm ${voucher.discountValue}%`
+                                                            : `Giảm ${formatPrice(voucher.discountValue || 0)}`;
 
                                                     return (
                                                         <div
-                                                            key={voucher.code}
-                                                            className={cx('suggestion-card')}
-                                                            onClick={() => {
-                                                                setVoucherCodeInput(voucher.code);
-                                                                // Trigger apply after setting code
-                                                                setTimeout(() => {
-                                                                    const applyBtn = document.querySelector(
-                                                                        `.${cx('voucher-apply-btn')}:not(.${cx('clear-btn')})`
-                                                                    );
-                                                                    if (applyBtn) applyBtn.click();
-                                                                }, 100);
-                                                            }}
+                                                            key={voucher.id || voucher.code}
+                                                            className={cx('voucher-item', {
+                                                                selected: isSelected,
+                                                            })}
                                                         >
-                                                            <div className={cx('suggestion-badge')}>
-                                                                {discountValue}
-                                                            </div>
-                                                            <div className={cx('suggestion-info')}>
-                                                                <div className={cx('suggestion-code')}>
-                                                                    {voucher.code}
+                                                            <div className={cx('voucher-text')}>
+                                                                <div className={cx('voucher-code-row')}>
+                                                                    <span className={cx('voucher-code')}>
+                                                                        {voucher.code}
+                                                                    </span>
+                                                                    <span className={cx('voucher-name')}>
+                                                                        {voucher.name || discountText}
+                                                                    </span>
                                                                 </div>
-                                                                {voucher.name && (
-                                                                    <div className={cx('suggestion-name')}>
-                                                                        {voucher.name}
-                                                                    </div>
+                                                                {voucher.description && (
+                                                                    <p className={cx('voucher-desc')}>
+                                                                        {voucher.description}
+                                                                    </p>
                                                                 )}
-                                                                <div className={cx('suggestion-estimate')}>
-                                                                    Giảm ~{formatPrice(estimatedDiscount)}
-                                                                </div>
+                                                                {voucher.minOrderValue && (
+                                                                    <p className={cx('voucher-desc')}>
+                                                                        Áp dụng cho đơn từ {formatPrice(voucher.minOrderValue)}
+                                                                    </p>
+                                                                )}
                                                             </div>
                                                             <button
-                                                                className={cx('suggestion-apply-btn')}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
+                                                                className={cx('select-voucher-btn', {
+                                                                    applied: isSelected,
+                                                                })}
+                                                                onClick={() => {
+                                                                    setVoucherCodeInput(voucher.code);                                                                    setTimeout(() => {
+                                                                        const applyBtn = document.querySelector(
+                                                                            `.${cx('voucher-apply-btn')}`
+                                                                        );
+                                                                        if (applyBtn) applyBtn.click();
+                                                                    }, 100);
                                                                 }}
+                                                                disabled={isSelected}
                                                             >
                                                                 Áp dụng
                                                             </button>
