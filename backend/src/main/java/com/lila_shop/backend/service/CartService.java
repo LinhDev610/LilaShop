@@ -51,11 +51,9 @@ public class CartService {
     @PreAuthorize("hasRole('CUSTOMER')")
     public Cart getCart() {
         Cart cart = getOrCreateCartForCurrentCustomer();
-        // Force load cart items to avoid lazy loading issues
         if (cart.getCartItems() != null) {
-            cart.getCartItems().size(); // Trigger lazy loading
+            cart.getCartItems().size();
         }
-        // Recalculate totals to ensure they are up to date
         recalcCartTotals(cart);
         return cart;
     }

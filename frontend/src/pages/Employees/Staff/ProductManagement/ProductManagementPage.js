@@ -43,7 +43,7 @@ export default function ProductManagementPage() {
 
     // Fetch data using custom hooks (API endpoint (backend)
     const { products: allProducts, loading, error } = useProducts({
-        endpoint: '/products/my-products',
+        endpoint: '/products',
         token,
     });
     const { activeCategoryIdSet, activeCategoryNameSet, loaded: activeLoaded } = useActiveCategories(token);
