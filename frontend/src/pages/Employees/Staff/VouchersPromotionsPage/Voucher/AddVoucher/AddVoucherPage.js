@@ -576,24 +576,7 @@ export default function AddVoucherPage() {
                             </div>
                         </div>
 
-                        {/* 3. Điều kiện áp dụng - Giá trị đơn từ (chỉ hiển thị khi không chọn "Tổng giá trị đơn hàng") */}
-                        {!isOrderByMinValue && (
-                            <div className={cx('form-group')}>
-                                <label className={cx('form-label')}>Điều kiện áp dụng</label>
-                                <div className={cx('condition-row')}>
-                                    <label className={cx('condition-label')}>Giá trị đơn từ (VNĐ):</label>
-                                    <input
-                                        type="text"
-                                        className={cx('form-input', 'condition-input')}
-                                        placeholder="VD: 400000"
-                                        value={formState.minOrderValue}
-                                        onChange={(e) => handleChange('minOrderValue', e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 4. Radio buttons: Theo danh mục mỹ phẩm / Theo sản phẩm cụ thể / Toàn sàn / Tổng giá trị đơn hàng */}
+                        {/* 3. Radio buttons: Theo danh mục mỹ phẩm / Theo sản phẩm cụ thể / Toàn sàn / Tổng giá trị đơn hàng */}
                         <div className={cx('form-group')}>
                             <div className={cx('radio-group')}>
                                 <label className={cx('radio-label')}>
@@ -632,6 +615,7 @@ export default function AddVoucherPage() {
                                         checked={formState.applyScope === 'ORDER' && !isOrderByMinValue}
                                         onChange={() => {
                                             handleChange('applyScope', 'ORDER');
+                                            handleChange('minOrderValue', '');
                                             setIsOrderByMinValue(false);
                                         }}
                                         className={cx('radio-input')}
@@ -654,6 +638,23 @@ export default function AddVoucherPage() {
                                 </label>
                             </div>
                         </div>
+
+                        {/* 4. Điều kiện áp dụng - Giá trị đơn từ (chỉ hiển thị khi không chọn "Tổng giá trị đơn hàng") */}
+                        {!isOrderByMinValue && formState.applyScope !== 'ORDER' && (
+                            <div className={cx('form-group')}>
+                                <label className={cx('form-label')}>Điều kiện áp dụng</label>
+                                <div className={cx('condition-row')}>
+                                    <label className={cx('condition-label')}>Giá trị đơn từ (VNĐ):</label>
+                                    <input
+                                        type="text"
+                                        className={cx('form-input', 'condition-input')}
+                                        placeholder="VD: 400000"
+                                        value={formState.minOrderValue}
+                                        onChange={(e) => handleChange('minOrderValue', e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         {/* 5. Danh mục mỹ phẩm áp dụng - chỉ hiện khi chọn "Theo danh mục mỹ phẩm" */}
                         {formState.applyScope === 'CATEGORY' && !isOrderByMinValue && (
