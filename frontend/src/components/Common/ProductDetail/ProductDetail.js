@@ -814,7 +814,7 @@ const ProductDetail = ({ productId }) => {
                                 <div className={styles.currentPrice}>
                                     {formatPrice(currentPrice)}
                                 </div>
-                                {originalPrice > currentPrice && (
+                                {originalPrice > currentPrice && discountPercent > 0 && (
                                     <div className={styles.priceMeta}>
                                         <span className={styles.originalPrice}>
                                             {formatPrice(originalPrice)}
