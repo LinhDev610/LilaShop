@@ -28,6 +28,9 @@ public class BannerCreationRequest {
 
     String linkUrl;
 
+    @Size(max = 50, message = "Content type không được vượt quá 50 ký tự")
+    String contentType; // 'banner', 'seasonal', 'trending'
+
     @Builder.Default
     Boolean status = true;
 

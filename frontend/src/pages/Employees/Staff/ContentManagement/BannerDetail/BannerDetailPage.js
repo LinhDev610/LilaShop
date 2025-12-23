@@ -90,6 +90,7 @@ export default function BannerDetailPage() {
                         pendingReview: detail.pendingReview === true,
                         imageUrl: detail.imageUrl || '',
                         linkUrl: detail.linkUrl || '',
+                        contentType: detail.contentType || 'banner',
                         createdByName: detail.createdByName || detail.createdBy || 'N/A',
                         createdDate: detail.createdAt
                             ? formatDateTime(detail.createdAt).split(' ')[0]
@@ -272,6 +273,26 @@ export default function BannerDetailPage() {
                             <span className={cx('detail-value')}>{banner.description || '-'}</span>
                         </div>
                         <div className={cx('detail-row')}>
+                            <span className={cx('detail-label')}>Loại nội dung:</span>
+                            <span className={cx('detail-value')}>
+                                {banner.contentType === 'seasonal'
+                                    ? 'Bộ Sưu Tập'
+                                    : banner.contentType === 'trending'
+                                        ? 'Xu Hướng Làm Đẹp'
+                                        : 'Banner/Slider'}
+                            </span>
+                        </div>
+                        {banner.linkUrl && (
+                            <div className={cx('detail-row')}>
+                                <span className={cx('detail-label')}>Link:</span>
+                                <span className={cx('detail-value')}>
+                                    <a href={banner.linkUrl} target="_blank" rel="noopener noreferrer" className={cx('link-btn')}>
+                                        {banner.linkUrl}
+                                    </a>
+                                </span>
+                            </div>
+                        )}
+                        <div className={cx('detail-row')}>
                             <span className={cx('detail-label')}>Ngày tạo:</span>
                             <span className={cx('detail-value')}>{banner.createdDate || '-'}</span>
                         </div>
@@ -313,16 +334,32 @@ export default function BannerDetailPage() {
 
                     <div className={cx('actions')}>
                         {isRejected ? (
-                            <button
-                                className={cx('btn', 'btn-edit')}
-                                onClick={handleEdit}
-                            >
-                                Sửa lại
-                            </button>
+                            <>
+                                <button
+                                    className={cx('btn', 'btn-edit')}
+                                    onClick={handleEdit}
+                                >
+                                    Sửa lại
+                                </button>
+                                <button
+                                    className={cx('btn', 'btn-delete')}
+                                    onClick={() => setShowDeleteModal(true)}
+                                >
+                                    Xóa
+                                </button>
+                            </>
                         ) : (
-                            <button className={cx('btn', 'btn-back')} onClick={handleBack}>
-                                Quay lại
-                            </button>
+                            <>
+                                <button className={cx('btn', 'btn-back')} onClick={handleBack}>
+                                    Quay lại
+                                </button>
+                                <button
+                                    className={cx('btn', 'btn-delete')}
+                                    onClick={() => setShowDeleteModal(true)}
+                                >
+                                    Xóa
+                                </button>
+                            </>
                         )}
                     </div>
                 </div>

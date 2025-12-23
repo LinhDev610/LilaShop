@@ -68,6 +68,43 @@
     }
 }
 
+.filters-section {
+    margin-bottom: 20px;
+}
+
+.content-type-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.filter-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1b2b34;
+    white-space: nowrap;
+}
+
+.filter-select {
+    height: 40px;
+    padding: 0 32px 0 12px;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    font-size: 14px;
+    background: #fff;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    min-width: 180px;
+}
+
 .table-container {
     background: #fff;
     border-radius: 16px;
@@ -116,38 +153,45 @@
     font-size: 14px;
     color: #3a3f51;
     vertical-align: middle;
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-// Column widths
+// Allow title cell to wrap
+.title-cell {
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+// Column widths - Updated order: Tiêu đề, Loại nội dung, Thời gian hiển thị, Trạng thái, Hành động
 .content-table th:nth-child(1),
 .content-table td:nth-child(1) {
-    width: 30%;
+    width: 25%;
 }
 
 .content-table th:nth-child(2),
 .content-table td:nth-child(2) {
-    width: 14%;
+    width: 15%;
     text-align: center;
 }
 
 .content-table th:nth-child(3),
 .content-table td:nth-child(3) {
-    width: 18%;
+    width: 25%;
     text-align: center;
 }
 
 .content-table th:nth-child(4),
 .content-table td:nth-child(4) {
-    width: 23%;
+    width: 15%;
+    text-align: center;
 }
 
 .content-table th:nth-child(5),
 .content-table td:nth-child(5) {
-    width: 15%;
+    width: 20%;
     text-align: center;
+    min-width: 180px; // Ensure action column has minimum width
 }
 
 .title-cell {
@@ -158,6 +202,37 @@
 .date-cell {
     text-align: center;
     color: #6b7280;
+    font-weight: 500;
+    white-space: normal; // Allow wrapping
+}
+
+.date-range {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+}
+
+.date-start {
+    font-size: 13px;
+    color: #3a3f51;
+    font-weight: 500;
+}
+
+.date-end {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 400;
+}
+
+.no-date {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.content-type-cell {
+    text-align: center;
+    color: #3a3f51;
     font-weight: 500;
 }
 
@@ -208,15 +283,25 @@
     text-align: center;
 }
 
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap; // Allow buttons to wrap if needed
+}
+
 .btn {
     height: 38px;
-    padding: 0 18px;
+    padding: 0 14px;
     border: none;
     border-radius: 10px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.25s ease;
+    white-space: nowrap; // Prevent button text from wrapping
+    flex-shrink: 0; // Prevent buttons from shrinking
 }
 
 .btn-detail {
@@ -231,6 +316,27 @@
 
     &:active {
         transform: translateY(0);
+    }
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(239, 68, 68, 0.3);
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 }
 
@@ -300,5 +406,136 @@
 
     .content-table {
         min-width: 700px;
+    }
+}
+
+// Modal styles
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.modal {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    overflow: hidden;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e8ecf1;
+    background: linear-gradient(135deg, #f8f9fc 0%, #f1f3f8 100%);
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1d29;
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: #e8ecf1;
+        color: #1a1d29;
+    }
+}
+
+.modal-content {
+    padding: 24px;
+}
+
+.modal-message {
+    font-size: 15px;
+    color: #3a3f51;
+    line-height: 1.6;
+    margin: 0 0 12px 0;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.content-title-highlight {
+    font-weight: 700;
+    color: #667eea;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 20px 24px;
+    border-top: 1px solid #e8ecf1;
+    background: #fafbfd;
+}
+
+.btn-cancel {
+    background: #f3f4f6;
+    color: #3a3f51;
+    border: 1px solid #e5e7eb;
+
+    &:hover {
+        background: #e5e7eb;
+        transform: translateY(-1px);
+    }
+}
+
+.btn-confirm-delete {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(239, 68, 68, 0.3);
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
     }
 }

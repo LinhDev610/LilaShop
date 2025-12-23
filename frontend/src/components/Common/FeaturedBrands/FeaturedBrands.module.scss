@@ -1,0 +1,85 @@
+.brandsSection {
+    padding: 40px 40px;
+    background: #FFFFFF;
+    text-align: center;
+    max-width: 1400px;
+    margin: 0 auto;
+
+    @media (max-width: 768px) {
+        padding: 30px 20px;
+    }
+}
+
+.sectionTitle {
+    color: #3D2F2F;
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+
+    @media (max-width: 768px) {
+        font-size: 20px;
+        margin-bottom: 24px;
+    }
+}
+
+.brandsGrid {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 40px;
+
+    @media (max-width: 768px) {
+        gap: 24px;
+    }
+}
+
+.brandItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.3s ease;
+
+    &:hover {
+        transform: translateY(-4px);
+    }
+}
+
+.brandLogoPlaceholder {
+    width: 120px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #F5F5F5;
+    border-radius: 4px;
+    font-size: 24px;
+    font-weight: 600;
+    color: #6B6B6B;
+    text-transform: uppercase;
+}
+
+.brandLogo {
+    width: 120px;
+    height: 60px;
+    object-fit: contain;
+    filter: grayscale(100%);
+    opacity: 0.6;
+    transition: all 0.3s ease;
+
+    &:hover {
+        filter: grayscale(0%);
+        opacity: 1;
+    }
+}
+
+.brandName {
+    font-size: 14px;
+    color: #6B5B5B;
+    font-weight: 500;
+}
+

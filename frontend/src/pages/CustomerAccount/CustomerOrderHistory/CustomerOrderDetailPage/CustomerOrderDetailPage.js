@@ -13,20 +13,35 @@ import {
 const cx = classNames.bind(styles);
 
 const parseShippingInfo = (raw) => {
-    if (!raw || typeof raw !== 'string') return null;
-    try {
-        const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === 'object') {
-            return {
-                name: parsed.name || parsed.receiverName || '',
-                phone: parsed.phone || parsed.receiverPhone || '',
-                address: parsed.address || parsed.fullAddress || '',
-            };
-        }
-    } catch {
-        return { address: raw };
+    if (!raw) return null;
+
+    // If already an object, use it directly
+    if (typeof raw === 'object' && raw !== null) {
+        return {
+            name: raw.name || raw.receiverName || '',
+            phone: raw.phone || raw.receiverPhone || '',
+            address: raw.address || raw.fullAddress || raw.addressText || '',
+        };
     }
-    return { address: raw };
+
+    // If it's a string, try to parse as JSON
+    if (typeof raw === 'string') {
+        try {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object') {
+                return {
+                    name: parsed.name || parsed.receiverName || '',
+                    phone: parsed.phone || parsed.receiverPhone || '',
+                    address: parsed.address || parsed.fullAddress || parsed.addressText || '',
+                };
+            }
+        } catch {
+            // If parsing fails, treat as plain address string
+            return { address: raw };
+        }
+    }
+
+    return { address: String(raw) };
 };
 
 const STATUS_MAP = {
@@ -271,7 +286,22 @@ const mapOrderFromApi = (apiOrder) => {
             'Khách hàng',
         phone:
             apiOrder.receiverPhone || shippingInfo?.phone || apiOrder.customerEmail || '',
-        address: shippingInfo?.address || apiOrder.shippingAddress || '',
+        address: (() => {
+            // Use parsed shipping info address if available
+            if (shippingInfo?.address) {
+                return shippingInfo.address;
+            }
+            // Fallback: if shippingAddress is a string, use it directly
+            if (typeof apiOrder.shippingAddress === 'string') {
+                return apiOrder.shippingAddress;
+            }
+            // Fallback: if shippingAddress is an object, try to format it
+            if (apiOrder.shippingAddress && typeof apiOrder.shippingAddress === 'object') {
+                const addr = apiOrder.shippingAddress;
+                return addr.address || addr.fullAddress || addr.addressText || '';
+            }
+            return '';
+        })(),
         paymentMethod,
         paymentMethodLabel,
         items,

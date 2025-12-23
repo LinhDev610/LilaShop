@@ -510,12 +510,12 @@ function NavBar() {
                         className={cx('nav-trigger', { active: isHome || isDropdownOpen })}
                         whileHover={{
                             scale: 1.05,
-                            backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                            backgroundColor: 'rgba(183, 110, 121, 0.1)',
                         }}
                         whileTap={{ scale: 0.98 }}
                         animate={{
                             backgroundColor: isHome || isDropdownOpen
-                                ? '#d6002f'
+                                ? '#B76E79'
                                 : 'rgba(0, 0, 0, 0)',
                         }}
                         transition={{ type: 'spring', stiffness: 400, damping: 25 }}

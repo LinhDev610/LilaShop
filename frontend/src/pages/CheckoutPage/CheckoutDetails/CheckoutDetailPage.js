@@ -54,15 +54,6 @@ export default function CheckoutDetailPage() {
     const directQuantity = location.state?.quantity || 1;
     const directVariantId = location.state?.variantId || null;
 
-    // Debug log
-    if (directCheckout) {
-        console.log('CheckoutDetailPage: Direct checkout detected', {
-            directCheckout,
-            directProductId,
-            directQuantity,
-            locationState: location.state,
-        });
-    }
 
     const [userInfo, setUserInfo] = useState(null);
     const [cart, setCart] = useState(null);
@@ -118,7 +109,6 @@ export default function CheckoutDetailPage() {
 
                 if (directCheckout && directProductId) {
                     // Direct checkout: load product trực tiếp, không cần cart
-                    console.log('CheckoutDetailPage: Direct checkout, loading product:', directProductId);
                     const [me, productResp, addressesData] = await Promise.all([
                         getMyInfo(token),
                         (async () => {
@@ -134,7 +124,6 @@ export default function CheckoutDetailPage() {
                                 }
                                 const data = await resp.json();
                                 const product = data?.result || data;
-                                console.log('CheckoutDetailPage: Product loaded:', product?.id, product?.name);
                                 return product;
                             } catch (err) {
                                 console.error('Error fetching product:', err);
@@ -147,17 +136,11 @@ export default function CheckoutDetailPage() {
                     ]);
 
                     if (!productResp || !productResp.id) {
-                        console.error('CheckoutDetailPage: Product response is invalid:', productResp);
                         showError('Không thể tải thông tin sản phẩm');
                         navigate('/');
                         return;
                     }
 
-                    console.log('CheckoutDetailPage: Setting directProduct:', {
-                        id: productResp.id,
-                        name: productResp.name,
-                        price: productResp.price,
-                    });
                     setUserInfo(me || null);
                     setDirectProduct(productResp);
                     addresses = addressesData || [];
@@ -333,15 +316,6 @@ export default function CheckoutDetailPage() {
 
     // Derived items: direct checkout từ product hoặc từ cart
     const checkoutItems = useMemo(() => {
-        console.log('CheckoutDetailPage: checkoutItems useMemo called', {
-            directCheckout,
-            directProductId,
-            directProduct: directProduct ? { id: directProduct.id, name: directProduct.name } : null,
-            directQuantity,
-            cartItems: cart?.items?.length || 0,
-            selectedItemIds: selectedItemIds?.length || 0,
-        });
-
         if (directCheckout && directProductId) {
             // Direct checkout: tạo item từ product
             if (directProduct) {
@@ -370,15 +344,9 @@ export default function CheckoutDetailPage() {
                         weightGr: selectedVariant?.weightGr || null,
                     },
                 ];
-                console.log('CheckoutDetailPage: checkoutItems (direct):', items);
                 return items;
             }
             // Nếu directProduct chưa load xong, trả về mảng rỗng tạm thời
-            console.log('CheckoutDetailPage: checkoutItems (direct, product not loaded yet)', {
-                directProductId,
-                directProduct: directProduct,
-                loading,
-            });
             return [];
         }
         // Checkout từ giỏ hàng (flow cũ)
@@ -387,7 +355,7 @@ export default function CheckoutDetailPage() {
         const selectedSet = new Set(selectedItemIds);
         const filtered = items.filter((item) => selectedSet.has(item.id));
         return filtered.length > 0 ? filtered : items;
-    }, [directCheckout, directProductId, directProduct, directQuantity, directVariantId, cart, selectedItemIds, loading]);
+    }, [directCheckout, directProductId, directProduct, directQuantity, directVariantId, cart, selectedItemIds]);
 
     // Tính phí vận chuyển từ GHN API
     useEffect(() => {
@@ -733,29 +701,27 @@ export default function CheckoutDetailPage() {
 
     // Tạm tính: CHỈ tính trên các item được chọn (checkoutItems),
     // dùng finalPrice backend để khớp công thức trong OrderService.createOrderFromCurrentCart.
-    const itemsSubtotal = checkoutItems.reduce((sum, item) => {
-        const quantity = item.quantity || 1;
-        const lineTotal =
-            typeof item.finalPrice === 'number'
-                ? item.finalPrice
-                : (item.unitPrice || 0) * quantity;
-        return sum + lineTotal;
-    }, 0);
+    const itemsSubtotal = useMemo(() => {
+        return checkoutItems.reduce((sum, item) => {
+            const quantity = item.quantity || 1;
+            const lineTotal =
+                typeof item.finalPrice === 'number'
+                    ? item.finalPrice
+                    : (item.unitPrice || 0) * quantity;
+            return sum + lineTotal;
+        }, 0);
+    }, [checkoutItems]);
 
     const voucherDiscount = cart?.voucherDiscount || 0;
 
     // Tổng cộng hiển thị: giống backend = selectedSubtotal + shippingFee - voucherDiscount
     const total = Math.max(0, itemsSubtotal + shippingFee - voucherDiscount);
 
-    // Filter applicable vouchers based on order value
-    // NOTE: This useEffect must be AFTER checkoutItems and itemsSubtotal are defined
-    useEffect(() => {
-        if (!availableVouchers.length || !checkoutItems.length || selectedVoucherCode) {
-            setApplicableVouchers([]);
-            return;
+    // Memoize product and category IDs to prevent unnecessary re-renders
+    const voucherFilterParams = useMemo(() => {
+        if (!checkoutItems.length) {
+            return { productIds: [], categoryIds: [] };
         }
-
-        const now = new Date();
 
         const productIds = checkoutItems.map((item) => item.productId);
         const categoryIds = checkoutItems
@@ -763,19 +729,38 @@ export default function CheckoutDetailPage() {
             .filter(Boolean);
 
         // Special case for direct checkout if meta not yet populated but directProduct is available
-        // (Though useEffect above should have populated it)
         if (directCheckout && directProduct && categoryIds.length === 0) {
             const directCatId = directProduct.categoryId || directProduct.category?.id;
             if (directCatId) categoryIds.push(directCatId);
         }
 
-        const filtered = filterApplicableVouchers(availableVouchers, itemsSubtotal, {
-            productIds,
-            categoryIds,
-        });
+        return { productIds, categoryIds };
+    }, [checkoutItems, productMeta, directCheckout, directProduct]);
 
-        setApplicableVouchers(filtered.slice(0, 3)); // Top 3 vouchers
-    }, [availableVouchers, checkoutItems, itemsSubtotal, selectedVoucherCode]);
+    // Filter applicable vouchers based on order value
+    // NOTE: This useEffect must be AFTER checkoutItems and itemsSubtotal are defined
+    useEffect(() => {
+        if (!availableVouchers.length || !checkoutItems.length || selectedVoucherCode) {
+            setApplicableVouchers((prev) => {
+                // Only update if actually changing
+                if (prev.length === 0) return prev;
+                return [];
+            });
+            return;
+        }
+
+        const filtered = filterApplicableVouchers(availableVouchers, itemsSubtotal, voucherFilterParams);
+        const top3 = filtered.slice(0, 3);
+
+        // Only update if the result actually changed
+        setApplicableVouchers((prev) => {
+            if (prev.length !== top3.length) return top3;
+            const prevCodes = prev.map((v) => v.code).sort().join(',');
+            const newCodes = top3.map((v) => v.code).sort().join(',');
+            if (prevCodes !== newCodes) return top3;
+            return prev;
+        });
+    }, [availableVouchers, checkoutItems, itemsSubtotal, selectedVoucherCode, voucherFilterParams]);
 
     const handleApplyVoucher = async () => {
         // Kiểm tra định dạng mã giảm giá
@@ -1017,31 +1002,35 @@ export default function CheckoutDetailPage() {
             console.warn('Cannot persist preview order info', storageErr);
         }
 
-        navigate('/checkout/confirm', {
-            state: {
-                paymentMethod,
-                // Direct checkout flag
-                directCheckout: directCheckout,
-                productId: directProductId,
-                quantity: directQuantity,
-                variantId: directVariantId,
-                // Giữ lại danh sách cartItemId đã chọn để backend biết item nào cần thanh toán (nếu không phải direct checkout)
-                cartItemIds: directCheckout ? [] : selectedItemIds,
-                address: {
-                    ...(selectedAddress || {}),
-                    recipientName,
-                    recipientPhone,
-                    addressText,
-                    shippingProvider: 'GHN',
-                },
-                summary: {
-                    items: summaryItems,
-                    subtotal: itemsSubtotal,
-                    shippingFee,
-                    voucherDiscount,
-                    total,
-                },
+        // Chuẩn bị state để truyền sang trang xác nhận
+        const navigationState = {
+            paymentMethod,
+            // Direct checkout flag
+            directCheckout: directCheckout,
+            productId: directProductId,
+            quantity: directQuantity,
+            variantId: directVariantId,
+            // Giữ lại danh sách cartItemId đã chọn để backend biết item nào cần thanh toán (nếu không phải direct checkout)
+            cartItemIds: directCheckout ? [] : selectedItemIds,
+            address: {
+                ...(selectedAddress || {}),
+                recipientName,
+                recipientPhone,
+                addressText,
+                shippingProvider: 'GHN',
             },
+            summary: {
+                items: summaryItems,
+                subtotal: itemsSubtotal,
+                shippingFee,
+                voucherDiscount,
+                total,
+            },
+        };
+
+        // Navigate trực tiếp đến trang xác nhận thanh toán (giống như CartPage)
+        navigate('/checkout/confirm', {
+            state: navigationState,
         });
     };
 

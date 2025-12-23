@@ -1,0 +1,139 @@
+.products-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    min-height: 60vh;
+}
+
+.loading,
+.error {
+    text-align: center;
+    padding: 60px 20px;
+    font-size: 18px;
+    color: #6B6B6B;
+}
+
+.error {
+    color: #C75B5B;
+}
+
+.products-header {
+    margin-bottom: 40px;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #2D2D2D;
+    margin-bottom: 30px;
+
+    @media (max-width: 768px) {
+        font-size: 2rem;
+    }
+}
+
+.filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: #FAFAFA;
+    border-radius: 12px;
+}
+
+.filter-label {
+    font-weight: 500;
+    color: #2D2D2D;
+    white-space: nowrap;
+}
+
+.filter-select {
+    padding: 10px 16px;
+    border: 2px solid rgba(183, 110, 121, 0.15);
+    border-radius: 8px;
+    background: #FFFFFF;
+    font-size: 16px;
+    color: #2D2D2D;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:focus {
+        outline: none;
+        border-color: #B76E79;
+        box-shadow: 0 0 0 3px rgba(183, 110, 121, 0.1);
+    }
+}
+
+.products-info {
+    margin-bottom: 30px;
+    color: #6B6B6B;
+    font-size: 14px;
+}
+
+.no-products {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6B6B6B;
+    font-size: 1.1rem;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 60px;
+    padding: 20px 0;
+}
+
+.pagination-btn {
+    padding: 10px 20px;
+    border: 2px solid rgba(183, 110, 121, 0.15);
+    background: #FFFFFF;
+    border-radius: 8px;
+    font-size: 16px;
+    color: #2D2D2D;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover:not(.disabled) {
+        border-color: #B76E79;
+        color: #B76E79;
+    }
+
+    &.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.pagination-pages {
+    display: flex;
+    gap: 8px;
+}
+
+.pagination-page {
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    border: 2px solid rgba(183, 110, 121, 0.15);
+    background: #FFFFFF;
+    border-radius: 8px;
+    font-size: 16px;
+    color: #2D2D2D;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+        border-color: #B76E79;
+        color: #B76E79;
+    }
+
+    &.active {
+        background: linear-gradient(135deg, #B76E79 0%, #A85A66 100%);
+        border-color: #B76E79;
+        color: #FFFFFF;
+    }
+}
+

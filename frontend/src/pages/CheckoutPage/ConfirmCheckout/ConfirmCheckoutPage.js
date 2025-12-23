@@ -31,7 +31,7 @@ export default function ConfirmCheckoutPage() {
     const address = state.address || {};
     const summary = state.summary || {};
     const cartItemIds = state.cartItemIds || [];
-    
+
     // Direct checkout: mua ngay từ sản phẩm (không qua giỏ hàng)
     const directCheckout = state.directCheckout || false;
     const directProductId = state.productId || null;
@@ -166,9 +166,9 @@ export default function ConfirmCheckoutPage() {
 
             // Bước 1: tạo đơn hàng
             const shippingInfo = buildShippingInfo();
-            
+
             let orderResp;
-            
+
             if (directCheckout && directProductId) {
                 // Direct checkout: mua ngay từ sản phẩm (không qua giỏ hàng)
                 const directPayload = {
@@ -241,7 +241,7 @@ export default function ConfirmCheckoutPage() {
                     setSubmitting(false);
                     return;
                 }
-                
+
                 // Lưu thông tin checkout để tạo đơn hàng sau khi thanh toán thành công
                 const checkoutInfo = {
                     paymentMethod: 'momo',
@@ -266,16 +266,16 @@ export default function ConfirmCheckoutPage() {
                         addressText: address.addressText || address.address,
                     },
                 };
-                
+
                 // Lưu checkout info vào localStorage
                 window.localStorage.setItem('lumina_checkout_info', JSON.stringify(checkoutInfo));
-                
+
                 // Lưu preview order info để hiển thị trong OrderSuccess
                 persistLatestOrder({
                     code: orderCode,
                     orderCode: orderCode,
                 }, 'Thanh toán qua MoMo', Math.round(currentTotal));
-                
+
                 window.location.href = payUrl;
                 return;
             }
@@ -288,17 +288,20 @@ export default function ConfirmCheckoutPage() {
             }
 
             persistLatestOrder(order, 'Thanh toán khi nhận hàng', Math.round(currentTotal));
+
             // COD: Chuyển về trang cảm ơn (giống MoMo)
-            navigate('/order-success', {
-                state: {
-                    orderId: order.id,
-                    orderCode: order.code || order.orderCode,
-                },
+            requestAnimationFrame(() => {
+                navigate('/order-success', {
+                    state: {
+                        orderId: order.id,
+                        orderCode: order.code || order.orderCode,
+                    },
+                    replace: false,
+                });
             });
         } catch (err) {
             console.error('Error when confirming checkout:', err);
             showError('Có lỗi xảy ra khi xác nhận đặt hàng.');
-        } finally {
             setSubmitting(false);
         }
     };

@@ -22,11 +22,7 @@ public class CategoryInitConfig {
     CategoryRepository categoryRepository;
 
     @Bean
-    @ConditionalOnProperty(
-            prefix = "app",
-            value = "init-categories",
-            havingValue = "true",
-            matchIfMissing = false)
+    @ConditionalOnProperty(prefix = "app", value = "init-categories", havingValue = "true", matchIfMissing = false)
     ApplicationRunner categoryInitializer() {
         log.info("Initializing cosmetic categories...");
         return args -> {
@@ -41,14 +37,15 @@ public class CategoryInitConfig {
                 Category skincare = createRootCategory(
                         "CAT_SKINCARE",
                         "Chăm sóc da",
-                        "Các sản phẩm chăm sóc da mặt và cơ thể: kem dưỡng, serum, mặt nạ, tẩy trang, rửa mặt"
-                );
+                        "Các sản phẩm chăm sóc da mặt và cơ thể: kem dưỡng, serum, mặt nạ, tẩy trang, rửa mặt");
 
                 // Subcategories cho Chăm sóc da
-                createSubCategory("CAT_SKINCARE_CLEANSER", "Sữa rửa mặt", "Sữa rửa mặt, gel rửa mặt, tẩy trang", skincare);
+                createSubCategory("CAT_SKINCARE_CLEANSER", "Sữa rửa mặt", "Sữa rửa mặt, gel rửa mặt, tẩy trang",
+                        skincare);
                 createSubCategory("CAT_SKINCARE_TONER", "Nước hoa hồng", "Toner, nước hoa hồng cân bằng da", skincare);
                 createSubCategory("CAT_SKINCARE_SERUM", "Serum", "Serum dưỡng da, tinh chất đặc trị", skincare);
-                createSubCategory("CAT_SKINCARE_MOISTURIZER", "Kem dưỡng ẩm", "Kem dưỡng ẩm, lotion, gel dưỡng", skincare);
+                createSubCategory("CAT_SKINCARE_MOISTURIZER", "Kem dưỡng ẩm", "Kem dưỡng ẩm, lotion, gel dưỡng",
+                        skincare);
                 createSubCategory("CAT_SKINCARE_SUNSCREEN", "Kem chống nắng", "Kem chống nắng, SPF", skincare);
                 createSubCategory("CAT_SKINCARE_MASK", "Mặt nạ", "Mặt nạ giấy, mặt nạ đất sét, mặt nạ ngủ", skincare);
                 createSubCategory("CAT_SKINCARE_EYE", "Chăm sóc mắt", "Kem mắt, serum mắt, gel mắt", skincare);
@@ -57,12 +54,13 @@ public class CategoryInitConfig {
                 Category makeup = createRootCategory(
                         "CAT_MAKEUP",
                         "Trang điểm",
-                        "Các sản phẩm trang điểm: foundation, phấn má, son môi, mascara, eyeliner, phấn mắt"
-                );
+                        "Các sản phẩm trang điểm: foundation, phấn má, son môi, mascara, eyeliner, phấn mắt");
 
                 // Subcategories cho Trang điểm
-                createSubCategory("CAT_MAKEUP_FACE", "Nền trang điểm", "Foundation, BB cream, CC cream, concealer, phấn nền", makeup);
-                createSubCategory("CAT_MAKEUP_EYE", "Trang điểm mắt", "Mascara, eyeliner, phấn mắt, chì kẻ mắt", makeup);
+                createSubCategory("CAT_MAKEUP_FACE", "Nền trang điểm",
+                        "Foundation, BB cream, CC cream, concealer, phấn nền", makeup);
+                createSubCategory("CAT_MAKEUP_EYE", "Trang điểm mắt", "Mascara, eyeliner, phấn mắt, chì kẻ mắt",
+                        makeup);
                 createSubCategory("CAT_MAKEUP_LIP", "Son môi", "Son môi, son bóng, son dưỡng, lip tint", makeup);
                 createSubCategory("CAT_MAKEUP_CHEEK", "Má hồng", "Phấn má, cream blush, highlighter", makeup);
                 createSubCategory("CAT_MAKEUP_BROW", "Chân mày", "Chì kẻ mày, gel cố định mày, phấn mày", makeup);
@@ -72,13 +70,13 @@ public class CategoryInitConfig {
                 Category haircare = createRootCategory(
                         "CAT_HAIRCARE",
                         "Chăm sóc tóc",
-                        "Các sản phẩm chăm sóc tóc: dầu gội, dầu xả, serum tóc, mặt nạ tóc, thuốc nhuộm"
-                );
+                        "Các sản phẩm chăm sóc tóc: dầu gội, dầu xả, serum tóc, mặt nạ tóc, thuốc nhuộm");
 
                 // Subcategories cho Chăm sóc tóc
                 createSubCategory("CAT_HAIRCARE_SHAMPOO", "Dầu gội", "Dầu gội đầu, dầu gội khô", haircare);
                 createSubCategory("CAT_HAIRCARE_CONDITIONER", "Dầu xả", "Dầu xả, kem ủ tóc", haircare);
-                createSubCategory("CAT_HAIRCARE_TREATMENT", "Điều trị tóc", "Serum tóc, mặt nạ tóc, tinh dầu tóc", haircare);
+                createSubCategory("CAT_HAIRCARE_TREATMENT", "Điều trị tóc", "Serum tóc, mặt nạ tóc, tinh dầu tóc",
+                        haircare);
                 createSubCategory("CAT_HAIRCARE_STYLING", "Tạo kiểu", "Gel tóc, sáp tóc, keo xịt tóc", haircare);
                 createSubCategory("CAT_HAIRCARE_COLOR", "Nhuộm tóc", "Thuốc nhuộm tóc, thuốc tẩy tóc", haircare);
 
@@ -86,8 +84,7 @@ public class CategoryInitConfig {
                 Category fragrance = createRootCategory(
                         "CAT_FRAGRANCE",
                         "Nước hoa",
-                        "Các sản phẩm nước hoa: nước hoa nam, nước hoa nữ, nước hoa unisex, body mist"
-                );
+                        "Các sản phẩm nước hoa: nước hoa nam, nước hoa nữ, nước hoa unisex, body mist");
 
                 // Subcategories cho Nước hoa
                 createSubCategory("CAT_FRAGRANCE_WOMEN", "Nước hoa nữ", "Nước hoa dành cho nữ", fragrance);
@@ -99,8 +96,7 @@ public class CategoryInitConfig {
                 Category bodycare = createRootCategory(
                         "CAT_BODYCARE",
                         "Chăm sóc cơ thể",
-                        "Các sản phẩm chăm sóc cơ thể: sữa tắm, kem dưỡng body, xà phòng, tẩy tế bào chết"
-                );
+                        "Các sản phẩm chăm sóc cơ thể: sữa tắm, kem dưỡng body, xà phòng, tẩy tế bào chết");
 
                 // Subcategories cho Chăm sóc cơ thể
                 createSubCategory("CAT_BODYCARE_BATH", "Sữa tắm", "Sữa tắm, gel tắm, xà phòng", bodycare);
@@ -147,4 +143,3 @@ public class CategoryInitConfig {
                 });
     }
 }
-

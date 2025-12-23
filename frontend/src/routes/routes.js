@@ -84,10 +84,13 @@ import PaymentPolicyPage from '../pages/SupportUser/PaymentPolicy';
 import ShippingPolicyPage from '../pages/SupportUser/ShippingPolicy';
 import ReturnPolicyPage from '../pages/SupportUser/ReturnPolicy';
 import CategoryPage from '../pages/Category';
+import ProductsPage from '../pages/Products';
+import ArticlesPage from '../pages/Articles';
 
 // Public routes
 const publicRoutes = [
     { path: '/', component: Home },
+    { path: '/products', component: ProductsPage },
     { path: '/search', component: SearchResultsPage },
     { path: '/category/:id', component: CategoryPage },
     { path: '/promotion', component: PromotionPage },
@@ -99,6 +102,7 @@ const publicRoutes = [
     { path: '/support/shipping-policy', component: ShippingPolicyPage },
     { path: '/support/return-policy', component: ReturnPolicyPage },
     { path: '/product/:id', component: ProductDetailPage },
+    { path: '/article/:id', component: ArticlesPage },
     { path: '/cart', component: CartPage },
     { path: '/checkout', component: CheckoutDetailPage },
     { path: '/checkout/confirm', component: ConfirmCheckoutPage },

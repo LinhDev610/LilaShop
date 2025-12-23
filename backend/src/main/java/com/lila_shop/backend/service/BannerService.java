@@ -19,12 +19,14 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -52,8 +54,13 @@ public class BannerService {
         banner.setCreatedBy(user);
         banner.setCreatedAt(LocalDateTime.now());
         banner.setUpdatedAt(LocalDateTime.now());
-        // Staff tạo banner không cần admin duyệt, active ngay
-        banner.setStatus(Boolean.TRUE);
+        // Staff tạo content mặc định đã duyệt (không cần admin duyệt)
+        // Set status from request, default to true (đã duyệt) if not provided
+        if (request.getStatus() != null) {
+            banner.setStatus(request.getStatus());
+        } else {
+            banner.setStatus(Boolean.TRUE); // Default: đã duyệt
+        }
         banner.setPendingReview(Boolean.FALSE);
 
         // Set order index if not provided
@@ -82,6 +89,11 @@ public class BannerService {
         Banner banner = bannerRepository.findById(bannerId)
                 .orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
 
+        // Force load products if lazy loaded
+        if (banner.getProducts() != null) {
+            banner.getProducts().size(); // Trigger lazy loading
+        }
+
         return bannerMapper.toResponse(banner);
     }
 
@@ -93,8 +105,43 @@ public class BannerService {
 
     public List<BannerResponse> getActiveBanners() {
         List<Banner> banners = bannerRepository.findByStatusOrderByOrderIndexAsc(true);
+        LocalDate today = LocalDate.now();
 
-        return banners.stream().map(bannerMapper::toResponse).toList();
+        // Filter banners by status AND date range
+        List<BannerResponse> result = banners.stream()
+                .filter(banner -> {
+                    // Must have status = true
+                    if (!Boolean.TRUE.equals(banner.getStatus())) {
+                        return false;
+                    }
+
+                    // Check start date: if set, must be today or in the past
+                    // Use isAfter with equals check to include today
+                    if (banner.getStartDate() != null && banner.getStartDate().isAfter(today)) {
+                        return false; // Not started yet
+                    }
+
+                    // Check end date: if set, must be today or in the future
+                    // Use isBefore with equals check to include today
+                    if (banner.getEndDate() != null && banner.getEndDate().isBefore(today)) {
+                        return false; // Already expired
+                    }
+
+                    return true; // Active banner
+                })
+                .peek(banner -> {
+                    // Force load products if lazy loaded
+                    if (banner.getProducts() != null) {
+                        banner.getProducts().size(); // Trigger lazy loading
+                    }
+                })
+                .map(banner -> {
+                    BannerResponse response = bannerMapper.toResponse(banner);
+                    return response;
+                })
+                .toList();
+
+        return result;
     }
 
     @Transactional
@@ -128,11 +175,18 @@ public class BannerService {
         if (request.getLinkUrl() != null) {
             banner.setLinkUrl(request.getLinkUrl());
         }
-        // Staff update banner không cần admin duyệt, active ngay
+        if (request.getContentType() != null) {
+            banner.setContentType(request.getContentType());
+        }
+        // Staff update banner - mặc định đã duyệt (không cần admin duyệt)
         if (!isAdmin) {
-            // Staff update banner -> active ngay, không cần duyệt
-            banner.setStatus(true);
-            banner.setPendingReview(false);
+            // Staff update banner -> mặc định đã duyệt
+            if (request.getStatus() != null) {
+                banner.setStatus(request.getStatus());
+            } else {
+                banner.setStatus(Boolean.TRUE); // Default: đã duyệt
+            }
+            banner.setPendingReview(Boolean.FALSE);
             // Xóa rejectionReason khi staff update thành công
             banner.setRejectionReason(null);
         } else {
@@ -184,10 +238,20 @@ public class BannerService {
     }
 
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
     public void deleteBanner(String bannerId) {
         Banner banner = bannerRepository.findById(bannerId)
                 .orElseThrow(() -> new AppException(ErrorCode.BANNER_NOT_EXISTED));
+
+        // Kiểm tra quyền: Admin hoặc chủ sở hữu banner (staff)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+        // Admin có thể xóa bất kỳ banner nào, Staff chỉ có thể xóa banner của chính họ
+        if (!isAdmin && (banner.getCreatedBy() == null || !banner.getCreatedBy().getId().equals(user.getId()))) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
 
         bannerRepository.delete(banner);
         log.info(
