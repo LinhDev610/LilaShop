@@ -7,89 +7,97 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, String> {
 
-    // Tìm products theo category
-    List<Product> findByCategoryId(String categoryId);
+        @Lock(LockModeType.PESSIMISTIC_WRITE)
+        @Query("SELECT p FROM Product p WHERE p.id = :id")
+        Optional<Product> findByIdWithLock(@Param("id") String id);
 
-    List<Product> findByStatus(ProductStatus status);
+        // Tìm products theo category
+        List<Product> findByCategoryId(String categoryId);
 
-    // Tìm products theo name (case insensitive)
-    List<Product> findByNameContainingIgnoreCase(String name);
+        List<Product> findByStatus(ProductStatus status);
 
-    // Tìm products theo brand
-    List<Product> findByBrandContainingIgnoreCase(String brand);
+        // Tìm products theo name (case insensitive)
+        List<Product> findByNameContainingIgnoreCase(String name);
 
-    // Tìm products theo price range
-    @Query("SELECT p FROM Product p WHERE p.price BETWEEN :minPrice AND :maxPrice")
-    List<Product> findByPriceRange(@Param("minPrice") double minPrice, @Param("maxPrice") double maxPrice);
+        // Tìm products theo brand
+        List<Product> findByBrandContainingIgnoreCase(String brand);
 
-    // Tìm products theo keyword search (name, brand, description, ingredients)
-    @Query("SELECT p FROM Product p WHERE " + "LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
-            + "LOWER(p.brand) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
-            + "LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
-            + "LOWER(p.ingredients) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    List<Product> findByKeyword(@Param("keyword") String keyword);
+        // Tìm products theo price range
+        @Query("SELECT p FROM Product p WHERE p.price BETWEEN :minPrice AND :maxPrice")
+        List<Product> findByPriceRange(@Param("minPrice") double minPrice, @Param("maxPrice") double maxPrice);
 
-    // Tìm products submitted bởi staff cụ thể
-    List<Product> findBySubmittedBy(User submittedBy);
+        // Tìm products theo keyword search (name, brand, description, ingredients)
+        @Query("SELECT p FROM Product p WHERE " + "LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
+                        + "LOWER(p.brand) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
+                        + "LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
+                        + "LOWER(p.ingredients) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+        List<Product> findByKeyword(@Param("keyword") String keyword);
 
-    // Tìm products theo expiry date range
-    @Query("SELECT p FROM Product p WHERE p.expiryDate BETWEEN :startDate AND :endDate")
-    List<Product> findByExpiryDateRange(
-            @Param("startDate") java.time.LocalDate startDate, @Param("endDate") java.time.LocalDate endDate);
+        // Tìm products submitted bởi staff cụ thể
+        List<Product> findBySubmittedBy(User submittedBy);
 
-    // Tìm products có inventory
-    @Query("SELECT p FROM Product p WHERE p.inventory IS NOT NULL")
-    List<Product> findProductsWithInventory();
+        // Tìm products theo expiry date range
+        @Query("SELECT p FROM Product p WHERE p.expiryDate BETWEEN :startDate AND :endDate")
+        List<Product> findByExpiryDateRange(
+                        @Param("startDate") java.time.LocalDate startDate,
+                        @Param("endDate") java.time.LocalDate endDate);
 
-    // Tìm products có inventory quantity lớn hơn minQuantity
-    @Query("SELECT p FROM Product p WHERE p.inventory.stockQuantity > :minQuantity")
-    List<Product> findByInventoryQuantityGreaterThan(@Param("minQuantity") int minQuantity);
+        // Tìm products có inventory
+        @Query("SELECT p FROM Product p WHERE p.inventory IS NOT NULL")
+        List<Product> findProductsWithInventory();
 
-    // Tìm products có discount value lớn hơn discountValue
-    List<Product> findByDiscountValueGreaterThan(double discountValue);
+        // Tìm products có inventory quantity lớn hơn minQuantity
+        @Query("SELECT p FROM Product p WHERE p.inventory.stockQuantity > :minQuantity")
+        List<Product> findByInventoryQuantityGreaterThan(@Param("minQuantity") int minQuantity);
 
-    // Tìm products ordered by price ascending
-    List<Product> findByStatusOrderByPriceAsc(ProductStatus status);
+        // Tìm products có discount value lớn hơn discountValue
+        List<Product> findByDiscountValueGreaterThan(double discountValue);
 
-    // Tìm products ordered by price descending
-    List<Product> findByStatusOrderByPriceDesc(ProductStatus status);
+        // Tìm products ordered by price ascending
+        List<Product> findByStatusOrderByPriceAsc(ProductStatus status);
 
-    // Tìm products ordered by creation date
-    List<Product> findByStatusOrderByCreatedAtDesc(ProductStatus status);
+        // Tìm products ordered by price descending
+        List<Product> findByStatusOrderByPriceDesc(ProductStatus status);
 
-    // Tìm products ordered by update date
-    List<Product> findByStatusOrderByUpdatedAtDesc(ProductStatus status);
+        // Tìm products ordered by creation date
+        List<Product> findByStatusOrderByCreatedAtDesc(ProductStatus status);
 
-    // Tìm products ordered by quantity sold
-    List<Product> findByStatusOrderByQuantitySoldDesc(ProductStatus status);
+        // Tìm products ordered by update date
+        List<Product> findByStatusOrderByUpdatedAtDesc(ProductStatus status);
 
-    // Tính số lượng products theo category
-    long countByCategoryId(String categoryId);
+        // Tìm products ordered by quantity sold
+        List<Product> findByStatusOrderByQuantitySoldDesc(ProductStatus status);
 
-    // Tính số lượng products theo status
-    long countByStatus(ProductStatus status);
+        // Tính số lượng products theo category
+        long countByCategoryId(String categoryId);
 
-    // Tính số lượng products submitted bởi user cụ thể
-    long countBySubmittedBy(User submittedBy);
+        // Tính số lượng products theo status
+        long countByStatus(ProductStatus status);
 
-    // Tìm products theo promotion
-    List<Product> findByPromotionId(String promotionId);
+        // Tính số lượng products submitted bởi user cụ thể
+        long countBySubmittedBy(User submittedBy);
 
-    // Find product by ID with promotion, category, and other relationships loaded
-    @Query("SELECT DISTINCT p FROM Product p " +
-           "LEFT JOIN FETCH p.promotion " +
-           "LEFT JOIN FETCH p.category " +
-           "LEFT JOIN FETCH p.submittedBy " +
-           "LEFT JOIN FETCH p.approvedBy " +
-           "LEFT JOIN FETCH p.inventory " +
-           "LEFT JOIN FETCH p.mediaList " +
-           "LEFT JOIN FETCH p.defaultMedia " +
-           "WHERE p.id = :productId")
-    java.util.Optional<Product> findByIdWithRelations(@Param("productId") String productId);
+        // Tìm products theo promotion
+        List<Product> findByPromotionId(String promotionId);
+
+        // Find product by ID with promotion, category, and other relationships loaded
+        @Query("SELECT DISTINCT p FROM Product p " +
+                        "LEFT JOIN FETCH p.promotion " +
+                        "LEFT JOIN FETCH p.category " +
+                        "LEFT JOIN FETCH p.submittedBy " +
+                        "LEFT JOIN FETCH p.approvedBy " +
+                        "LEFT JOIN FETCH p.inventory " +
+                        "LEFT JOIN FETCH p.mediaList " +
+                        "LEFT JOIN FETCH p.defaultMedia " +
+                        "WHERE p.id = :productId")
+        java.util.Optional<Product> findByIdWithRelations(@Param("productId") String productId);
 }
