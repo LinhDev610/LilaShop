@@ -5,7 +5,7 @@ import styles from './UpdateCategoryPage.module.scss';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { useNotification } from '../../../../components/Common/Notification';
 import { getStoredToken } from '../../../../services/utils';
-import { getCategoryById, getRootCategories, refreshToken, updateCategory, createCategory } from '../../../../services';
+import { getCategoryById, getRootCategories, refreshToken, updateCategory, createCategory, getSubCategories } from '../../../../services';
 import { ErrorCode, isAuthError, isValidationError } from '../../../../utils/errorCodes';
 
 const cx = classNames.bind(styles);
@@ -30,6 +30,7 @@ function UpdateCategoryPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [rootCategories, setRootCategories] = useState([]);
     const [loadingCategories, setLoadingCategories] = useState(false);
+    const [hasChildren, setHasChildren] = useState(false);
 
     // ========== Helper Functions ==========
     const readToken = (key = 'token') => getStoredToken(key);
@@ -42,7 +43,11 @@ function UpdateCategoryPage() {
             const fetchCategory = async () => {
                 try {
                     const token = readToken();
-                    const cat = await getCategoryById(id, token) || {};
+                    const [cat, subCats] = await Promise.all([
+                        getCategoryById(id, token) || {},
+                        getSubCategories(id, token) || []
+                    ]);
+
                     setFormData({
                         id: cat.id || '',
                         name: cat.name || '',
@@ -50,6 +55,11 @@ function UpdateCategoryPage() {
                         parentId: cat.parentId || cat.parent?.id || '',
                         status: cat.status === undefined ? true : Boolean(cat.status),
                     });
+
+                    // Check if category has children
+                    if (Array.isArray(subCats) && subCats.length > 0) {
+                        setHasChildren(true);
+                    }
                 } catch (err) {
                     console.error('Error fetching category:', err);
                     error('Không thể tải thông tin danh mục');
@@ -311,7 +321,8 @@ function UpdateCategoryPage() {
                                     className={cx('form-select', { error: errors.parentId })}
                                     value={formData.parentId}
                                     onChange={(e) => handleInputChange('parentId', e.target.value)}
-                                    disabled={loadingCategories}
+                                    disabled={loadingCategories || (isEditMode && hasChildren)}
+                                    title={isEditMode && hasChildren ? 'Danh mục này đang có danh mục con, không thể chuyển thành danh mục con' : ''}
                                 >
                                     <option value="">-- Không có (Danh mục gốc) --</option>
                                     {rootCategories
@@ -322,6 +333,11 @@ function UpdateCategoryPage() {
                                             </option>
                                         ))}
                                 </select>
+                                {isEditMode && hasChildren && (
+                                    <span style={{ fontSize: '0.85em', color: '#dc2626', marginTop: '4px', display: 'block' }}>
+                                        Lưu ý: Danh mục này đang có danh mục con bên trong, không thể chọn làm danh mục con của danh mục khác.
+                                    </span>
+                                )}
                                 {errors.parentId && <span className={cx('error-message')}>{errors.parentId}</span>}
                             </div>
 

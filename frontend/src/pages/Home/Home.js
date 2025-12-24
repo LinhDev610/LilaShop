@@ -11,9 +11,7 @@ import { useVouchers } from '../../hooks/useVouchersPromotions';
 import styles from './Home.module.scss';
 
 import heroImage from '../../assets/images/img_qc.png';
-import bgChristmas from '../../assets/images/img_christmas.png';
 
-import ProductList from '../../components/Common/ProductList/ProductList';
 import Banner1 from '../../components/Common/Banner/Banner1';
 import { VoucherCard } from '../../components/Common/VoucherPromotionCard';
 import FlashSale from '../../components/Common/FlashSale';
