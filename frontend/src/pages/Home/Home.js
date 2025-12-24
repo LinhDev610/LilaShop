@@ -13,14 +13,16 @@ import styles from './Home.module.scss';
 import heroImage from '../../assets/images/img_qc.png';
 
 import Banner1 from '../../components/Common/Banner/Banner1';
-import { VoucherCard } from '../../components/Common/VoucherPromotionCard';
-import FlashSale from '../../components/Common/FlashSale';
-import CategoryGrid from '../../components/Common/CategoryGrid';
-import FeaturedBrands from '../../components/Common/FeaturedBrands';
-import CustomerReviews from '../../components/Common/CustomerReviews';
-import ProductTabs from '../../components/Common/ProductTabs';
-import SeasonalBanner from '../../components/Common/SeasonalBanner';
-import TrendingLooks from '../../components/Common/TrendingLooks';
+import {
+    FlashSale,
+    VoucherCard,
+    CategoryGrid,
+    FeaturedBrands,
+    CustomerReviews,
+    ProductTabs,
+    SeasonalBanner,
+    TrendingLooks
+} from '../../components/Common';
 
 const cx = classNames.bind(styles);
 
@@ -218,7 +220,7 @@ function Home() {
                             return false;
                         }
                         if (!b.status) {
-                            return false; 
+                            return false;
                         }
 
                         const normalizedStartDate = normalizeDate(b.startDate);
@@ -230,7 +232,7 @@ function Home() {
                                 const startDate = new Date(normalizedStartDate);
                                 startDate.setHours(0, 0, 0, 0);
                                 if (startDate > today) {
-                                    return false; 
+                                    return false;
                                 }
                             } catch (e) {
                                 console.warn('Invalid startDate:', normalizedStartDate);
@@ -243,7 +245,7 @@ function Home() {
                                 const endDate = new Date(normalizedEndDate);
                                 endDate.setHours(0, 0, 0, 0);
                                 if (endDate < today) {
-                                    return false; 
+                                    return false;
                                 }
                             } catch (e) {
                                 console.warn('Invalid endDate:', normalizedEndDate);
