@@ -1,0 +1,153 @@
+.wrapper {
+    padding: 60px 20px;
+    background-color: #f9f9f9;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    position: relative;
+    background-image: linear-gradient(135deg, #fff 0%, #fff 50%, #FFF0F5 100%);
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 6px;
+        background: linear-gradient(90deg, #FF9A9E, #FECFEF, #E0C3FC);
+    }
+}
+
+.content {
+    padding: 50px 40px;
+    text-align: center;
+
+    @media (max-width: 576px) {
+        padding: 30px 20px;
+    }
+}
+
+.title {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 16px;
+    font-weight: 700;
+}
+
+.description {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 30px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+
+    strong {
+        color: #C13584;
+    }
+}
+
+.form {
+    display: flex;
+    max-width: 500px;
+    margin: 0 auto 20px;
+    gap: 10px;
+
+    @media (max-width: 576px) {
+        flex-direction: column;
+    }
+}
+
+.input {
+    flex: 1;
+    padding: 14px 20px;
+    border: 2px solid #eee;
+    border-radius: 50px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s;
+
+    &:focus {
+        border-color: #C13584;
+    }
+}
+
+.button {
+    padding: 14px 30px;
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+
+    &:hover:not(:disabled) {
+        background: #C13584;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(193, 53, 132, 0.3);
+    }
+
+    &:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    &.loading {
+        position: relative;
+        color: transparent;
+
+        &::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin-top: -10px;
+            margin-left: -10px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+    }
+}
+
+.disclaimer {
+    font-size: 0.85rem;
+    color: #999;
+}
+
+.successMessage {
+    background: #E8F5E9;
+    color: #2E7D32;
+    padding: 20px;
+    border-radius: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    max-width: 600px;
+    margin: 0 auto 20px;
+}
+
+.icon {
+    font-size: 1.4rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

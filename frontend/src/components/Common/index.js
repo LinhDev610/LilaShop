@@ -16,3 +16,5 @@ export { default as ProductTabs } from './ProductTabs/ProductTabs';
 export { default as CollectionDetail } from './CollectionDetail/CollectionDetail';
 export { default as SeasonalBanner } from './SeasonalBanner/SeasonalBanner';
 export { default as TrendingLooks } from './TrendingLooks/TrendingLooks';
+export { default as BeautyCorner } from './BeautyCorner/BeautyCorner';
+export { default as Newsletter } from './Newsletter/Newsletter';

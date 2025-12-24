@@ -75,3 +75,6 @@ cloudinary:
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET}
   secure: true
+gemini:
+  apiKey: ${GEMINI_API_KEY}
+  model: gemini-2.5-flash

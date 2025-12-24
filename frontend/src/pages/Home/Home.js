@@ -21,7 +21,9 @@ import {
     CustomerReviews,
     ProductTabs,
     SeasonalBanner,
-    TrendingLooks
+    TrendingLooks,
+    BeautyCorner,
+    Newsletter
 } from '../../components/Common';
 
 const cx = classNames.bind(styles);
@@ -739,6 +741,28 @@ function Home() {
                             <ServiceItem key={idx} service={service} index={idx} />
                         ))}
                     </motion.div>
+                </motion.section>
+
+                {/* 11. Beauty Corner (Blog) */}
+                <motion.section
+                    className={cx('section')}
+                    variants={sectionVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "0px" }}
+                >
+                    <BeautyCorner />
+                </motion.section>
+
+                {/* 12. Newsletter */}
+                <motion.section
+                    className={cx('section')}
+                    variants={sectionVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "0px" }}
+                >
+                    <Newsletter />
                 </motion.section>
 
                 {/* Loading & Error States */}

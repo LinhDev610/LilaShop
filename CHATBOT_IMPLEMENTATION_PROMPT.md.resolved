@@ -1,0 +1,1497 @@
+# PROMPT CHI TIẾT: XÂY DỰNG HỆ THỐNG CHATBOT AI CHO WEBSITE MỸ PHẨM
+
+## 📋 TỔNG QUAN HỆ THỐNG
+
+Xây dựng một hệ thống Chatbot AI tư vấn sản phẩm mỹ phẩm với các đặc điểm sau:
+
+### Công Nghệ Sử Dụng
+- **Backend**: Spring Boot (Java) hoặc Node.js/Python
+- **Frontend**: ReactJS hoặc framework tương đương
+- **AI Service**: Google Gemini API (hoặc OpenAI GPT, Claude)
+- **Database**: MySQL/PostgreSQL
+- **Cache**: In-memory cache hoặc Redis
+
+### Mục Tiêu
+- Tư vấn sản phẩm mỹ phẩm dựa trên database thực tế
+- Duy trì context conversation qua sessionId
+- Hỗ trợ filter sản phẩm theo danh mục, thương hiệu, loại da
+- Tối ưu performance với caching mechanism
+
+---
+
+## 🏗️ KIẾN TRÚC HỆ THỐNG
+
+### 1. Luồng Dữ Liệu (Data Flow)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  User gửi câu hỏi qua Frontend                                  │
+│  "Bạn có sản phẩm nào cho da dầu không?"                        │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  ChatbotController.ask()                                        │
+│  POST /api/chatbot/ask                                          │
+│  Body: { message: "...", sessionId: "..." }                     │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  ChatbotService.ask()                                           │
+│  - Kiểm tra cache sản phẩm                                      │
+│  - Nếu cache hết hạn → refreshProductsContext()                 │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  ProductService.getActiveProducts()                             │
+│  - Query database lấy sản phẩm có status = APPROVED            │
+│  - Áp dụng promotion (nếu có)                                   │
+│  - Convert Entity → DTO                                         │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Format thành Text Context                                      │
+│  "DANH SÁCH SẢN PHẨM:                                          │
+│   1. Tên: Kem dưỡng ẩm | Giá: 250,000 VNĐ | Loại da: Da dầu"  │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Đưa vào Prompt cho Gemini AI                                   │
+│  systemPrompt + productsContext + userMessage                   │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Gọi Gemini API                                                 │
+│  POST https://generativelanguage.googleapis.com/...             │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Gemini AI phân tích và trả lời                                │
+│  "Chúng tôi có sản phẩm Kem dưỡng ẩm cho da dầu..."            │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Lưu vào Conversation History (sessionId)                       │
+│  Trả về Frontend                                                │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 💾 CẤU TRÚC DATABASE
+
+### Bảng Sản Phẩm (Products)
+
+```sql
+CREATE TABLE products (
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10, 2) NOT NULL,
+    brand VARCHAR(100),
+    status VARCHAR(50) NOT NULL, -- 'APPROVED', 'PENDING', 'REJECTED'
+    category_id VARCHAR(36),
+    skin_type VARCHAR(100), -- 'Da dầu', 'Da khô', 'Da hỗn hợp', etc.
+    texture VARCHAR(100), -- 'Kem', 'Gel', 'Nước', etc.
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES categories(id)
+);
+```
+
+### Bảng Danh Mục (Categories)
+
+```sql
+CREATE TABLE categories (
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    parent_id VARCHAR(36) NULL, -- Danh mục cha
+    status BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (parent_id) REFERENCES categories(id)
+);
+```
+
+### Dữ Liệu Mẫu
+
+```sql
+-- Danh mục cha
+INSERT INTO categories (id, name, parent_id, status) VALUES
+('cat-001', 'Trang điểm', NULL, TRUE),
+('cat-002', 'Chăm sóc da', NULL, TRUE),
+('cat-003', 'Nước hoa', NULL, TRUE);
+
+-- Danh mục con
+INSERT INTO categories (id, name, parent_id, status) VALUES
+('cat-101', 'Trang điểm môi', 'cat-001', TRUE),
+('cat-102', 'Trang điểm mắt', 'cat-001', TRUE),
+('cat-201', 'Kem dưỡng', 'cat-002', TRUE),
+('cat-202', 'Sữa rửa mặt', 'cat-002', TRUE);
+
+-- Sản phẩm
+INSERT INTO products (id, name, description, price, brand, status, category_id, skin_type, texture) VALUES
+('prod-001', 'Kem dưỡng ẩm cho da dầu', 'Kem dưỡng ẩm không gây bóng nhờn', 250000, 'La Roche-Posay', 'APPROVED', 'cat-201', 'Da dầu', 'Gel'),
+('prod-002', 'Son Dior Addict Lip Glow', 'Son dưỡng môi màu tự nhiên', 850000, 'Dior', 'APPROVED', 'cat-101', 'Mọi loại da', 'Sáp'),
+('prod-003', 'Nước hoa Chanel No.5', 'Nước hoa nữ cổ điển', 3500000, 'Chanel', 'APPROVED', 'cat-003', NULL, 'Nước');
+```
+
+---
+
+## 🔧 IMPLEMENTATION CHI TIẾT
+
+### PHẦN 1: BACKEND SERVICE
+
+#### 1.1. ChatbotController (API Endpoint)
+
+**Spring Boot (Java):**
+
+```java
+@RestController
+@RequestMapping("/api/chatbot")
+@RequiredArgsConstructor
+@Slf4j
+public class ChatbotController {
+    
+    private final ChatbotService chatbotService;
+    
+    @PostMapping("/ask")
+    public ApiResponse<ChatResponse> ask(@Valid @RequestBody ChatRequest request) {
+        log.info("Chatbot request received: {}", request.getMessage());
+        ChatResponse response = chatbotService.ask(request);
+        return ApiResponse.<ChatResponse>builder()
+                .result(response)
+                .build();
+    }
+}
+```
+
+**Node.js (Express):**
+
+```javascript
+const express = require('express');
+const router = express.Router();
+const chatbotService = require('../services/chatbotService');
+
+router.post('/ask', async (req, res) => {
+    try {
+        const { message, sessionId } = req.body;
+        console.log('Chatbot request received:', message);
+        
+        const response = await chatbotService.ask(message, sessionId);
+        
+        res.json({
+            code: 1000,
+            result: response
+        });
+    } catch (error) {
+        console.error('Chatbot error:', error);
+        res.status(500).json({
+            code: 5000,
+            message: 'Internal server error'
+        });
+    }
+});
+
+module.exports = router;
+```
+
+**Python (Flask):**
+
+```python
+from flask import Blueprint, request, jsonify
+from services.chatbot_service import ChatbotService
+import logging
+
+chatbot_bp = Blueprint('chatbot', __name__)
+chatbot_service = ChatbotService()
+
+@chatbot_bp.route('/ask', methods=['POST'])
+def ask():
+    try:
+        data = request.get_json()
+        message = data.get('message')
+        session_id = data.get('sessionId')
+        
+        logging.info(f'Chatbot request received: {message}')
+        
+        response = chatbot_service.ask(message, session_id)
+        
+        return jsonify({
+            'code': 1000,
+            'result': response
+        })
+    except Exception as e:
+        logging.error(f'Chatbot error: {str(e)}')
+        return jsonify({
+            'code': 5000,
+            'message': 'Internal server error'
+        }), 500
+```
+
+---
+
+#### 1.2. ChatbotService (Core Logic)
+
+**Các Chức Năng Chính:**
+
+1. **Cache Mechanism**: Cache sản phẩm trong 30 phút
+2. **Conversation History**: Lưu lịch sử chat theo sessionId
+3. **Smart Context**: Chỉ đưa context cần thiết vào prompt
+4. **Error Handling**: Xử lý retry cho quota exceeded
+
+**Spring Boot (Java) - Core Methods:**
+
+```java
+@Service
+@Slf4j
+public class ChatbotService {
+    
+    // Constants
+    private static final String GEMINI_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
+    private static final long PRODUCTS_CACHE_TTL = 30 * 60 * 1000; // 30 phút
+    
+    // Dependencies
+    private final WebClient webClient;
+    private final ProductService productService;
+    private final CategoryService categoryService;
+    private final String apiKey;
+    private final String model;
+    
+    // Cache
+    private String cachedProductsContext = "";
+    private long lastProductsCacheUpdate = 0;
+    
+    // Conversation history (có thể dùng Redis cho production)
+    private final Map<String, List<GeminiContent>> conversationHistory = new HashMap<>();
+    
+    // System Prompt - QUAN TRỌNG NHẤT
+    private static final String SYSTEM_PROMPT_BASE = """
+        Bạn là trợ lý AI chuyên nghiệp của website Nova Beauty - một cửa hàng mỹ phẩm và chăm sóc sắc đẹp uy tín.
+        
+        VAI TRÒ: Hỗ trợ khách hàng nhiệt tình, chuyên nghiệp, thân thiện. Tư vấn sản phẩm, giải đáp thắc mắc.
+        
+        QUY TẮC VÀNG (TUYỆT ĐỐI PHẢI TUÂN THỦ):
+        1. CHỈ tư vấn sản phẩm CÓ TRONG CONTEXT được cung cấp (từ database).
+        2. TUYỆT ĐỐI KHÔNG tự nghĩ ra, tạo ra, hoặc thay đổi bất kỳ tên sản phẩm nào.
+        3. TUYỆT ĐỐI KHÔNG gợi ý sản phẩm KHÔNG CÓ trong context/database.
+        4. Nếu không có thông tin trong context → Nói "Xin lỗi, hiện tại chưa có sản phẩm phù hợp. Bạn có thể liên hệ CSKH để được tư vấn thêm ạ."
+        
+        TƯ VẤN SẢN PHẨM (CHỈ DÙNG THÔNG TIN TỪ CONTEXT):
+        A. Khi khách hỏi CHUNG (ví dụ: "có son gì", "có kem gì"):
+           - Nếu có danh mục con: liệt kê danh mục con để khách chọn
+           - Format: "Chào bạn! Nova Beauty có các loại [danh mục] sau:\n1. [Tên danh mục con 1]\n2. [Tên danh mục con 2]\n\nBạn muốn xem chi tiết danh mục nào ạ?"
+        
+        B. Khi khách hỏi CỤ THỂ (ví dụ: "son dior", "kem chống nắng la roche"):
+           - CHỈ giới thiệu ngắn gọn loại sản phẩm
+           - KHÔNG liệt kê tên sản phẩm cụ thể trong text (hệ thống sẽ tự hiển thị card)
+           - Nếu >20 sản phẩm: đề xuất lọc theo thương hiệu, giá, loại da
+           - Format: "Chào bạn! Nova Beauty có các sản phẩm [loại] như bạn đang tìm kiếm. Dưới đây là các sản phẩm bạn có thể tham khảo ạ:"
+        
+        C. Khi khách CHỌN sản phẩm:
+           - Đưa link [LINK:/product/{id}] với ID CÓ TRONG CONTEXT
+           - Format: "Bạn có thể xem chi tiết sản phẩm [tên] tại: [LINK:/product/{id}]"
+        
+        D. Khi khách HỎI VỀ THƯƠNG HIỆU (ví dụ: "có son dior"):
+           - Nếu <10 sản phẩm: liệt kê tên và link từng sản phẩm
+           - Nếu >=10 sản phẩm: đưa link trang thương hiệu [LINK:/products?brand={brand}]
+        
+        THÔNG TIN KHUYẾN MÃI/VOUCHER:
+        - KHÔNG liệt kê danh sách khuyến mãi
+        - Hướng dẫn vào trang Khuyến mãi: [LINK:/promo]
+        
+        GIỚI HẠN:
+        - KHÔNG thể tra cứu đơn hàng cụ thể (cần đăng nhập)
+        - KHÔNG thể xử lý khiếu nại/đổi trả (cần liên hệ CSKH)
+        - KHÔNG có thông tin tài khoản (cần đăng nhập)
+        - KHÔNG thể thanh toán trực tiếp (cần đặt hàng trên website)
+        
+        NGUYÊN TẮC TRẢ LỜI:
+        1. Ngắn gọn, rõ ràng, dễ hiểu
+        2. Ngôn ngữ thân thiện, chuyên nghiệp
+        3. CHỈ tư vấn sản phẩm CÓ TRONG CONTEXT
+        4. Khi không có thông tin: thành thật nói không có
+        
+        QUY TẮC FORMATTING:
+        1. TUYỆT ĐỐI KHÔNG dùng markdown: **, ***, *, #, __, ~~
+        2. Chỉ dùng text thuần túy
+        3. Liệt kê: dùng số thứ tự (1., 2., 3.) hoặc dấu gạch (-)
+        4. Trích dẫn: dùng dấu ngoặc kép ""
+        """;
+    
+    public ChatResponse ask(ChatRequest request) {
+        try {
+            // 1. Validate request
+            if (request == null || request.getMessage() == null || request.getMessage().isBlank()) {
+                throw new AppException(ErrorCode.INVALID_REQUEST);
+            }
+            
+            // 2. Tạo hoặc lấy sessionId
+            String sessionId = request.getSessionId();
+            if (sessionId == null || sessionId.isBlank()) {
+                sessionId = UUID.randomUUID().toString();
+            }
+            
+            // 3. Lấy conversation history
+            List<GeminiContent> history = conversationHistory.getOrDefault(sessionId, new ArrayList<>());
+            
+            // 4. Build request cho Gemini
+            GeminiRequest geminiRequest = buildGeminiRequest(request.getMessage(), history);
+            
+            // 5. Gọi Gemini API với retry
+            GeminiResponse response = callGeminiWithRetry(geminiRequest, 3);
+            
+            // 6. Extract reply
+            String reply = response.getCandidates().get(0).getContent().getParts().get(0).getText();
+            
+            // 7. Remove markdown formatting
+            reply = reply.replace("***", "").replace("**", "").replace("*", "");
+            
+            // 8. Lưu vào history
+            history.add(new GeminiContent("user", request.getMessage()));
+            history.add(new GeminiContent("model", reply));
+            conversationHistory.put(sessionId, history);
+            
+            // 9. Giới hạn history (giữ 10 cặp Q&A gần nhất)
+            if (history.size() > 20) {
+                history.subList(0, history.size() - 20).clear();
+            }
+            
+            return ChatResponse.builder()
+                    .reply(reply)
+                    .sessionId(sessionId)
+                    .build();
+                    
+        } catch (Exception e) {
+            log.error("Error in chatbot service", e);
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
+    }
+    
+    private GeminiRequest buildGeminiRequest(String userMessage, List<GeminiContent> history) {
+        List<GeminiContent> contents = new ArrayList<>();
+        
+        // Refresh products context nếu cần
+        refreshProductsContextIfNeeded();
+        
+        // Tạo system prompt
+        String systemPrompt = SYSTEM_PROMPT_BASE;
+        
+        // Chỉ thêm products context nếu câu hỏi liên quan đến sản phẩm
+        if (!isGreetingMessage(userMessage) && isProductRelatedQuestion(userMessage)) {
+            String productsContext = getProductsContextForMessage(userMessage);
+            if (!productsContext.isEmpty()) {
+                systemPrompt += "\n\n" + productsContext;
+            }
+        }
+        
+        // Build contents
+        if (history.isEmpty()) {
+            // Conversation mới: thêm system prompt
+            contents.add(new GeminiContent("user", systemPrompt + "\n\nCâu hỏi của khách hàng: " + userMessage));
+        } else {
+            // Conversation có history: thêm history + message mới
+            contents.addAll(history);
+            
+            String messageWithContext = userMessage;
+            if (!isGreetingMessage(userMessage) && isProductRelatedQuestion(userMessage)) {
+                String productsContext = getProductsContextForMessage(userMessage);
+                if (!productsContext.isEmpty()) {
+                    messageWithContext = "Thông tin sản phẩm hiện có:\n" + productsContext 
+                        + "\n\nCâu hỏi của khách hàng: " + userMessage;
+                }
+            }
+            contents.add(new GeminiContent("user", messageWithContext));
+        }
+        
+        GeminiRequest request = new GeminiRequest();
+        request.setContents(contents);
+        return request;
+    }
+    
+    private GeminiResponse callGeminiWithRetry(GeminiRequest request, int maxRetries) {
+        int retryCount = 0;
+        long baseDelay = 2000; // 2 seconds
+        
+        while (retryCount < maxRetries) {
+            try {
+                return webClient.post()
+                        .uri("/models/" + model + ":generateContent?key=" + apiKey)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(request)
+                        .retrieve()
+                        .bodyToMono(GeminiResponse.class)
+                        .block();
+                        
+            } catch (WebClientResponseException e) {
+                int statusCode = e.getStatusCode().value();
+                String errorBody = e.getResponseBodyAsString();
+                
+                // 400 BadRequest: không retry
+                if (statusCode == 400) {
+                    log.error("Gemini API BadRequest (400): {}", errorBody);
+                    throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+                }
+                
+                // 404 NotFound: không retry
+                if (statusCode == 404) {
+                    log.error("Gemini API NotFound (404). Model '{}' not found", model);
+                    throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+                }
+                
+                // 429 TooManyRequests: retry với backoff
+                if (statusCode == 429) {
+                    // Nếu limit = 0, không retry
+                    if (errorBody.contains("\"limit\": 0")) {
+                        log.error("Gemini API quota exceeded (limit = 0)");
+                        throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+                    }
+                    
+                    if (retryCount < maxRetries) {
+                        long delay = baseDelay * (long) Math.pow(2, retryCount);
+                        log.warn("Gemini API rate limited. Retrying in {}ms (attempt {}/{})", 
+                            delay, retryCount + 1, maxRetries);
+                        Thread.sleep(delay);
+                        retryCount++;
+                        continue;
+                    }
+                }
+                
+                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+            } catch (Exception e) {
+                log.error("Unexpected error calling Gemini API", e);
+                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+            }
+        }
+        
+        throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+    }
+    
+    private void refreshProductsContextIfNeeded() {
+        long now = System.currentTimeMillis();
+        if (now - lastProductsCacheUpdate > PRODUCTS_CACHE_TTL || cachedProductsContext.isEmpty()) {
+            refreshProductsContext();
+        }
+    }
+    
+    private void refreshProductsContext() {
+        try {
+            // Lấy sản phẩm từ database
+            List<ProductResponse> products = productService.getActiveProducts();
+            
+            // Giới hạn 100 sản phẩm để tránh prompt quá dài
+            int maxProducts = Math.min(100, products.size());
+            
+            // Format thành text context
+            StringBuilder context = new StringBuilder();
+            context.append("DANH SÁCH SẢN PHẨM CỦA NOVA BEAUTY:\n\n");
+            
+            for (int i = 0; i < maxProducts; i++) {
+                ProductResponse product = products.get(i);
+                context.append(String.format("%d. ID: %s | Tên: %s", 
+                    i + 1, product.getId(), product.getName()));
+                
+                if (product.getBrand() != null) {
+                    context.append(" | Thương hiệu: ").append(product.getBrand());
+                }
+                
+                if (product.getPrice() != null) {
+                    context.append(String.format(" | Giá: %,.0f VNĐ", product.getPrice()));
+                }
+                
+                if (product.getSkinType() != null) {
+                    context.append(" | Loại da: ").append(product.getSkinType());
+                }
+                
+                context.append("\n");
+            }
+            
+            cachedProductsContext = context.toString();
+            lastProductsCacheUpdate = System.currentTimeMillis();
+            
+            log.info("Products context refreshed: {} products", maxProducts);
+            
+        } catch (Exception e) {
+            log.error("Error refreshing products context", e);
+        }
+    }
+    
+    private boolean isGreetingMessage(String message) {
+        String lowerMessage = message.toLowerCase().trim();
+        String[] greetingKeywords = {
+            "hi", "hello", "xin chào", "chào", "chào bạn",
+            "hey", "hế lô", "alo"
+        };
+        for (String keyword : greetingKeywords) {
+            if (lowerMessage.equals(keyword) || lowerMessage.startsWith(keyword + " ")) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private boolean isProductRelatedQuestion(String message) {
+        String lowerMessage = message.toLowerCase();
+        String[] productKeywords = {
+            "sản phẩm", "mỹ phẩm", "kem", "son", "nước hoa",
+            "trang điểm", "chăm sóc", "tư vấn", "giá", "mua", "bán",
+            "skincare", "makeup", "perfume"
+        };
+        for (String keyword : productKeywords) {
+            if (lowerMessage.contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // ... Thêm các methods khác như getProductsContextForMessage(), 
+    // getSubCategoriesContext(), getBrandProductsContext(), etc.
+}
+```
+
+---
+
+### PHẦN 2: FRONTEND (REACTJS)
+
+#### 2.1. Chatbot Service (API Client)
+
+```javascript
+import axios from 'axios';
+
+const API_BASE_URL = 'http://localhost:8080'; // Hoặc URL backend của bạn
+
+const chatbotService = {
+    /**
+     * Gửi message đến chatbot AI
+     * @param {string} message - Nội dung tin nhắn
+     * @param {string} sessionId - Session ID (optional)
+     * @returns {Promise<{reply: string, sessionId: string}>}
+     */
+    async ask(message, sessionId = null) {
+        try {
+            const payload = { message };
+            if (sessionId) {
+                payload.sessionId = sessionId;
+            }
+            
+            const response = await axios.post(`${API_BASE_URL}/api/chatbot/ask`, payload);
+            
+            return response.data.result;
+        } catch (error) {
+            console.error('[Chatbot Service] ask error:', error);
+            throw error;
+        }
+    }
+};
+
+export default chatbotService;
+```
+
+#### 2.2. Chatbot Component (UI)
+
+```jsx
+import React, { useState, useEffect, useRef } from 'react';
+import chatbotService from '~/services/chatbot';
+import './Chatbot.scss';
+
+const Chatbot = () => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [messages, setMessages] = useState([]);
+    const [inputMessage, setInputMessage] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [sessionId, setSessionId] = useState(null);
+    const messagesEndRef = useRef(null);
+
+    // Auto scroll to bottom
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    // Add greeting message when open
+    useEffect(() => {
+        if (isOpen && messages.length === 0) {
+            setMessages([
+                {
+                    type: 'bot',
+                    content: 'Xin chào! Tôi là trợ lý AI của Nova Beauty. Tôi có thể giúp gì cho bạn hôm nay?',
+                    timestamp: new Date()
+                }
+            ]);
+        }
+    }, [isOpen]);
+
+    const handleSendMessage = async () => {
+        if (!inputMessage.trim()) return;
+
+        // Add user message
+        const userMessage = {
+            type: 'user',
+            content: inputMessage,
+            timestamp: new Date()
+        };
+        setMessages(prev => [...prev, userMessage]);
+        setInputMessage('');
+        setIsLoading(true);
+
+        try {
+            // Call API
+            const response = await chatbotService.ask(inputMessage, sessionId);
+            
+            // Update sessionId
+            if (response.sessionId) {
+                setSessionId(response.sessionId);
+            }
+
+            // Add bot message
+            const botMessage = {
+                type: 'bot',
+                content: response.reply,
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, botMessage]);
+            
+        } catch (error) {
+            console.error('Error sending message:', error);
+            const errorMessage = {
+                type: 'bot',
+                content: 'Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau.',
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    };
+
+    return (
+        <>
+            {/* Chat button */}
+            <button 
+                className={`chatbot-button ${isOpen ? 'active' : ''}`}
+                onClick={() => setIsOpen(!isOpen)}
+            >
+                <i className="fas fa-comments"></i>
+            </button>
+
+            {/* Chat window */}
+            {isOpen && (
+                <div className="chatbot-window">
+                    {/* Header */}
+                    <div className="chatbot-header">
+                        <h3>Trợ lý AI Nova Beauty</h3>
+                        <button onClick={() => setIsOpen(false)}>
+                            <i className="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    {/* Messages */}
+                    <div className="chatbot-messages">
+                        {messages.map((msg, index) => (
+                            <div 
+                                key={index} 
+                                className={`message ${msg.type}`}
+                            >
+                                <div className="message-content">
+                                    {msg.content}
+                                </div>
+                                <div className="message-time">
+                                    {msg.timestamp.toLocaleTimeString('vi-VN', { 
+                                        hour: '2-digit', 
+                                        minute: '2-digit' 
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                        {isLoading && (
+                            <div className="message bot">
+                                <div className="message-content loading">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </div>
+                        )}
+                        <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Input */}
+                    <div className="chatbot-input">
+                        <textarea
+                            value={inputMessage}
+                            onChange={(e) => setInputMessage(e.target.value)}
+                            onKeyPress={handleKeyPress}
+                            placeholder="Nhập tin nhắn..."
+                            rows={1}
+                            disabled={isLoading}
+                        />
+                        <button 
+                            onClick={handleSendMessage}
+                            disabled={isLoading || !inputMessage.trim()}
+                        >
+                            <i className="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+};
+
+export default Chatbot;
+```
+
+#### 2.3. Chatbot Styles (SCSS)
+
+```scss
+.chatbot-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: all 0.3s ease;
+    z-index: 1000;
+
+    &:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    &.active {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+}
+
+.chatbot-window {
+    position: fixed;
+    bottom: 100px;
+    right: 30px;
+    width: 380px;
+    height: 600px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    overflow: hidden;
+
+    .chatbot-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+    }
+
+    .chatbot-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        background: #f5f5f5;
+
+        .message {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+
+            &.user {
+                align-items: flex-end;
+
+                .message-content {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    max-width: 70%;
+                    padding: 12px 16px;
+                    border-radius: 18px 18px 4px 18px;
+                }
+            }
+
+            &.bot {
+                align-items: flex-start;
+
+                .message-content {
+                    background: white;
+                    color: #333;
+                    max-width: 70%;
+                    padding: 12px 16px;
+                    border-radius: 18px 18px 18px 4px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+                    &.loading {
+                        display: flex;
+                        gap: 4px;
+                        padding: 16px;
+
+                        span {
+                            width: 8px;
+                            height: 8px;
+                            border-radius: 50%;
+                            background: #667eea;
+                            animation: bounce 1.4s infinite ease-in-out;
+
+                            &:nth-child(1) {
+                                animation-delay: -0.32s;
+                            }
+                            &:nth-child(2) {
+                                animation-delay: -0.16s;
+                            }
+                        }
+                    }
+                }
+            }
+
+            .message-time {
+                font-size: 11px;
+                color: #999;
+                margin-top: 4px;
+            }
+        }
+    }
+
+    .chatbot-input {
+        padding: 16px;
+        background: white;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        gap: 12px;
+
+        textarea {
+            flex: 1;
+            border: 1px solid #e0e0e0;
+            border-radius: 24px;
+            padding: 12px 16px;
+            font-size: 14px;
+            resize: none;
+            font-family: inherit;
+
+            &:focus {
+                outline: none;
+                border-color: #667eea;
+            }
+        }
+
+        button {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+
+            &:hover:not(:disabled) {
+                transform: scale(1.1);
+            }
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+        }
+    }
+}
+
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0);
+    }
+    40% {
+        transform: scale(1);
+    }
+}
+```
+
+---
+
+### PHẦN 3: CẤU HÌNH VÀ DEPLOYMENT
+
+#### 3.1. Environment Variables
+
+**Backend (application.yaml):**
+
+```yaml
+gemini:
+  apiKey: ${GEMINI_API_KEY:your-api-key-here}
+  model: gemini-1.5-flash # Hoặc gemini-2.0-flash, gemini-pro
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/nova_beauty
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:password}
+```
+
+**Frontend (.env):**
+
+```
+REACT_APP_API_BASE_URL=http://localhost:8080
+```
+
+#### 3.2. Lấy Gemini API Key
+
+1. Truy cập [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Đăng nhập bằng tài khoản Google
+3. Click "Create API Key"
+4. Copy API key và lưu vào environment variable
+
+#### 3.3. Testing
+
+**Test API bằng Postman/cURL:**
+
+```bash
+curl -X POST http://localhost:8080/api/chatbot/ask \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Bạn có sản phẩm nào cho da dầu không?",
+    "sessionId": null
+  }'
+```
+
+**Expected Response:**
+
+```json
+{
+  "code": 1000,
+  "result": {
+    "reply": "Chào bạn! Nova Beauty có các sản phẩm chăm sóc da cho da dầu. Dưới đây là các sản phẩm bạn có thể tham khảo ạ:",
+    "sessionId": "123e4567-e89b-12d3-a456-426614174000"
+  }
+}
+```
+
+---
+
+## 🎯 TÍNH NĂNG NÂNG CAO
+
+### 1. Smart Context Loading
+
+**Vấn đề:** Prompt quá dài nếu load tất cả sản phẩm
+
+**Giải pháp:**
+
+- Chỉ load context khi câu hỏi liên quan đến sản phẩm
+- Filter sản phẩm theo keyword
+- Ưu tiên danh mục con khi hỏi chung
+- Giới hạn 50-100 sản phẩm trong context
+
+**Implementation:**
+
+```java
+private String getProductsContextForMessage(String userMessage) {
+    // Extract keywords
+    String[] productKeywords = extractProductKeywords(userMessage);
+    
+    if (productKeywords.length == 0) {
+        return "";
+    }
+    
+    // Kiểm tra câu hỏi chung hay cụ thể
+    boolean isSpecific = isSpecificProductQuestion(userMessage);
+    
+    if (!isSpecific) {
+        // Câu hỏi chung: trả về danh mục con
+        String subCategoriesContext = getSubCategoriesContext(productKeywords[0]);
+        if (!subCategoriesContext.isEmpty()) {
+            return subCategoriesContext;
+        }
+    }
+    
+    // Kiểm tra câu hỏi về brand
+    String brandName = extractBrandFromMessage(userMessage);
+    if (brandName != null) {
+        String brandProductsContext = getBrandProductsContext(brandName);
+        if (!brandProductsContext.isEmpty()) {
+            return brandProductsContext;
+        }
+    }
+    
+    // Trả về sản phẩm filtered
+    return getFilteredProductsContext(productKeywords);
+}
+```
+
+### 2. Subcategories Context
+
+**Mục đích:** Khi user hỏi chung (ví dụ: "có son gì"), trả về danh mục con để user chọn
+
+**Implementation:**
+
+```java
+private String getSubCategoriesContext(String keyword) {
+    try {
+        // Tìm category theo keyword
+        List<CategoryResponse> categories = categoryService.getAllCategories();
+        CategoryResponse mainCategory = null;
+        
+        // Tìm category phù hợp
+        for (CategoryResponse cat : categories) {
+            if (cat.getName().toLowerCase().contains(keyword.toLowerCase())) {
+                mainCategory = cat;
+                break;
+            }
+        }
+        
+        if (mainCategory == null) {
+            return "";
+        }
+        
+        // Lấy subcategories
+        List<CategoryResponse> subCategories = categoryService.getSubCategories(mainCategory.getId());
+        
+        if (subCategories.isEmpty()) {
+            return "";
+        }
+        
+        // Format context
+        StringBuilder context = new StringBuilder();
+        context.append("=== DANH MỤC CON CỦA ").append(mainCategory.getName().toUpperCase()).append(" ===\n");
+        context.append("TUYỆT ĐỐI CHỈ LIỆT KÊ ĐÚNG Y HỆT CÁC DANH MỤC CON SAU:\n\n");
+        
+        for (int i = 0; i < subCategories.size(); i++) {
+            CategoryResponse subCat = subCategories.get(i);
+            context.append(String.format("%d. %s", i + 1, subCat.getName()));
+            if (subCat.getProductCount() != null && subCat.getProductCount() > 0) {
+                context.append(String.format(" (%d sản phẩm)", subCat.getProductCount()));
+            }
+            context.append("\n");
+        }
+        
+        return context.toString();
+        
+    } catch (Exception e) {
+        log.error("Error getting subcategories", e);
+        return "";
+    }
+}
+```
+
+### 3. Brand Products Context
+
+**Mục đích:** Khi user hỏi về thương hiệu (ví dụ: "có son dior"), trả về sản phẩm của brand đó
+
+**Implementation:**
+
+```java
+private String getBrandProductsContext(String brandName) {
+    try {
+        // Search products by brand
+        List<ProductResponse> brandProducts = productService.searchProducts(brandName)
+            .stream()
+            .filter(p -> p.getBrand() != null && p.getBrand().equalsIgnoreCase(brandName))
+            .collect(Collectors.toList());
+        
+        if (brandProducts.isEmpty()) {
+            return "";
+        }
+        
+        // Format context
+        StringBuilder context = new StringBuilder();
+        context.append("=== SẢN PHẨM THEO THƯƠNG HIỆU: ").append(brandName.toUpperCase()).append(" ===\n");
+        context.append("TÊN THƯƠNG HIỆU: ").append(brandName).append("\n");
+        context.append("SỐ LƯỢNG SẢN PHẨM: ").append(brandProducts.size()).append("\n\n");
+        
+        // Giới hạn 50 sản phẩm
+        int maxProducts = Math.min(50, brandProducts.size());
+        for (int i = 0; i < maxProducts; i++) {
+            ProductResponse product = brandProducts.get(i);
+            context.append(String.format("%d. ID: %s | Tên: %s", 
+                i + 1, product.getId(), product.getName()));
+            if (product.getPrice() != null) {
+                context.append(String.format(" | Giá: %,.0f VNĐ", product.getPrice()));
+            }
+            context.append("\n");
+        }
+        
+        context.append("\nQUY TẮC KHI TRẢ LỜI:\n");
+        context.append("- Nếu có <10 sản phẩm: liệt kê tất cả tên và link [LINK:/product/{id}]\n");
+        context.append("- Nếu có >=10 sản phẩm: đưa link [LINK:/products?brand=" + brandName + "]\n");
+        
+        return context.toString();
+        
+    } catch (Exception e) {
+        log.error("Error getting brand products", e);
+        return "";
+    }
+}
+```
+
+### 4. Retry Logic With Exponential Backoff
+
+**Mục đích:** Xử lý quota exceeded và network errors
+
+**Implementation đã được trình bày ở phần ChatbotService.callGeminiWithRetry()**
+
+### 5. Scheduled Cache Refresh
+
+**Mục đích:** Tự động refresh cache mỗi 30 phút
+
+**Implementation:**
+
+```java
+@Scheduled(fixedRate = PRODUCTS_CACHE_TTL)
+public void scheduledRefreshProductsContext() {
+    log.info("Scheduled task: Refreshing products context");
+    refreshProductsContext();
+}
+```
+
+**Configuration:**
+
+```java
+@Configuration
+@EnableScheduling
+public class SchedulingConfig {
+    // Spring Boot sẽ tự động chạy @Scheduled tasks
+}
+```
+
+---
+
+## 🔒 BẢO MẬT VÀ TỐI ƯU
+
+### 1. Bảo Mật API Key
+
+```yaml
+# KHÔNG commit API key vào Git
+gemini:
+  apiKey: ${GEMINI_API_KEY}  # Lấy từ environment variable
+```
+
+```bash
+# Set environment variable
+export GEMINI_API_KEY="your-actual-api-key"
+```
+
+### 2. Rate Limiting
+
+```java
+@RateLimiter(name = "chatbot", fallbackMethod = "rateLimitFallback")
+public ChatResponse ask(ChatRequest request) {
+    // ...
+}
+
+public ChatResponse rateLimitFallback(ChatRequest request, Throwable t) {
+    return ChatResponse.builder()
+        .reply("Xin lỗi, hệ thống đang quá tải. Vui lòng thử lại sau.")
+        .build();
+}
+```
+
+### 3. Input Validation
+
+```java
+@Valid
+public class ChatRequest {
+    @NotBlank(message = "Message cannot be blank")
+    @Size(max = 1000, message = "Message too long")
+    private String message;
+    
+    private String sessionId;
+}
+```
+
+### 4. Caching với Redis (Production)
+
+```java
+@Configuration
+public class RedisConfig {
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(factory);
+        return template;
+    }
+}
+
+// Usage
+@Autowired
+private RedisTemplate<String, Object> redisTemplate;
+
+private void saveConversationHistory(String sessionId, List<GeminiContent> history) {
+    redisTemplate.opsForValue().set("chat:" + sessionId, history, 30, TimeUnit.MINUTES);
+}
+```
+
+---
+
+## 📊 MONITORING VÀ LOGGING
+
+### 1. Logging Strategy
+
+```java
+// Request logging
+log.info("Chatbot request received: sessionId={}, message={}", 
+    sessionId, request.getMessage().substring(0, Math.min(50, request.getMessage().length())));
+
+// Response logging
+log.info("Chatbot response sent: sessionId={}, reply_length={}", 
+    sessionId, reply.length());
+
+// Error logging
+log.error("Error calling Gemini API: status={}, message={}, body={}", 
+    statusCode, e.getMessage(), errorBody, e);
+```
+
+### 2. Metrics
+
+```java
+@Autowired
+private MeterRegistry meterRegistry;
+
+private void recordChatbotMetrics(boolean success) {
+    Counter.builder("chatbot.requests")
+        .tag("status", success ? "success" : "error")
+        .register(meterRegistry)
+        .increment();
+}
+```
+
+---
+
+## 🧪 TESTING
+
+### 1. Unit Tests
+
+```java
+@Test
+public void testAsk_Success() {
+    // Arrange
+    ChatRequest request = ChatRequest.builder()
+        .message("Bạn có sản phẩm nào cho da dầu không?")
+        .build();
+    
+    // Act
+    ChatResponse response = chatbotService.ask(request);
+    
+    // Assert
+    assertNotNull(response);
+    assertNotNull(response.getReply());
+    assertNotNull(response.getSessionId());
+}
+```
+
+### 2. Integration Tests
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+public class ChatbotControllerTest {
+    
+    @Autowired
+    private MockMvc mockMvc;
+    
+    @Test
+    public void testAskEndpoint() throws Exception {
+        mockMvc.perform(post("/api/chatbot/ask")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"message\":\"Xin chào\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(1000))
+                .andExpect(jsonPath("$.result.reply").exists())
+                .andExpect(jsonPath("$.result.sessionId").exists());
+    }
+}
+```
+
+---
+
+## 📚 TÀI LIỆU THAM KHẢO
+
+### Google Gemini API
+- **Documentation**: https://ai.google.dev/docs
+- **API Reference**: https://ai.google.dev/api/rest/v1/models/generateContent
+- **Get API Key**: https://makersuite.google.com/app/apikey
+- **Usage Limits**: https://ai.dev/usage?tab=rate-limit
+
+### Alternative AI Services
+- **OpenAI GPT**: https://platform.openai.com/docs/api-reference
+- **Anthropic Claude**: https://docs.anthropic.com/claude/reference
+- **Cohere**: https://docs.cohere.com/
+
+---
+
+## ✅ CHECKLIST IMPLEMENTATION
+
+### Backend
+- [ ] Tạo database và tables (products, categories)
+- [ ] Implement ProductService.getActiveProducts()
+- [ ] Implement CategoryService với subcategories
+- [ ] Implement ChatbotService với cache mechanism
+- [ ] Implement retry logic với exponential backoff
+- [ ] Tạo ChatbotController với endpoint /api/chatbot/ask
+- [ ] Setup Gemini API key trong application.yaml
+- [ ] Test API với Postman/cURL
+- [ ] Add logging và error handling
+- [ ] (Optional) Setup Redis cho conversation history
+
+### Frontend
+- [ ] Tạo chatbot service (API client)
+- [ ] Implement Chatbot component (UI)
+- [ ] Add styling (SCSS/CSS)
+- [ ] Handle loading state
+- [ ] Handle errors gracefully
+- [ ] Auto-scroll to bottom
+- [ ] Save sessionId trong localStorage
+- [ ] Test UI với các use cases
+
+### Deployment
+- [ ] Set environment variables (GEMINI_API_KEY, DB credentials)
+- [ ] Build backend (mvn clean package)
+- [ ] Build frontend (npm run build)
+- [ ] Deploy backend (Heroku, AWS, etc.)
+- [ ] Deploy frontend (Vercel, Netlify, etc.)
+- [ ] Configure CORS
+- [ ] Setup SSL/HTTPS
+- [ ] Monitor logs và metrics
+
+### Testing
+- [ ] Test greeting messages
+- [ ] Test product queries (chung và cụ thể)
+- [ ] Test brand queries
+- [ ] Test category queries
+- [ ] Test conversation history
+- [ ] Test error handling (invalid input, API errors)
+- [ ] Test performance (response time)
+- [ ] Test với nhiều users đồng thời
+
+---
+
+## 🚀 NEXT STEPS & IMPROVEMENTS
+
+### Short Term
+1. Add product images trong response
+2. Implement "Quick Replies" buttons
+3. Add typing indicator animation
+4. Save conversation history vào database
+
+### Medium Term
+1. Multi-language support (English, Vietnamese)
+2. Voice input/output
+3. Product recommendations based on chat history
+4. Integration với shopping cart
+
+### Long Term
+1. Custom AI model training
+2. Sentiment analysis
+3. Automated customer support tickets
+4. Analytics dashboard
+5. A/B testing different prompts
+
+---
+
+## 💡 MẸO VÀ LƯU Ý
+
+### 1. System Prompt là Quan Trọng Nhất
+
+System prompt quyết định 80% chất lượng chatbot. Cần:
+- Rõ ràng, chi tiết
+- Đưa ra rules cụ thể
+- Có ví dụ format
+- Nhấn mạnh "CHỈ dùng thông tin từ context"
+
+### 2. Context Loading Strategy
+
+- KHÔNG load tất cả sản phẩm vào mọi request
+- Chỉ load context khi cần
+- Filter sản phẩm theo keyword
+- Giới hạn số lượng sản phẩm (50-100)
+
+### 3. Conversation History
+
+- Giới hạn history (10-20 cặp Q&A)
+- Clear history khi user refresh
+- Lưu sessionId trong localStorage (frontend)
+- Dùng Redis cho production
+
+### 4. Error Handling
+
+- Validate input trước khi gọi API
+- Retry cho 429 (quota exceeded)
+- KHÔNG retry cho 400, 404
+- Có fallback message cho users
+
+### 5. Performance
+
+- Cache sản phẩm trong 30 phút
+- Scheduled task để refresh cache
+- Optimize database queries (JOIN FETCH)
+- Dùng connection pooling
+
+### 6. Testing
+
+- Test với real users
+- Monitor response time
+- Track error rates
+- A/B test different prompts
+
+---
+
+**LƯU Ý QUAN TRỌNG:**
+
+1. **API Key**: TUYỆT ĐỐI KHÔNG commit API key vào Git
+2. **Rate Limiting**: Gemini API có giới hạn requests per minute
+3. **Cost**: Monitor usage để tránh chi phí cao
+4. **Privacy**: KHÔNG lưu thông tin nhạy cảm của users
+5. **Fallback**: Luôn có plan B khi AI API down
+
+---
+
+**KẾT LUẬN:**
+
+Đây là một hệ thống Chatbot AI hoàn chỉnh, production-ready với:
+- ✅ Smart context loading
+- ✅ Conversation history
+- ✅ Error handling & retry logic
+- ✅ Caching mechanism
+- ✅ Frontend UI đẹp
+- ✅ Scalable architecture
+
+Bạn có thể customize và mở rộng dựa trên nhu cầu cụ thể của dự án!
