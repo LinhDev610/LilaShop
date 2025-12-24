@@ -11,9 +11,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/media")
@@ -61,5 +64,16 @@ public class MediaController {
                 .map(fileStorageService::storeBannerMedia)
                 .collect(Collectors.toList());
         return ApiResponse.<List<String>>builder().result(urls).build();
+    }
+
+    @PostMapping(value = "/signature")
+    public ApiResponse<Map<String, Object>> generateSignature(
+            @RequestBody Map<String, Object> params) {
+        String signature = fileStorageService.generateSignature(params);
+        Map<String, Object> result = new HashMap<>();
+        result.put("signature", signature);
+        result.put("api_key", fileStorageService.getApiKey());
+        result.put("cloud_name", fileStorageService.getCloudName());
+        return ApiResponse.<Map<String, Object>>builder().result(result).build();
     }
 }

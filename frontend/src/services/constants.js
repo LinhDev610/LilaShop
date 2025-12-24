@@ -32,8 +32,19 @@ import {
 } from 'react-icons/fi';
 
 // =========== API Configuration ===========
-// API Base URL fallback - được cấu hình trong backend/application.yaml: app.frontend.base-url
+// API Base URL fallback
 export const API_BASE_URL_FALLBACK = 'http://localhost:8080/lila_shop';
+export const CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1';
+
+// Cloudinary Folders
+export const CLOUDINARY_FOLDERS = {
+    PRODUCT: 'product_media',
+    VOUCHER: 'voucher_media',
+    PROMOTION: 'promotion_media',
+    PROFILE: 'profile_media',
+    BANNER: 'banners',
+    CONTENT: 'content_media',
+};
 
 // =========== API Routes ===========
 export const API_ROUTES = {

@@ -21,6 +21,14 @@ public class FileStorageService {
 
     private final Cloudinary cloudinary;
 
+    public String getApiKey() {
+        return cloudinary.config.apiKey;
+    }
+
+    public String getCloudName() {
+        return cloudinary.config.cloudName;
+    }
+
     /**
      * Upload product/voucher/promotion/avatar media file to Cloudinary
      * 
@@ -131,6 +139,16 @@ public class FileStorageService {
     }
 
     /**
+     * Generate signature for Client-side upload
+     * 
+     * @param params Parameters to sign (timestamp, folder, etc.)
+     * @return Signature string
+     */
+    public String generateSignature(Map<String, Object> params) {
+        return cloudinary.apiSignRequest(params, cloudinary.config.apiSecret);
+    }
+
+    /**
      * Extract public_id from Cloudinary URL
      * 
      * Cloudinary URL format:
@@ -151,14 +169,14 @@ public class FileStorageService {
 
             String pathAfterUpload = url.substring(uploadIndex + "/upload/".length());
 
-            // Remove version if present (format: v1234567890/)
+            // Remove version nếu có (format: v1234567890/)
             if (pathAfterUpload.startsWith("v") && pathAfterUpload.indexOf('/') > 0) {
                 int versionEndIndex = pathAfterUpload.indexOf('/');
                 pathAfterUpload = pathAfterUpload.substring(versionEndIndex + 1);
             }
 
-            // Remove transformation if present (format: w_500,h_500/ or c_scale,w_500/)
-            // Transformation typically contains underscore or comma
+            // Remove transformation nếu có (format: w_500,h_500/ or c_scale,w_500/)
+            // Transformation thường chứa dấu gạch ngang hoặc dấu phẩy
             while (pathAfterUpload.matches("^[^/]+_[^/]+/.*") ||
                     pathAfterUpload.matches("^[^/]+,[^/]+/.*")) {
                 int slashIndex = pathAfterUpload.indexOf('/');

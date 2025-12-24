@@ -173,7 +173,7 @@ function clearTokensAndLogout() {
 }
 
 // Hàm helper để tạo request API
-async function apiRequest(endpoint, options = {}) {
+export async function apiRequest(endpoint, options = {}) {
     const { method = 'GET', body = null, token = null, isFormData = false, skipAuthCheck = false, isRetry = false } = options;
     const apiBaseUrl = getApiBaseUrl();
     let tokenToUse = token || getStoredToken('token');

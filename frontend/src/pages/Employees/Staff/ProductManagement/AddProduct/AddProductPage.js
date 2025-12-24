@@ -10,15 +10,16 @@ import {
     getActiveCategories,
     createProduct,
     createProductVariant,
-    uploadProductMedia,
     INITIAL_FORM_STATE_PRODUCT,
     CATEGORY_FIELD_CONFIG,
+    CLOUDINARY_FOLDERS,
 } from '../../../../../services';
+import { uploadToCloudinary } from '../../../../../services/CloudinaryService';
 import imageCompression from 'browser-image-compression';
 import LoadingBar from '../../../../../components/Common/LoadingBar';
 
 const cx = classNames.bind(styles);
-const MAX_TOTAL_MEDIA_SIZE = 50 * 1024 * 1024; // 50MB tổng dung lượng ảnh/video
+const MAX_TOTAL_MEDIA_SIZE = 100 * 1024 * 1024; // 100MB tổng dung lượng ảnh/video
 
 /**
  * Lấy danh sách fields cần hiển thị dựa trên category đã chọn
@@ -727,11 +728,7 @@ export default function AddProductPage() {
                 const batch = compressedFiles.slice(i, i + batchSize);
 
                 const batchPromises = batch.map(async (m) => {
-                    const { ok, url, message } = await uploadProductMedia([m.file], token);
-
-                    if (!ok || !url) {
-                        throw new Error(message || `Failed to upload ${m.file.name}`);
-                    }
+                    const url = await uploadToCloudinary(m.file, CLOUDINARY_FOLDERS.PRODUCT);
 
                     completedCount++;
                     setUploadProgress(Math.round((completedCount / totalFiles) * 100));
@@ -853,7 +850,7 @@ export default function AddProductPage() {
             );
 
             if (currentTotalSize + selectedSize > MAX_TOTAL_MEDIA_SIZE) {
-                notifyError('Tổng dung lượng ảnh/video không được vượt quá 50MB.');
+                notifyError('Tổng dung lượng ảnh/video không được vượt quá 100MB.');
                 event.target.value = '';
                 return;
             }
