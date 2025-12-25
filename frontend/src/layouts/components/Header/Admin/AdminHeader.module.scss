@@ -1,11 +1,11 @@
 /* Admin Header Styles */
-.header { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    background: #fff; 
-    padding: 20px 40px; 
-    border-bottom: 1px solid #ddd; 
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    padding: 20px 40px;
+    border-bottom: 1px solid #ddd;
 }
 
 .logo {
@@ -124,7 +124,7 @@
     min-height: 200px;
     background: #fff;
     border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .2);
     padding: 50px 24px 20px;
     text-align: center;
 }
@@ -133,7 +133,7 @@
     margin: 0 0 8px;
     font-size: 24px;
     font-weight: 800;
-    color: #173a55;
+    color: #7C3AED;
 }
 
 .modal-desc {
@@ -163,6 +163,12 @@
 }
 
 .btn-primary {
-    background: #173a55;
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #fff;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+
+    &:hover {
+        box-shadow: 0 6px 15px rgba(124, 58, 237, 0.35);
+        transform: translateY(-1px);
+    }
 }

@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700;800&display=swap');
 
 // Primary Colors
-$rose-gold: #B76E79;
-$dusty-rose: #D4A5A5;
-$soft-pink: #F5E6E8;
+$rose-gold: #873435;
+$dusty-rose: #a14b4b;
+$soft-pink: rgba(135, 52, 53, 0.05);
 
 // Accent Colors
 $soft-gold: #C9A959;
@@ -22,7 +22,7 @@ $accent-light: $champagne;
 $text-primary: $deep-brown;
 $text-secondary: $soft-brown;
 $text-light: #ffffff;
-$voucher-red: #C75B5B;
+$voucher-red: #873435;
 $voucher-yellow: $soft-gold;
 
 // ============================================
@@ -315,7 +315,7 @@ $voucher-yellow: $soft-gold;
         border-color: $primary-color;
         background: #FDF8F5;
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(183, 110, 121, 0.12);
+        box-shadow: 0 4px 12px rgba(87, 52, 53, 0.12);
     }
 }
 
@@ -344,7 +344,7 @@ $voucher-yellow: $soft-gold;
 .voucher-image-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(183, 110, 121, 0.1);
+    background: rgba(87, 52, 53, 0.1);
     pointer-events: none;
 }
 
@@ -467,7 +467,7 @@ $voucher-yellow: $soft-gold;
 
     &.highlight {
         color: $text-primary;
-        background: rgba(183, 110, 121, 0.08);
+        background: rgba(87, 52, 53, 0.08);
         padding: 4px 8px;
         border-radius: 6px;
         margin: 0 -8px;

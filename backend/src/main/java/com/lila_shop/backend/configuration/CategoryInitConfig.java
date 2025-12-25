@@ -26,11 +26,8 @@ public class CategoryInitConfig {
     ApplicationRunner categoryInitializer() {
         log.info("Initializing cosmetic categories...");
         return args -> {
-            // Kiểm tra xem đã có categories chưa
-            if (categoryRepository.count() > 0) {
-                log.info("Categories already exist, skipping initialization.");
-                return;
-            }
+// Bỏ qua kiểm tra count để có thể thêm categories mới vào hệ thống hiện có
+            // createRootCategory và createSubCategory đã có kiểm tra tồn tại theo tên
 
             try {
                 // 1. Chăm sóc da (Skincare)
@@ -40,7 +37,8 @@ public class CategoryInitConfig {
                         "Các sản phẩm chăm sóc da mặt và cơ thể: kem dưỡng, serum, mặt nạ, tẩy trang, rửa mặt");
 
                 // Subcategories cho Chăm sóc da
-                createSubCategory("CAT_SKINCARE_CLEANSER", "Sữa rửa mặt", "Sữa rửa mặt, gel rửa mặt, tẩy trang",
+                createSubCategory("CAT_SKINCARE_REMOVER", "Nước tẩy trang", "Nước tẩy trang, dầu tẩy trang, sáp tẩy trang", skincare);
+                createSubCategory("CAT_SKINCARE_CLEANSER", "Sữa rửa mặt", "Sữa rửa mặt, gel rửa mặt cho mọi loại da",
                         skincare);
                 createSubCategory("CAT_SKINCARE_TONER", "Nước hoa hồng", "Toner, nước hoa hồng cân bằng da", skincare);
                 createSubCategory("CAT_SKINCARE_SERUM", "Serum", "Serum dưỡng da, tinh chất đặc trị", skincare);
@@ -103,6 +101,16 @@ public class CategoryInitConfig {
                 createSubCategory("CAT_BODYCARE_LOTION", "Kem dưỡng body", "Kem dưỡng thể, lotion body", bodycare);
                 createSubCategory("CAT_BODYCARE_SCRUB", "Tẩy tế bào chết", "Scrub body, tẩy da chết", bodycare);
                 createSubCategory("CAT_BODYCARE_HAND", "Chăm sóc tay chân", "Kem tay, kem chân, dưỡng móng", bodycare);
+                
+                // 6. Phụ kiện trang điểm (Accessories)
+                Category accessories = createRootCategory(
+                        "CAT_ACCESSORIES",
+                        "Phụ kiện trang điểm",
+                        "Các loại phụ kiện: cọ, bông mút, kẹp tóc, hộp đựng mỹ phẩm");
+
+                createSubCategory("CAT_ACCESSORIES_BRUSH", "Cọ trang điểm", "Các loại cọ trang điểm chuyên nghiệp", accessories);
+                createSubCategory("CAT_ACCESSORIES_SPONGE", "Bông mút", "Bông mút trang điểm, mút đánh nền", accessories);
+                createSubCategory("CAT_ACCESSORIES_STORAGE", "Hộp đựng", "Hộp đựng mỹ phẩm, túi đựng makeup", accessories);
 
                 log.info("Cosmetic categories initialized successfully!");
             } catch (Exception e) {

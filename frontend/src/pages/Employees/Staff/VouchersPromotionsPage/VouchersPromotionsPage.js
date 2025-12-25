@@ -153,7 +153,7 @@ export default function VouchersPromotionsPage() {
     const sortOptions = useMemo(() => VOUCHER_PROMOTION_SORT_OPTIONS, []);
 
     return (
-        <div>
+        <div className={cx('wrap')}>
             {/* Header */}
             <div className={cx('header')}>
                 <h1 className={cx('title')}>Voucher & Khuyến mãi</h1>
@@ -173,115 +173,113 @@ export default function VouchersPromotionsPage() {
                 </button>
             </div>
 
-            <div className={cx('wrap')}>
-                {/* Search và Filter */}
-                <div className={cx('search-filter-container')}>
-                    {/* Hàng 1: Search, Date, Search Button */}
-                    <div className={cx('search-row')}>
+            {/* Search và Filter */}
+            <div className={cx('search-filter-container')}>
+                {/* Hàng 1: Search, Date, Search Button */}
+                <div className={cx('search-row')}>
+                    <input
+                        type="text"
+                        className={cx('search-input')}
+                        placeholder="Tìm kiếm theo mã voucher, tên khuyến mãi....."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <div className={cx('date-wrapper')}>
                         <input
-                            type="text"
-                            className={cx('search-input')}
-                            placeholder="Tìm kiếm theo mã voucher, tên khuyến mãi....."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            type="date"
+                            className={cx('date-input')}
+                            value={dateFilter || ''}
+                            onChange={(e) => setDateFilter(e.target.value)}
                         />
-                        <div className={cx('date-wrapper')}>
-                            <input
-                                type="date"
-                                className={cx('date-input')}
-                                value={dateFilter || ''}
-                                onChange={(e) => setDateFilter(e.target.value)}
-                            />
-                        </div>
-                        <button className={cx('search-btn')} onClick={() => { }}>
-                            Tìm kiếm
+                    </div>
+                    <button className={cx('search-btn')} onClick={() => { }}>
+                        Tìm kiếm
+                    </button>
+                </div>
+
+                {/* Hàng 2: Sort (trái) và Action Buttons (phải) */}
+                <div className={cx('filter-row')}>
+                    <div className={cx('sort-section')}>
+                        <span className={cx('sort-label')}>Sắp xếp:</span>
+                        <select
+                            className={cx('sort-dropdown')}
+                            value={sortFilter}
+                            onChange={(e) => setSortFilter(e.target.value)}
+                        >
+                            {sortOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className={cx('action-buttons')}>
+                        <button
+                            className={cx('btn', 'primary')}
+                            onClick={handleAddVoucher}
+                        >
+                            Thêm voucher
+                        </button>
+                        <button
+                            className={cx('btn', 'primary')}
+                            onClick={handleAddPromotion}
+                        >
+                            Thêm khuyến mãi
                         </button>
                     </div>
-
-                    {/* Hàng 2: Sort (trái) và Action Buttons (phải) */}
-                    <div className={cx('filter-row')}>
-                        <div className={cx('sort-section')}>
-                            <span className={cx('sort-label')}>Sắp xếp:</span>
-                            <select
-                                className={cx('sort-dropdown')}
-                                value={sortFilter}
-                                onChange={(e) => setSortFilter(e.target.value)}
-                            >
-                                {sortOptions.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className={cx('action-buttons')}>
-                            <button
-                                className={cx('btn', 'primary')}
-                                onClick={handleAddVoucher}
-                            >
-                                Thêm voucher
-                            </button>
-                            <button
-                                className={cx('btn', 'primary')}
-                                onClick={handleAddPromotion}
-                            >
-                                Thêm khuyến mãi
-                            </button>
-                        </div>
-                    </div>
                 </div>
+            </div>
 
-                {/* Bảng Voucher & Khuyến mãi */}
-                <div className={cx('card')}>
-                    <div className={cx('card-header')}>Danh sách Voucher / Khuyến mãi</div>
-                    <table className={cx('table')}>
-                        <thead>
+            {/* Bảng Voucher & Khuyến mãi */}
+            <div className={cx('card')}>
+                <div className={cx('card-header')}>Danh sách Voucher / Khuyến mãi</div>
+                <table className={cx('table')}>
+                    <thead>
+                        <tr>
+                            <th>Mã</th>
+                            <th>Tên</th>
+                            <th>Loại</th>
+                            <th>Ngày tạo</th>
+                            <th>Trạng thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {isLoading ? (
                             <tr>
-                                <th>Mã</th>
-                                <th>Tên</th>
-                                <th>Loại</th>
-                                <th>Ngày tạo</th>
-                                <th>Trạng thái</th>
-                                <th>Hành động</th>
+                                <td colSpan={6} className={cx('empty')}>
+                                    Đang tải dữ liệu...
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {isLoading ? (
-                                <tr>
-                                    <td colSpan={6} className={cx('empty')}>
-                                        Đang tải dữ liệu...
+                        ) : sortedAndFiltered.length === 0 ? (
+                            <tr>
+                                <td colSpan={6} className={cx('empty')}>
+                                    Không có voucher/khuyến mãi phù hợp.
+                                </td>
+                            </tr>
+                        ) : (
+                            sortedAndFiltered.map((record) => (
+                                <tr key={`${record.entity}-${record.id}`}>
+                                    <td className={cx('code-cell')}>{record.code || '-'}</td>
+                                    <td className={cx('name-cell')}>{record.name}</td>
+                                    <td>{record.type}</td>
+                                    <td>{record.createdAt}</td>
+                                    <td>
+                                        <StatusBadge status={record.statusLabel} />
+                                    </td>
+                                    <td>
+                                        <button
+                                            className={cx('btn', 'view-btn')}
+                                            onClick={() => handleViewDetail(record)}
+                                        >
+                                            Xem chi tiết
+                                        </button>
                                     </td>
                                 </tr>
-                            ) : sortedAndFiltered.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className={cx('empty')}>
-                                        Không có voucher/khuyến mãi phù hợp.
-                                    </td>
-                                </tr>
-                            ) : (
-                                sortedAndFiltered.map((record) => (
-                                    <tr key={`${record.entity}-${record.id}`}>
-                                        <td className={cx('code-cell')}>{record.code || '-'}</td>
-                                        <td className={cx('name-cell')}>{record.name}</td>
-                                        <td>{record.type}</td>
-                                        <td>{record.createdAt}</td>
-                                        <td>
-                                            <StatusBadge status={record.statusLabel} />
-                                        </td>
-                                        <td>
-                                            <button
-                                                className={cx('btn', 'view-btn')}
-                                                onClick={() => handleViewDetail(record)}
-                                            >
-                                                Xem chi tiết
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
         </div>
     );

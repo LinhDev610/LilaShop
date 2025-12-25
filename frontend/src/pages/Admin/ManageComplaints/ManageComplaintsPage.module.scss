@@ -31,7 +31,7 @@
 }
 
 .complaint-table thead {
-    background: #1A3C5A;
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #fff;
 }
 
@@ -97,7 +97,7 @@
 }
 
 .view-btn {
-    background: #1A3C5A;
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #fff;
     border: none;
     border-radius: 6px;
@@ -105,11 +105,13 @@
     font-size: 15px;
     cursor: pointer;
     font-weight: 500;
-    transition: background 0.2s ease;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+    transition: all 0.2s ease;
 }
 
 .view-btn:hover {
-    background: #0f2a3f;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(124, 58, 237, 0.35);
 }
 
 // Modal styles
@@ -278,7 +280,7 @@
 
 .notes-input:focus {
     outline: none;
-    border-color: #1A3C5A;
+    border-color: #7C3AED;
 }
 
 .notes-input:disabled {
@@ -311,12 +313,14 @@
 }
 
 .btn-resolved {
-    background: #1A3C5A;
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #fff;
 }
 
 .btn-resolved:hover:not(:disabled) {
-    background: #0f2a3f;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
+    opacity: 0.95;
 }
 
 .btn-save-note {
@@ -339,16 +343,18 @@
 .view-detail-btn {
     width: 100%;
     padding: 12px 24px;
-    background: #1A3C5A;
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #fff;
     border: none;
     border-radius: 8px;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+    transition: all 0.2s ease;
 }
 
 .view-detail-btn:hover {
-    background: #0f2a3f;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(124, 58, 237, 0.35);
 }

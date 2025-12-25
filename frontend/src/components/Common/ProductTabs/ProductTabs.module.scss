@@ -1,11 +1,12 @@
 .productTabsSection {
-    padding: 60px 40px;
-    background: #FFFFFF;
+    width: 90%;
     max-width: 1400px;
     margin: 0 auto;
+    padding: 60px 0;
 
     @media (max-width: 768px) {
-        padding: 40px 20px;
+        width: 100%;
+        padding: 40px 15px;
     }
 }
 
@@ -53,7 +54,7 @@
         transform: translateX(-50%);
         width: 0;
         height: 3px;
-        background: linear-gradient(90deg, #B76E79 0%, #A85A66 100%);
+        background: linear-gradient(90deg, #873435 0%, #6d2829 100%);
         border-radius: 2px 2px 0 0;
         transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -64,7 +65,7 @@
     }
 
     &.active {
-        color: #B76E79;
+        color: #873435;
         font-weight: 500;
         background: rgba(245, 230, 232, 0.2);
 
@@ -89,4 +90,3 @@
         }
     }
 }
-

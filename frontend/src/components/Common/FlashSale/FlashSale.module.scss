@@ -1,11 +1,11 @@
 // --- ELEGANT COSMETICS STYLE CONSTANTS ---
-$flash-bg-gradient: linear-gradient(135deg, #B76E79 0%, #D4A5A5 100%);
+$flash-bg-gradient: linear-gradient(135deg, #873435 0%, #6d2829 100%);
 $flash-header-title-color: #FFFFFF;
-$flash-active-tab-color: #B76E79;
-$flash-timer-box-text: #B76E79;
-$flash-price-color: #B76E79;
+$flash-active-tab-color: #873435;
+$flash-timer-box-text: #873435;
+$flash-price-color: #873435;
 $flash-original-price-color: #6B5B5B;
-$flash-sold-bar-color: #C75B5B;
+$flash-sold-bar-color: #873435;
 
 .flash-sale-section {
     width: 100%;
@@ -18,13 +18,18 @@ $flash-sold-bar-color: #C75B5B;
 }
 
 .flash-sale-container {
-    width: 96%;
+    width: 90%;
     max-width: 1400px;
     margin: 0 auto;
     background: $flash-bg-gradient;
     border-radius: 16px;
     padding-bottom: 25px;
     box-shadow: 0 4px 16px rgba(61, 47, 47, 0.08);
+
+    @media (max-width: 768px) {
+        width: 100%;
+        border-radius: 0;
+    }
 }
 
 // --- HEADER ---
@@ -206,7 +211,7 @@ $flash-sold-bar-color: #C75B5B;
     position: absolute;
     top: 0;
     right: 0;
-    background: #C75B5B;
+    background: #873435;
     color: white;
     padding: 4px 8px;
     border-bottom-left-radius: 8px;
