@@ -31,9 +31,9 @@ public class ExpirationService {
     private final ExpiredPromotionRepository expiredPromotionRepository;
     private final PromotionService promotionService;
 
-    // Chạy mỗi giờ để kiểm tra và chuyển voucher/promotion hết hạn vào bảng hết hạn
-    // Cron expression: giây phút giờ ngày tháng thứ (0 0 * * * * = mỗi giờ)
-    @Scheduled(cron = "0 0 * * * *")
+    // Chạy mỗi ngày lúc 0:00 để kiểm tra và chuyển voucher/promotion hết hạn vào bảng hết hạn
+    // Cron expression: giây phút giờ ngày tháng thứ (0 0 0 * * * = mỗi ngày lúc 0:00)
+    @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void moveExpiredItems() {
         // log.info("Bắt đầu kiểm tra và chuyển voucher/promotion hết hạn...");
@@ -64,10 +64,9 @@ public class ExpirationService {
 
                 // Apply promotion vào các sản phẩm target
                 promotionService.applyPromotionToTargets(promotion);
-
-                log.info("Đã tự động kích hoạt và áp dụng promotion {} ({}) cho sản phẩm", promotion.getName(), promotion.getId());
             } catch (Exception e) {
-                log.error("Lỗi khi kích hoạt promotion {} ({}): {}", promotion.getName(), promotion.getId(), e.getMessage(), e);
+                log.error("Lỗi khi kích hoạt promotion {} ({}): {}", promotion.getName(), promotion.getId(),
+                        e.getMessage(), e);
             }
         }
     }
@@ -105,11 +104,11 @@ public class ExpirationService {
                         .build();
 
                 expiredVoucherRepository.save(expiredVoucher);
-                
+
                 // Cập nhật status của voucher gốc thành EXPIRED
                 voucher.setStatus(VoucherStatus.EXPIRED);
                 voucherRepository.save(voucher);
-                
+
                 log.info("Đã chuyển voucher {} vào bảng hết hạn", voucher.getCode());
             }
         }
@@ -145,14 +144,13 @@ public class ExpirationService {
 
                 expiredPromotionRepository.save(expiredPromotion);
                 promotionService.detachPromotionFromProducts(promotion);
-                
+
                 // Cập nhật status của promotion gốc thành EXPIRED
                 promotion.setStatus(PromotionStatus.EXPIRED);
                 promotionRepository.save(promotion);
-                
+
                 log.info("Đã chuyển promotion {} ({}) vào bảng hết hạn", promotion.getName(), promotion.getId());
             }
         }
     }
 }
-
