@@ -1,43 +1,51 @@
 @import 'normalize.css';
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
 
 :root {
     // Colors
     --color-text-primary: #1a1a1a;
     --color-text-description: #4a4a4a;
     --color-text-caption: #6b7280;
-    --color-brand: #C75B5B; 
+    --color-brand: #C75B5B;
     --color-bg-white: #FFFFFF;
     --color-bg-light: #FAFAFA;
-    
-    // Typography
-    --font-primary: 'Be Vietnam Pro', sans-serif;
-    
-    --font-size-h1: 36px;
+
+    // Typography System
+    --font-family-body: 'Be Vietnam Pro', sans-serif;
+    --font-family-title: 'Poppins', sans-serif;
+    --font-family-luxury: 'Playfair Display', serif;
+
+    --font-size-h1: 32px;
+    --line-height-h1: 1.15;
     --font-weight-h1: 700;
-    
+
     --font-size-h2: 24px;
+    --line-height-h2: 1.25;
     --font-weight-h2: 600;
-    
+
     --font-size-h3: 18px;
-    --font-weight-h3: 500;
-    
+    --line-height-h3: 1.35;
+    --font-weight-h3: 600;
+
     --font-size-body: 16px;
+    --line-height-body: 1.6;
     --font-weight-body: 400;
-    
-    --font-size-cta: 16px;
-    --font-weight-cta: 600;
-    
-    --font-size-price: 20px;
-    --font-weight-price: 700;
-    
-    --font-size-caption: 14px;
+
+    --font-size-caption: 12px;
+    --line-height-caption: 1.4;
     --font-weight-caption: 400;
 
+    --font-size-cta: 16px;
+    --font-weight-cta: 600;
+
+    --font-size-price: 20px;
+    --font-weight-price: 700;
+
     @media (min-width: 768px) {
-        --font-size-h1: 48px;
-        --font-size-h2: 32px;
+        --font-size-h1: 40px;
+        --font-size-h2: 28px;
         --font-size-h3: 20px;
+        --font-size-caption: 13px;
     }
 }
 
@@ -52,32 +60,41 @@ html {
 body {
     text-rendering: optimizeSpeed;
     margin: 0;
-    font-family: var(--font-primary);
+    font-family: var(--font-family-body);
     color: var(--color-text-primary);
     font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
     font-weight: var(--font-weight-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     margin: 0;
     color: var(--color-text-primary);
-    font-family: var(--font-primary);
+    font-family: var(--font-family-title);
 }
 
 h1 {
     font-size: var(--font-size-h1);
+    line-height: var(--line-height-h1);
     font-weight: var(--font-weight-h1);
 }
 
 h2 {
     font-size: var(--font-size-h2);
+    line-height: var(--line-height-h2);
     font-weight: var(--font-weight-h2);
 }
 
 h3 {
     font-size: var(--font-size-h3);
+    line-height: var(--line-height-h3);
     font-weight: var(--font-weight-h3);
 }
 

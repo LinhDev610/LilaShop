@@ -754,7 +754,7 @@ function Home() {
                 {/* Loading & Error States */}
                 {productLoading && (
                     <div className={cx('status-message')}>
-                        <span>Đang tải sản phẩm...</span>
+                        <span>Đợi chút, hàng đang về...</span>
                     </div>
                 )}
                 {!productLoading && productError && (

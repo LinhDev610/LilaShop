@@ -68,11 +68,12 @@
 
 .banner-title {
     margin: 0;
+    font-family: var(--font-family-luxury);
     font-size: 3.5rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
+    font-weight: 700;
+    letter-spacing: 0.02em;
     color: #FFFFFF;
-    line-height: 1.2;
+    line-height: 1.15;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 
     @media (max-width: 768px) {
@@ -116,4 +117,3 @@
         padding: 30px 0 0;
     }
 }
-

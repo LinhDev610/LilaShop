@@ -31,9 +31,9 @@ function Newsletter() {
                 transition={{ duration: 0.6 }}
             >
                 <div className={cx('content')}>
-                    <h2 className={cx('title')}>Đăng ký nhận tin</h2>
+                    <h2 className={cx('title')}>Để lại email, nhận quà ngay</h2>
                     <p className={cx('description')}>
-                        Nhận ngay voucher giảm giá <strong>10%</strong> cho đơn hàng đầu tiên và cập nhật những xu hướng làm đẹp mới nhất từ LilaShop.
+                        Nhận ngay voucher <strong>10%</strong> cho đơn đầu tiên và là người đầu tiên biết về các bộ sưu tập mới nhất.
                     </p>
 
                     {status === 'success' ? (
@@ -42,14 +42,14 @@ function Newsletter() {
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                         >
-                            <span className={cx('icon')}>🎉</span>
-                            Cảm ơn bạn đã đăng ký! Mã giảm giá đã được gửi vào email của bạn.
+                            <span className={cx('icon')}>✨</span>
+                            Xong rồi! Check mail để nhận mã giảm giá từ Lila nhé.
                         </motion.div>
                     ) : (
                         <form onSubmit={handleSubmit} className={cx('form')}>
                             <input
                                 type="email"
-                                placeholder="Nhập địa chỉ email của bạn..."
+                                placeholder="Email của bạn là..."
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className={cx('input')}
@@ -61,7 +61,7 @@ function Newsletter() {
                                 className={cx('button', { loading: status === 'loading' })}
                                 disabled={status === 'loading'}
                             >
-                                {status === 'loading' ? 'Đang gửi...' : 'Đăng ký ngay'}
+                                {status === 'loading' ? 'Chờ xíu...' : 'Gửi mình nhé'}
                             </button>
                         </form>
                     )}

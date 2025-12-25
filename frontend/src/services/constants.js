@@ -483,28 +483,28 @@ export const RATING_THRESHOLD = 4.9;
 export const SERVICE_ITEMS = [
     {
         icon: iconGiaoHang,
-        title: 'Giao hàng tận nơi',
-        desc: 'Dành cho tất cả đơn hàng',
+        title: 'Giao hàng nhanh',
+        desc: 'Nhận hàng sau 2-4 ngày làm việc',
     },
     {
         icon: iconDoiTra,
-        title: 'Đổi trả hàng 90 ngày',
-        desc: 'Nếu hàng hóa có vấn đề',
+        title: '90 ngày đổi trả',
+        desc: 'Đổi trả dễ dàng nếu chưa mở seal',
     },
     {
         icon: iconThanhToan,
         title: 'Thanh toán an toàn',
-        desc: '100% thanh toán an toàn',
+        desc: 'Bảo mật thông tin 100%',
     },
     {
         icon: iconHoTro,
-        title: 'Hỗ trợ 24/7',
-        desc: 'Hỗ trợ khách hàng 24/7',
+        title: 'Hỗ trợ tận tình',
+        desc: 'Chat ngay với chuyên viên tư vấn',
     },
     {
         icon: iconKhuyenMai,
-        title: 'Khuyến mãi hấp dẫn',
-        desc: 'Chương trình khuyến mãi hấp dẫn',
+        title: 'Ưu đãi mỗi ngày',
+        desc: 'Voucher giảm giá luôn sẵn sàng',
     },
 ];
 

@@ -62,10 +62,10 @@
     gap: 8px;
     background: transparent;
     border: none;
-    color: var(--nb-text);
+    font-family: var(--font-family-title);
     font-weight: 700;
-    font-size: 14px;
-    letter-spacing: 0.3px;
+    font-size: 13px;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     cursor: pointer;
     padding: 0 20px;
@@ -113,9 +113,10 @@
 .nav-link {
     color: var(--nb-text);
     text-decoration: none;
-    font-weight: 600; // tăng độ premium
-    font-size: 14px; // hơi nhỏ hơn chút cho thanh lịch
-    letter-spacing: 0.3px;
+    font-family: var(--font-family-title);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     padding: 0 16px;
     height: 50px;
@@ -216,7 +217,8 @@
     border: none;
     text-align: left;
     color: var(--nb-text);
-    font-weight: 600;
+    font-family: var(--font-family-body);
+    font-weight: 500;
     font-size: 14px;
     cursor: pointer;
     display: flex;

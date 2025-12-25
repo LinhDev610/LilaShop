@@ -8,10 +8,12 @@ $bg-light: #FAFAFA;
 $bg-lighter: #F5F5F5;
 
 // Typography
-$font-family: var(--font-primary);
+$font-family: var(--font-family-body);
+$font-family-heading: var(--font-family-title);
+$font-family-luxury: var(--font-family-luxury);
 $font-weight-heading: var(--font-weight-h2);
 $font-weight-body: var(--font-weight-body);
-$line-height-body: 1.6;
+$line-height-body: var(--line-height-body);
 $letter-spacing-heading: -0.01em;
 
 // Spacing
@@ -244,7 +246,8 @@ $radius-full: 9999px;
     margin: 0;
     font-size: var(--font-size-h2);
     font-weight: var(--font-weight-h2);
-    letter-spacing: 0.05em;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
     color: $deep-brown;
     display: flex;
     align-items: center;
