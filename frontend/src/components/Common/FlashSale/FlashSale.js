@@ -126,8 +126,6 @@ const FlashSale = ({ products = [] }) => {
     // In real app, you would filter by date or type
     const displayProducts = activeTab === 'occurring' ? products : [];
 
-    if (!products || products.length === 0) return null;
-
     return (
         <section className={cx('flash-sale-section')}>
             <div className={cx('flash-sale-container')}>
@@ -155,41 +153,40 @@ const FlashSale = ({ products = [] }) => {
                     </div>
                 </div>
 
-                {/* Body with Carousel */}
+                {/* Body */}
                 <div className={cx('flash-sale-body')}>
-                    <div className={cx('product-list-wrapper')}>
-                        {activeTab === 'occurring' ? (
-                            <>
-                                <button
-                                    className={cx('nav-button', 'prev')}
-                                    onClick={() => scroll('left')}
-                                    aria-label="Scroll left"
-                                >
-                                    <ChevronLeft />
-                                </button>
+                    {!displayProducts || displayProducts.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'white' }}>
+                            <p style={{ fontSize: '20px', fontWeight: '600' }}>
+                                {activeTab === 'search' ? 'Không tìm thấy sản phẩm phù hợp.' : 'Hiện tại không có sản phẩm nào.'}
+                            </p>
+                            <p style={{ fontSize: '16px', marginTop: '10px', opacity: 0.9 }}>Vui lòng quay lại sau!</p>
+                        </div>
+                    ) : (
+                        <div className={cx('product-list-wrapper')}>
+                            <button
+                                className={cx('nav-button', 'prev')}
+                                onClick={() => scroll('left')}
+                                aria-label="Scroll left"
+                            >
+                                <ChevronLeft />
+                            </button>
 
-                                <div className={cx('product-list')} ref={scrollRef}>
-                                    {displayProducts.map(product => (
-                                        <FlashSaleCard key={product.id} product={product} />
-                                    ))}
-                                </div>
-
-                                <button
-                                    className={cx('nav-button', 'next')}
-                                    onClick={() => scroll('right')}
-                                    aria-label="Scroll right"
-                                >
-                                    <ChevronRight />
-                                </button>
-                            </>
-                        ) : (
-                            // Empty state for "Upcoming"
-                            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'white' }}>
-                                <p style={{ fontSize: '20px', fontWeight: '600' }}>Chưa có chương trình Flash Sale sắp diễn ra.</p>
-                                <p style={{ fontSize: '16px', marginTop: '10px', opacity: 0.9 }}>Vui lòng quay lại sau!</p>
+                            <div className={cx('product-list')} ref={scrollRef}>
+                                {displayProducts.map(product => (
+                                    <FlashSaleCard key={product.id} product={product} />
+                                ))}
                             </div>
-                        )}
-                    </div>
+
+                            <button
+                                className={cx('nav-button', 'next')}
+                                onClick={() => scroll('right')}
+                                aria-label="Scroll right"
+                            >
+                                <ChevronRight />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </section>

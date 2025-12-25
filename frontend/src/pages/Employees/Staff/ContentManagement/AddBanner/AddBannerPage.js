@@ -308,17 +308,17 @@ export default function AddBannerPage() {
 
         // Validation
         if (!formData.title || !formData.title.trim()) {
-            const contentTypeLabel = contentType === 'banner' ? 'banner/slider' : contentType === 'seasonal' ? 'bộ sưu tập' : 'xu hướng làm đẹp';
+            const contentTypeLabel = contentType === 'banner' ? 'banner/slider' : contentType === 'seasonal' ? 'bộ sưu tập' : 'blog làm đẹp';
             notifyError(`Vui lòng nhập tiêu đề cho ${contentTypeLabel}`);
             return;
         }
         if (!isEditMode && !formData.imageFile) {
-            const contentTypeLabel = contentType === 'banner' ? 'banner/slider' : contentType === 'seasonal' ? 'bộ sưu tập' : 'xu hướng làm đẹp';
+            const contentTypeLabel = contentType === 'banner' ? 'banner/slider' : contentType === 'seasonal' ? 'bộ sưu tập' : 'blog làm đẹp';
             notifyError(`Vui lòng chọn ảnh cho ${contentTypeLabel}`);
             return;
         }
         if (isEditMode && !formData.imageFile && !formData.imageUrl) {
-            const contentTypeLabel = contentType === 'banner' ? 'banner/slider' : contentType === 'seasonal' ? 'bộ sưu tập' : 'xu hướng làm đẹp';
+            const contentTypeLabel = contentType === 'banner' ? 'banner/slider' : contentType === 'seasonal' ? 'bộ sưu tập' : 'blog làm đẹp';
             notifyError(`Vui lòng chọn ảnh cho ${contentTypeLabel}`);
             return;
         }
@@ -476,7 +476,7 @@ export default function AddBannerPage() {
             <div className={cx('form-container')}>
                 <h2 className={cx('form-title')}>
                     {isEditMode
-                        ? `Sửa ${contentType === 'banner' ? 'banner/slider' : contentType === 'seasonal' ? 'bộ sưu tập' : 'xu hướng làm đẹp'}`
+                        ? `Sửa ${contentType === 'banner' ? 'banner/slider' : contentType === 'seasonal' ? 'bộ sưu tập' : 'blog làm đẹp'}`
                         : 'Thêm nội dung mới'}
                 </h2>
 
@@ -504,7 +504,7 @@ export default function AddBannerPage() {
                                 className={cx('content-type-btn', { active: contentType === 'trending' })}
                                 onClick={() => setContentType('trending')}
                             >
-                                Xu Hướng Làm Đẹp
+                                Blog Làm Đẹp
                             </button>
                         </div>
                     </div>
@@ -513,7 +513,7 @@ export default function AddBannerPage() {
                 <form onSubmit={handleSubmit}>
                     <div className={cx('form-group')}>
                         <label className={cx('form-label')}>
-                            {contentType === 'banner' ? 'Ảnh banner/slider' : contentType === 'seasonal' ? 'Ảnh bộ sưu tập' : 'Ảnh xu hướng làm đẹp'}
+                            {contentType === 'banner' ? 'Ảnh banner/slider' : contentType === 'seasonal' ? 'Ảnh bộ sưu tập' : 'Ảnh blog làm đẹp'}
                             <span className={cx('required-label')}> *</span>
                         </label>
                         <div className={cx('file-upload-section')}>
@@ -575,7 +575,7 @@ export default function AddBannerPage() {
                                     ? "Nhập tiêu đề banner/slider..."
                                     : contentType === 'seasonal'
                                         ? "Nhập tên bộ sưu tập..."
-                                        : "Nhập tiêu đề xu hướng làm đẹp..."
+                                        : "Nhập tiêu đề blog làm đẹp..."
                             }
                             className={cx('form-input')}
                         />
@@ -602,7 +602,7 @@ export default function AddBannerPage() {
                     {contentType === 'trending' && (
                         <div className={cx('form-group')}>
                             <label className={cx('form-label')}>
-                                Nội dung bài viết (Mô tả về xu hướng làm đẹp)
+                                Nội dung bài viết (Mô tả về blog làm đẹp)
                                 <span className={cx('required-label')}> *</span>
                             </label>
                             <RichTextEditor
@@ -613,7 +613,7 @@ export default function AddBannerPage() {
                                         description: html
                                     }));
                                 }}
-                                placeholder="Nhập nội dung bài viết về xu hướng làm đẹp, tips, hướng dẫn... Bạn có thể sử dụng các công cụ định dạng ở trên để làm đẹp bài viết."
+                                placeholder="Nhập nội dung bài viết về blog làm đẹp, tips, hướng dẫn... Bạn có thể sử dụng các công cụ định dạng ở trên để làm đẹp bài viết."
                             />
                         </div>
                     )}

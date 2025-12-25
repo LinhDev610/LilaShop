@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { publicRoutes, privateRoutes } from './routes';
 import { DefaultLayout } from './layouts';
 import PrivateRoute from './routes/PrivateRoute';
+import ScrollToTop from './components/ScrollToTop';
 import AdminRedirectHandler from './components/AdminRedirectHandler';
 import Notification from './components/Common/Notification';
 
@@ -10,6 +11,7 @@ function App() {
     return (
         <Notification>
             <Router>
+                <ScrollToTop />
                 {/* Tự động redirect ADMIN/STAFF khi đang ở trang chủ */}
                 <AdminRedirectHandler />
                 <Routes>

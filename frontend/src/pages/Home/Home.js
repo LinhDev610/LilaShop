@@ -660,20 +660,7 @@ function Home() {
                     <FeaturedBrands products={allProducts} />
                 </motion.section>
 
-                {/* 6. Xu hướng làm đẹp */}
-                {trendingBanners.length > 0 && (
-                    <motion.section
-                        className={cx('section')}
-                        variants={sectionVariants}
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true, margin: "-100px" }}
-                    >
-                        <TrendingLooks looks={trendingBanners} />
-                    </motion.section>
-                )}
-
-                {/* 7. Product Tabs */}
+                {/* 6. Product Tabs */}
                 <motion.section
                     className={cx('section')}
                     variants={sectionVariants}
@@ -688,7 +675,7 @@ function Home() {
                     />
                 </motion.section>
 
-                {/* 8. Customer Reviews */}
+                {/* 7. Customer Reviews */}
                 <motion.section
                     className={cx('section')}
                     variants={sectionVariants}
@@ -699,7 +686,7 @@ function Home() {
                     <CustomerReviews />
                 </motion.section>
 
-                {/* 9. Voucher Strip */}
+                {/* 8. Voucher Strip */}
                 {!vouchersLoading && vouchers.length > 0 && (
                     <motion.section
                         className={cx('section', 'voucher-section')}
@@ -725,7 +712,7 @@ function Home() {
                     </motion.section>
                 )}
 
-                {/* 10. Services */}
+                {/* 9. Services */}
                 <motion.section
                     className={cx('section', 'services')}
                     variants={sectionVariants}
@@ -743,7 +730,7 @@ function Home() {
                     </motion.div>
                 </motion.section>
 
-                {/* 11. Beauty Corner (Blog) */}
+                {/* 10. Beauty Corner (Blog) */}
                 <motion.section
                     className={cx('section')}
                     variants={sectionVariants}
@@ -751,10 +738,10 @@ function Home() {
                     whileInView="visible"
                     viewport={{ once: true, margin: "0px" }}
                 >
-                    <BeautyCorner />
+                    <BeautyCorner tips={trendingBanners} />
                 </motion.section>
 
-                {/* 12. Newsletter */}
+                {/* 11. Newsletter */}
                 <motion.section
                     className={cx('section')}
                     variants={sectionVariants}
