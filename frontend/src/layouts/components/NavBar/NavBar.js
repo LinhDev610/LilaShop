@@ -322,7 +322,7 @@ function NavBar() {
                     whileHover={{
                         scale: 1.02,
                         x: 8,
-                        backgroundColor: '#f3f4f6',
+                        backgroundColor: 'rgba(183, 110, 121, 0.10)',
                     }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleCategorySelect(category)}
@@ -408,7 +408,7 @@ function NavBar() {
                                 whileHover={{
                                     scale: 1.02,
                                     x: 6,
-                                    backgroundColor: '#f3f4f6',
+                                    backgroundColor: 'rgba(183, 110, 121, 0.10)',
                                 }}
                                 whileTap={{ scale: 0.98 }}
                                 onMouseEnter={() => {
@@ -469,7 +469,7 @@ function NavBar() {
                                     whileHover={{
                                         scale: 1.05,
                                         x: 8,
-                                        backgroundColor: '#f3f4f6',
+                                        backgroundColor: 'rgba(183, 110, 121, 0.10)',
                                     }}
                                     whileTap={{ scale: 0.95 }}
                                     onClick={() => handleCategorySelect(child)}
@@ -511,7 +511,7 @@ function NavBar() {
                         className={cx('nav-trigger', { active: isHome || isDropdownOpen })}
                         whileHover={{
                             scale: 1.05,
-                            backgroundColor: 'rgba(183, 110, 121, 0.1)',
+                            backgroundColor: 'rgba(183, 110, 121, 0.10)',
                         }}
                         whileTap={{ scale: 0.98 }}
                         animate={{
