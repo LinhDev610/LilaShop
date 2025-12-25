@@ -1,5 +1,6 @@
 package com.lila_shop.backend.dto.request;
 
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -19,12 +20,13 @@ public class ProductVariantRequest {
 
     @NotNull(message = "Giá biến thể không được để trống")
     @DecimalMin(value = "0.0", message = "Giá phải >= 0")
-    Double price; 
+    Double price;
 
     @DecimalMin(value = "0.0", message = "Giá niêm yết phải >= 0")
     Double unitPrice;
 
     @DecimalMin(value = "0.0", message = "Thuế phải >= 0")
+    @DecimalMax(value = "1.0", message = "Thuế tối đa là 1.0 (100%)")
     Double tax;
 
     @DecimalMin(value = "0.0", message = "Giá nhập phải >= 0")

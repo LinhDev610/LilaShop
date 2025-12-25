@@ -381,7 +381,7 @@ export default function AddProductPage() {
                         shadeHex: v.shadeHex?.trim() || null,
                         price: v.finalPrice ? Number(v.finalPrice) : 0, // Giá cuối cùng (đã gồm thuế)
                         unitPrice: v.unitPrice ? Number(v.unitPrice) : null,
-                        tax: v.taxPercent ? Number(v.taxPercent) : null,
+                        tax: v.taxPercent ? Number(v.taxPercent) / 100 : null,
                         purchasePrice: v.purchasePrice ? Number(v.purchasePrice) : null,
                         stockQuantity: v.stockQuantity === '' ? 0 : Number(v.stockQuantity),
                         isDefault: Boolean(v.isDefault),

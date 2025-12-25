@@ -156,7 +156,7 @@ function UpdateProductPage() {
                         ? product.purchasePrice
                         : '',
                 );
-                setTaxPercent(product.tax ? String(Math.round(product.tax)) : '0');
+                setTaxPercent(product.tax ? String(Math.round(product.tax * 100)) : '0');
                 setDiscountValue(product.discountValue || 0.0);
                 setCategoryId(product.categoryId || '');
                 const inventoryQuantity = product.stockQuantity ?? null;
@@ -407,7 +407,7 @@ function UpdateProductPage() {
                 shadeHex: restockVariantTarget.shadeHex || null,
                 price: restockVariantTarget.price || 0,
                 unitPrice: restockVariantTarget.unitPrice || null,
-                tax: restockVariantTarget.taxPercent ? Number(restockVariantTarget.taxPercent) : null,
+                tax: restockVariantTarget.taxPercent ? Number(restockVariantTarget.taxPercent) / 100 : null,
                 purchasePrice: restockVariantTarget.purchasePrice || null,
                 stockQuantity: newStock,
                 isDefault: Boolean(restockVariantTarget.isDefault),
