@@ -12,7 +12,35 @@ Xây dựng một hệ thống Chatbot AI tư vấn sản phẩm mỹ phẩm v�
 - **Cache**: In-memory cache hoặc Redis
 
 ### Mục Tiêu
-- Tư vấn sản phẩm mỹ phẩm dựa trên database thực tế
+- Tư vấn sản phẩm mỹ phẩm dựa trên database thực tế 
+- Tư vấn sản phẩm theo nhu cầu người dùng
++ Da dầu / khô / nhạy cảm
++ Có mụn không? mụn viêm hay mụn ẩn
++ Ngân sách bao nhiêu?
++ Thích thương hiệu nào?
++ Bot lọc sản phẩm phù hợp trong DB: “Dựa trên da dầu – mụn – ngân sách 300k, mình gợi ý 3 sản phẩm sau…”,
++ Cái này khác search/filter thông thường ở chỗ: người dùng không cần biết mỹ phẩm, chatbot dẫn dắt như nhân viên bán hàng
+-> Trong mục chat trước hết đưa ra các mục cho khách hàng chọn tìm kiếm theo lĩnh vực nào, nhu cầu ra sao, đưa ra các mục cho khách chọn, sau đó AI sẽ đi theo danh mục đó để đọc danh sách sản phẩm thay vì tải hết sẽ vừa khién khách khi bắt đầu dễ chọn, dễ tìm kiếm, tối ưu tốc độ, dung lượng, và đưa ra các danh mục phù hợp với nhu cầu của khách (danh mục chọn phải đúng như trong DB)
+- Chatbot = Trợ lý chăm sóc da cá nhân:
++ Xây dựng routine chăm sóc da
++ Chatbot có thể tạo:
+    + Routine sáng / tối
+    + Thứ tự dùng mỹ phẩm
+    + Thời gian chờ giữa các bước
+    + Ví dụ:
+    “Sáng: Sữa rửa mặt → Toner → Serum → Kem chống nắng
+    Tối: Tẩy trang → SRM → Treatment → Kem dưỡng”
+- Gợi ý combo & khuyến mãi
+- Chatbot nói chuyện như chuyên gia da liễu (giới hạn)
++ Không chẩn đoán bệnh
++ Chỉ tư vấn mức mỹ phẩm
++ Có cảnh báo: “Không thay thế bác sĩ”
+Chatbot so sánh sản phẩm
++ “Sản phẩm A và B khác nhau ở đâu?”
++ Bot trả lời:
++ Thành phần chính
++ Đối tượng phù hợp
++ Giá & dung tích
 - Duy trì context conversation qua sessionId
 - Hỗ trợ filter sản phẩm theo danh mục, thương hiệu, loại da
 - Tối ưu performance với caching mechanism
@@ -87,59 +115,1037 @@ Xây dựng một hệ thống Chatbot AI tư vấn sản phẩm mỹ phẩm v�
 
 ## 💾 CẤU TRÚC DATABASE
 
-### Bảng Sản Phẩm (Products)
-
 ```sql
-CREATE TABLE products (
-    id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    price DECIMAL(10, 2) NOT NULL,
-    brand VARCHAR(100),
-    status VARCHAR(50) NOT NULL, -- 'APPROVED', 'PENDING', 'REJECTED'
-    category_id VARCHAR(36),
-    skin_type VARCHAR(100), -- 'Da dầu', 'Da khô', 'Da hỗn hợp', etc.
-    texture VARCHAR(100), -- 'Kem', 'Gel', 'Nước', etc.
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categories(id)
+CREATE TABLE `address` (
+  `address_id` varchar(255) PRIMARY KEY NOT NULL,
+  `address` varchar(255),
+  `country` varchar(255),
+  `created_at` datetime(6),
+  `is_default` bit(1),
+  `districtid` varchar(255),
+  `district_name` varchar(255),
+  `postal_code` varchar(255),
+  `provinceid` varchar(255),
+  `province_name` varchar(255),
+  `recipient_name` varchar(255),
+  `recipient_phone_number` varchar(255),
+  `updated_at` datetime(6),
+  `ward_code` varchar(255),
+  `ward_name` varchar(255)
 );
-```
 
-### Bảng Danh Mục (Categories)
-
-```sql
-CREATE TABLE categories (
-    id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    parent_id VARCHAR(36) NULL, -- Danh mục cha
-    status BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (parent_id) REFERENCES categories(id)
+CREATE TABLE `banner_products` (
+  `banner_id` varchar(255) NOT NULL,
+  `product_id` varchar(255) NOT NULL
 );
+
+CREATE TABLE `banners` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `content_type` varchar(50),
+  `created_at` datetime(6) NOT NULL,
+  `description` text,
+  `end_date` date,
+  `image_url` varchar(255) NOT NULL,
+  `link_url` varchar(255),
+  `order_index` int,
+  `pending_review` bit(1),
+  `rejection_reason` text,
+  `start_date` date,
+  `status` bit(1) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `update_at` datetime(6) NOT NULL,
+  `created_by` varchar(255)
+);
+
+CREATE TABLE `cart` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `applied_voucher_code` varchar(255),
+  `subtotal` double,
+  `total_amount` double,
+  `voucher_discount` double,
+  `user_id` varchar(255) UNIQUE
+);
+
+CREATE TABLE `cart_item` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `final_price` double,
+  `quantity` int,
+  `unit_price` double,
+  `cart_id` varchar(255),
+  `product_id` varchar(255),
+  `variant_id` varchar(255)
+);
+
+CREATE TABLE `categories` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `created_at` datetime(6),
+  `description` text,
+  `name` varchar(255) UNIQUE NOT NULL,
+  `status` bit(1) NOT NULL,
+  `updated_at` datetime(6),
+  `parent_id` varchar(255)
+);
+
+CREATE TABLE `chat_messages` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `is_read` bit(1) NOT NULL,
+  `message` text NOT NULL,
+  `read_at` datetime(6),
+  `receiver_id` varchar(255) NOT NULL,
+  `sender_id` varchar(255) NOT NULL
+);
+
+CREATE TABLE `expired_promotions` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `approved_at` datetime(6),
+  `approved_by` varchar(255),
+  `code` varchar(255),
+  `description` varchar(255),
+  `discount_value` double NOT NULL,
+  `expired_at` datetime(6),
+  `expiry_date` date NOT NULL,
+  `image_url` varchar(255),
+  `is_active` bit(1),
+  `max_discount_value` double,
+  `min_order_value` double,
+  `name` varchar(255) NOT NULL,
+  `rejection_reason` varchar(255),
+  `start_date` date NOT NULL,
+  `status` varchar(255) NOT NULL,
+  `submitted_at` datetime(6),
+  `submitted_by` varchar(255),
+  `usage_count` int
+);
+
+CREATE TABLE `expired_vouchers` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `apply_scope` enum(ORDER,CATEGORY,PRODUCT),
+  `approved_at` datetime(6),
+  `approved_by` varchar(255),
+  `code` varchar(255) UNIQUE NOT NULL,
+  `description` varchar(255),
+  `discount_value` double,
+  `discount_value_type` enum(PERCENTAGE,AMOUNT),
+  `expired_at` datetime(6),
+  `expiry_date` date,
+  `image_url` varchar(255),
+  `is_active` bit(1),
+  `max_discount_value` double,
+  `max_order_value` double,
+  `min_order_value` double,
+  `name` varchar(255),
+  `rejection_reason` varchar(255),
+  `start_date` date,
+  `status` varchar(255),
+  `submitted_at` datetime(6),
+  `submitted_by` varchar(255),
+  `usage_count` int,
+  `usage_limit` int
+);
+
+CREATE TABLE `financial_records` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `amount` double NOT NULL,
+  `occurred_at` datetime(6) NOT NULL,
+  `payment_method` enum(MOMO,COD),
+  `record_type` enum(ORDER_PAYMENT,REFUND,COMPENSATION) NOT NULL,
+  `order_id` varchar(255),
+  `product_id` varchar(255)
+);
+
+CREATE TABLE `invalidated_token` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `expiry_time` datetime(6)
+);
+
+CREATE TABLE `inventory` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `last_updated` date NOT NULL,
+  `stock_quantity` int NOT NULL,
+  `product_id` varchar(255) UNIQUE NOT NULL
+);
+
+CREATE TABLE `notifications` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `is_read` bit(1) NOT NULL,
+  `link` varchar(512),
+  `message` text NOT NULL,
+  `read_at` datetime(6),
+  `title` varchar(255) NOT NULL,
+  `type` varchar(255) NOT NULL
+);
+
+CREATE TABLE `order_items` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `final_price` double,
+  `quantity` int,
+  `unit_price` double,
+  `order_id` varchar(255),
+  `product_id` varchar(255),
+  `variant_id` varchar(255)
+);
+
+CREATE TABLE `orders` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `admin_processing_note` text,
+  `cancellation_reason` text,
+  `cancellation_source` enum(CUSTOMER,STAFF),
+  `cart_item_ids` text,
+  `order_code` varchar(255) UNIQUE,
+  `expected_delivery_date` date,
+  `note` text,
+  `order_date` date,
+  `order_date_time` datetime(6),
+  `is_paid` bit(1),
+  `payment_method` enum(MOMO,COD),
+  `payment_reference` varchar(255),
+  `payment_status` enum(INIT,PENDING,PAID,FAILED,CANCELLED),
+  `refund_account_holder` varchar(255),
+  `refund_account_number` varchar(50),
+  `refund_amount` double,
+  `refund_bank` varchar(100),
+  `refund_confirmed_amount` double,
+  `refund_confirmed_penalty` double,
+  `refund_confirmed_second_shipping_fee` double,
+  `refund_description` text,
+  `refund_email` varchar(255),
+  `refund_media_urls` text,
+  `refund_method` varchar(100),
+  `refund_penalty_amount` double,
+  `refund_reason_type` varchar(50),
+  `refund_rejection_reason` text,
+  `refund_rejection_source` varchar(50),
+  `refund_return_address` text,
+  `refund_return_fee` double,
+  `refund_second_shipping_fee` double,
+  `refund_selected_product_ids` text,
+  `refund_total_paid` double,
+  `return_checked_date` date,
+  `shipping_address` varchar(255),
+  `shipping_fee` double,
+  `staff_inspection_result` text,
+  `status` enum(CREATED,CONFIRMED,PAID,SHIPPED,DELIVERED,CANCELLED,RETURN_REQUESTED,RETURN_CS_CONFIRMED,RETURN_STAFF_CONFIRMED,REFUNDED,RETURN_REJECTED),
+  `total_amount` double,
+  `address_id` varchar(255),
+  `cart_id` varchar(255) UNIQUE,
+  `user_id` varchar(255)
+);
+
+CREATE TABLE `otp` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `code` varchar(6) NOT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `expires_at` datetime(6) NOT NULL,
+  `is_used` bit(1) NOT NULL
+);
+
+CREATE TABLE `payment` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `amount` double,
+  `payment_date` date,
+  `payment_method` enum(MOMO,COD),
+  `status` enum(INIT,PENDING,PAID,FAILED,CANCELLED),
+  `order_id` varchar(255) UNIQUE
+);
+
+CREATE TABLE `permission` (
+  `name` varchar(255) PRIMARY KEY NOT NULL,
+  `description` varchar(255),
+  `permissions` varchar(255)
+);
+
+CREATE TABLE `product_media` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `display_order` int,
+  `is_default` bit(1) NOT NULL,
+  `media_type` varchar(255),
+  `media_url` varchar(255),
+  `product_id` varchar(255) NOT NULL
+);
+
+CREATE TABLE `product_variants` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `created_at` datetime(6),
+  `is_default` bit(1),
+  `name` varchar(255),
+  `price` double NOT NULL,
+  `purchase_price` double,
+  `shade_hex` varchar(255),
+  `shade_name` varchar(255),
+  `stock_quantity` int,
+  `tax` double,
+  `unit_price` double,
+  `updated_at` datetime(6),
+  `product_id` varchar(255) NOT NULL
+);
+
+CREATE TABLE `products` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `approved_at` datetime(6),
+  `brand` varchar(255),
+  `created_at` datetime(6),
+  `description` text,
+  `discount_value` double,
+  `expiry_date` date,
+  `height` double,
+  `ingredients` text,
+  `length` double,
+  `name` varchar(255) NOT NULL,
+  `origin` varchar(255),
+  `price` double NOT NULL,
+  `purchase_price` double,
+  `quantity_sold` int,
+  `rejection_reason` text,
+  `safety_note` text,
+  `shade_color` varchar(255),
+  `skin_concern` varchar(255),
+  `skin_type` varchar(255),
+  `status` enum(PENDING,APPROVED,REJECTED,DISABLED) NOT NULL,
+  `tax` double,
+  `unit_price` double NOT NULL,
+  `updated_at` datetime(6),
+  `usage_instructions` text,
+  `volume` varchar(255),
+  `weight` double,
+  `width` double,
+  `approved_by` varchar(255),
+  `category_id` varchar(255),
+  `default_media_id` varchar(255) UNIQUE,
+  `promotion_id` varchar(255),
+  `submitted_by` varchar(255)
+);
+
+CREATE TABLE `promotion_categories` (
+  `promotion_id` varchar(255) NOT NULL,
+  `category_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`promotion_id`, `category_id`)
+);
+
+CREATE TABLE `promotion_products` (
+  `promotion_id` varchar(255) NOT NULL,
+  `product_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`promotion_id`, `product_id`)
+);
+
+CREATE TABLE `promotions` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `apply_scope` enum(ORDER,CATEGORY,PRODUCT) NOT NULL,
+  `approved_at` datetime(6),
+  `code` varchar(255) UNIQUE NOT NULL,
+  `description` varchar(255),
+  `discount_value` double NOT NULL,
+  `discount_value_type` enum(PERCENTAGE,AMOUNT) NOT NULL,
+  `expiry_date` date NOT NULL,
+  `image_url` varchar(255),
+  `is_active` bit(1),
+  `loss_threshold` double,
+  `max_discount_value` double,
+  `min_order_value` double,
+  `name` varchar(255) NOT NULL,
+  `rejection_reason` varchar(255),
+  `start_date` date NOT NULL,
+  `status` enum(PENDING_APPROVAL,APPROVED,REJECTED,EXPIRED,DISABLED) NOT NULL,
+  `submitted_at` datetime(6),
+  `total_loss` double,
+  `usage_count` int,
+  `approved_by` varchar(255),
+  `submitted_by` varchar(255)
+);
+
+CREATE TABLE `reviews` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `comment` text,
+  `created_at` datetime(6) NOT NULL,
+  `name_display` varchar(255),
+  `rating` int NOT NULL,
+  `reply` text,
+  `reply_at` datetime(6),
+  `product_id` varchar(255) NOT NULL,
+  `user_id` varchar(255) NOT NULL
+);
+
+CREATE TABLE `role` (
+  `name` varchar(255) PRIMARY KEY NOT NULL,
+  `description` varchar(255)
+);
+
+CREATE TABLE `shipment` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `estimated_delivery` date,
+  `order_code` varchar(255),
+  `provider` enum(GHN),
+  `shipped_date` date,
+  `status` enum(CREATED,PICKED_UP,IN_TRANSIT,DELIVERED,FAILED,CANCELLED),
+  `total_fee` bigint,
+  `order_id` varchar(255) UNIQUE
+);
+
+CREATE TABLE `support_tickets` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `assigned_to` enum(CS,ADMIN) NOT NULL,
+  `content` text,
+  `created_at` datetime(6) NOT NULL,
+  `customer_name` varchar(255),
+  `email` varchar(255),
+  `handler_id` varchar(255),
+  `handler_note` text,
+  `order_code` varchar(255) NOT NULL,
+  `phone` varchar(255),
+  `status` enum(NEW,IN_PROGRESS,RESOLVED,ESCALATED) NOT NULL,
+  `updated_at` datetime(6) NOT NULL
+);
+
+CREATE TABLE `user_addresses` (
+  `user_id` varchar(255) NOT NULL,
+  `address_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`user_id`, `address_id`)
+);
+
+CREATE TABLE `user_notifications` (
+  `user_id` varchar(255) NOT NULL,
+  `notification_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`user_id`, `notification_id`)
+);
+
+CREATE TABLE `user_voucher_usage` (
+  `user_id` varchar(255) NOT NULL,
+  `voucher_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`user_id`, `voucher_id`)
+);
+
+CREATE TABLE `users` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `is_active` bit(1),
+  `address` varchar(255),
+  `avatar_url` varchar(255),
+  `create_at` date,
+  `email` varchar(255),
+  `full_name` varchar(255),
+  `password` varchar(255),
+  `phone_number` varchar(255),
+  `role` varchar(255)
+);
+
+CREATE TABLE `voucher_categories` (
+  `voucher_id` varchar(255) NOT NULL,
+  `category_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`voucher_id`, `category_id`)
+);
+
+CREATE TABLE `voucher_products` (
+  `voucher_id` varchar(255) NOT NULL,
+  `product_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`voucher_id`, `product_id`)
+);
+
+CREATE TABLE `vouchers` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `apply_scope` enum(ORDER,CATEGORY,PRODUCT) NOT NULL,
+  `approved_at` datetime(6),
+  `code` varchar(255) UNIQUE NOT NULL,
+  `comment` text,
+  `discount_value` double,
+  `discount_value_type` enum(PERCENTAGE,AMOUNT) NOT NULL,
+  `expiry_date` date,
+  `image_url` varchar(255),
+  `is_active` bit(1),
+  `loss_threshold` double,
+  `max_discount_value` double,
+  `max_order_value` double,
+  `min_order_value` double,
+  `name` varchar(255),
+  `rejection_reason` varchar(255),
+  `start_date` date,
+  `status` enum(PENDING_APPROVAL,APPROVED,REJECTED,EXPIRED,DISABLED) NOT NULL,
+  `submitted_at` datetime(6),
+  `total_loss` double,
+  `usage_count` int,
+  `usage_limit` int,
+  `usage_per_user` int,
+  `approved_by` varchar(255),
+  `submitted_by` varchar(255)
+);
+
+ALTER TABLE `banner_products` ADD FOREIGN KEY (`banner_id`) REFERENCES `banners` (`id`);
+
+ALTER TABLE `banner_products` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `banners` ADD FOREIGN KEY (`created_by`) REFERENCES `users` (`id`);
+
+ALTER TABLE `users` ADD FOREIGN KEY (`id`) REFERENCES `cart` (`user_id`);
+
+ALTER TABLE `cart_item` ADD FOREIGN KEY (`cart_id`) REFERENCES `cart` (`id`);
+
+ALTER TABLE `cart_item` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `cart_item` ADD FOREIGN KEY (`variant_id`) REFERENCES `product_variants` (`id`);
+
+ALTER TABLE `categories` ADD FOREIGN KEY (`parent_id`) REFERENCES `categories` (`id`);
+
+ALTER TABLE `chat_messages` ADD FOREIGN KEY (`receiver_id`) REFERENCES `users` (`id`);
+
+ALTER TABLE `chat_messages` ADD FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`);
+
+ALTER TABLE `financial_records` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `financial_records` ADD FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`);
+
+ALTER TABLE `products` ADD FOREIGN KEY (`id`) REFERENCES `inventory` (`product_id`);
+
+ALTER TABLE `order_items` ADD FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`);
+
+ALTER TABLE `order_items` ADD FOREIGN KEY (`variant_id`) REFERENCES `product_variants` (`id`);
+
+ALTER TABLE `order_items` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `orders` ADD FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+ALTER TABLE `orders` ADD FOREIGN KEY (`address_id`) REFERENCES `address` (`address_id`);
+
+ALTER TABLE `cart` ADD FOREIGN KEY (`id`) REFERENCES `orders` (`cart_id`);
+
+ALTER TABLE `orders` ADD FOREIGN KEY (`id`) REFERENCES `payment` (`order_id`);
+
+ALTER TABLE `permission` ADD FOREIGN KEY (`permissions`) REFERENCES `role` (`name`);
+
+ALTER TABLE `product_media` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `product_variants` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `products` ADD FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`);
+
+ALTER TABLE `products` ADD FOREIGN KEY (`promotion_id`) REFERENCES `promotions` (`id`);
+
+ALTER TABLE `products` ADD FOREIGN KEY (`submitted_by`) REFERENCES `users` (`id`);
+
+ALTER TABLE `product_media` ADD FOREIGN KEY (`id`) REFERENCES `products` (`default_media_id`);
+
+ALTER TABLE `products` ADD FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`);
+
+ALTER TABLE `promotion_categories` ADD FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`);
+
+ALTER TABLE `promotion_categories` ADD FOREIGN KEY (`promotion_id`) REFERENCES `promotions` (`id`);
+
+ALTER TABLE `promotion_products` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `promotion_products` ADD FOREIGN KEY (`promotion_id`) REFERENCES `promotions` (`id`);
+
+ALTER TABLE `promotions` ADD FOREIGN KEY (`submitted_by`) REFERENCES `users` (`id`);
+
+ALTER TABLE `promotions` ADD FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`);
+
+ALTER TABLE `reviews` ADD FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+ALTER TABLE `reviews` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `orders` ADD FOREIGN KEY (`id`) REFERENCES `shipment` (`order_id`);
+
+ALTER TABLE `user_addresses` ADD FOREIGN KEY (`address_id`) REFERENCES `address` (`address_id`);
+
+ALTER TABLE `user_addresses` ADD FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+ALTER TABLE `user_notifications` ADD FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+ALTER TABLE `user_notifications` ADD FOREIGN KEY (`notification_id`) REFERENCES `notifications` (`id`);
+
+ALTER TABLE `user_voucher_usage` ADD FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+ALTER TABLE `user_voucher_usage` ADD FOREIGN KEY (`voucher_id`) REFERENCES `vouchers` (`id`);
+
+ALTER TABLE `users` ADD FOREIGN KEY (`role`) REFERENCES `role` (`name`);
+
+ALTER TABLE `voucher_categories` ADD FOREIGN KEY (`voucher_id`) REFERENCES `vouchers` (`id`);
+
+ALTER TABLE `voucher_categories` ADD FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`);
+
+ALTER TABLE `voucher_products` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `voucher_products` ADD FOREIGN KEY (`voucher_id`) REFERENCES `vouchers` (`id`);
+
+ALTER TABLE `vouchers` ADD FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`);
+
+ALTER TABLE `vouchers` ADD FOREIGN KEY (`submitted_by`) REFERENCES `users` (`id`);
+
 ```
 
 ### Dữ Liệu Mẫu
 
 ```sql
 -- Danh mục cha
-INSERT INTO categories (id, name, parent_id, status) VALUES
-('cat-001', 'Trang điểm', NULL, TRUE),
-('cat-002', 'Chăm sóc da', NULL, TRUE),
-('cat-003', 'Nước hoa', NULL, TRUE);
+INSERT INTO categories (id, name, description, status, created_at, updated_at, parent_id) VALUES
+('cat-001', 'Mỹ phẩm trang điểm mặt', 'Các sản phẩm chăm sóc và trang điểm cho khuôn mặt', TRUE, NOW(), NOW(), NULL),
+('cat-002', 'Trang điểm và chăm sóc mắt', 'Các sản phẩm trang điểm và chăm sóc mắt', TRUE, NOW(), NOW(), NULL);
 
 -- Danh mục con
-INSERT INTO categories (id, name, parent_id, status) VALUES
-('cat-101', 'Trang điểm môi', 'cat-001', TRUE),
-('cat-102', 'Trang điểm mắt', 'cat-001', TRUE),
-('cat-201', 'Kem dưỡng', 'cat-002', TRUE),
-('cat-202', 'Sữa rửa mặt', 'cat-002', TRUE);
+INSERT INTO categories (id, name, description, status, created_at, updated_at, parent_id) VALUES
+('cat-006', 'Kem nền & Phấn nền', 'Kem nền và phấn nền cho mặt', TRUE, NOW(), NOW(), 'cat-001'),
+('cat-007', 'Phấn má & Highlighter', 'Phấn má hồng và highlight tạo khối', TRUE, NOW(), NOW(), 'cat-001');
 
 -- Sản phẩm
-INSERT INTO products (id, name, description, price, brand, status, category_id, skin_type, texture) VALUES
-('prod-001', 'Kem dưỡng ẩm cho da dầu', 'Kem dưỡng ẩm không gây bóng nhờn', 250000, 'La Roche-Posay', 'APPROVED', 'cat-201', 'Da dầu', 'Gel'),
-('prod-002', 'Son Dior Addict Lip Glow', 'Son dưỡng môi màu tự nhiên', 850000, 'Dior', 'APPROVED', 'cat-101', 'Mọi loại da', 'Sáp'),
-('prod-003', 'Nước hoa Chanel No.5', 'Nước hoa nữ cổ điển', 3500000, 'Chanel', 'APPROVED', 'cat-003', NULL, 'Nước');
+INSERT INTO products (id, name, description, brand, shade_color, skin_type, skin_concern, volume, origin, 
+                      expiry_date, ingredients, usage_instructions, safety_note, weight, length, width, height, 
+                      tax, unit_price, purchase_price, discount_value, price, quantity_sold, status, 
+                      created_at, updated_at, submitted_by, approved_by, approved_at, rejection_reason, category_id, promotion_id) VALUES
+('prod-001', 'Son Lì Matte Luxury', 
+ 'Son môi lì matte cao cấp, lâu trôi, không khô môi. Màu sắc đa dạng, phù hợp mọi tone da.',
+ 'Lila Beauty', 'Đỏ Ruby', NULL, NULL, '3.5g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Beeswax, Jojoba Oil, Vitamin E, Colorants', 
+ 'Thoa đều lên môi, có thể dùng chì kẻ môi trước để tạo viền',
+ 'Không nuốt. Tránh tiếp xúc với mắt. Ngưng sử dụng nếu có kích ứng.',
+ 5.0, 7.0, 2.0, 2.0, 10.0, 250000.0, 150000.0, 0.0, 250000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-004', 'user-002', NOW(), NULL, 'cat-013', NULL),
+('prod-002', 'Kem Nền Full Coverage', 
+ 'Kem nền che phủ hoàn hảo, không bết dính, giữ lớp trang điểm lâu trôi suốt 12 giờ.',
+ 'Lila Beauty', 'Nude Beige', 'Mọi loại da', 'Che khuyết điểm', '30ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Dimethicone, Titanium Dioxide, Iron Oxides', 
+ 'Thoa đều lên mặt bằng cọ hoặc bông mút, blend kỹ vùng viền',
+ 'Test thử trên da tay trước khi dùng. Tránh vùng mắt.',
+ 30.0, 5.0, 5.0, 8.0, 10.0, 450000.0, 250000.0, 50000.0, 400000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-004', 'user-002', NOW(), NULL, 'cat-006', NULL),
+('prod-003', 'Palette Phấn Mắt 12 Màu', 
+ 'Bộ palette phấn mắt 12 màu đa dạng, dễ phối hợp, độ bám màu cao, không bị vón cục.',
+ 'Lila Beauty', 'Đa màu', NULL, NULL, '12g', 'Italy', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Talc, Mica, Iron Oxides, Ultramarines', 
+ 'Dùng cọ phấn mắt để tán màu, có thể kết hợp nhiều màu để tạo hiệu ứng',
+ 'Tránh tiếp xúc với mắt. Ngưng sử dụng nếu có kích ứng.',
+ 12.0, 12.0, 8.0, 2.0, 10.0, 380000.0, 200000.0, 0.0, 380000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-005', 'user-002', NOW(), NULL, 'cat-009', NULL),
+('prod-004', 'Serum Vitamin C Sáng Da', 
+ 'Serum chứa Vitamin C tinh khiết, giúp làm sáng da, giảm thâm nám, đều màu da.',
+ 'Lila Beauty', NULL, 'Da thường, da khô, da hỗn hợp', 'Làm sáng da, giảm thâm', '30ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Ascorbic Acid, Hyaluronic Acid, Niacinamide', 
+ 'Thoa 2-3 giọt lên mặt sau khi rửa mặt, massage nhẹ nhàng. Dùng buổi tối.',
+ 'Tránh ánh nắng sau khi dùng. Test thử trên da tay trước.',
+ 30.0, 3.0, 3.0, 10.0, 10.0, 550000.0, 300000.0, 0.0, 550000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-005', 'user-002', NOW(), NULL, 'cat-017', NULL),
+('prod-005', 'Nước Hoa Hương Hoa Hồng', 
+ 'Nước hoa nữ hương hoa hồng quyến rũ, lưu hương lâu, phù hợp dùng hàng ngày.',
+ 'Lila Fragrance', 'Hồng', NULL, NULL, '50ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 5 YEAR), 
+ 'Alcohol, Water, Fragrance, Rose Extract', 
+ 'Xịt lên cổ tay, cổ và sau tai. Không chà xát.',
+ 'Tránh tiếp xúc với mắt. Để xa tầm tay trẻ em.',
+ 50.0, 5.0, 5.0, 12.0, 10.0, 1200000.0, 600000.0, 200000.0, 1000000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-006', 'user-002', NOW(), NULL, 'cat-019', NULL),
+('prod-006', 'Mascara Làm Dài Mi', 
+ 'Mascara công thức không vón cục, làm dài và cong mi tự nhiên, chống nước.',
+ 'Lila Beauty', 'Đen', NULL, NULL, '8ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Acrylate Copolymer, Carbon Black, Beeswax', 
+ 'Chải từ chân mi lên ngọn, có thể chải nhiều lớp',
+ 'Tránh tiếp xúc với mắt. Tháo bằng nước tẩy trang chuyên dụng.',
+ 8.0, 2.0, 2.0, 8.0, 10.0, 280000.0, 150000.0, 0.0, 280000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-006', 'user-002', NOW(), NULL, 'cat-011', NULL),
+('prod-007', 'Toner Cân Bằng Da', 
+ 'Toner làm sạch sâu, cân bằng độ pH da, se khít lỗ chân lông, cấp ẩm nhẹ.',
+ 'Lila Beauty', NULL, 'Mọi loại da', 'Cân bằng da, se khít lỗ chân lông', '200ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Witch Hazel, Hyaluronic Acid, Niacinamide, Glycerin', 
+ 'Thấm vào bông tẩy trang, lau nhẹ nhàng lên mặt sau khi rửa mặt',
+ 'Tránh vùng mắt. Test thử trên da tay trước.',
+ 200.0, 6.0, 6.0, 15.0, 10.0, 320000.0, 180000.0, 0.0, 320000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-004', 'user-002', NOW(), NULL, 'cat-016', NULL),
+('prod-008', 'Kem Dưỡng Ẩm Ban Đêm', 
+ 'Kem dưỡng ẩm ban đêm giàu dưỡng chất, phục hồi da trong khi ngủ, mềm mịn sáng hôm sau.',
+ 'Lila Beauty', NULL, 'Da khô, da hỗn hợp', 'Dưỡng ẩm, phục hồi da', '50ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Glycerin, Ceramides, Shea Butter, Hyaluronic Acid', 
+ 'Thoa đều lên mặt và cổ trước khi đi ngủ, massage nhẹ nhàng',
+ 'Test thử trên da tay trước. Tránh vùng mắt.',
+ 50.0, 5.0, 5.0, 6.0, 10.0, 420000.0, 220000.0, 0.0, 420000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-005', 'user-002', NOW(), NULL, 'cat-018', NULL),
+('prod-009', 'Son Tint Lâu Trôi', 
+ 'Son tint màu nước, lâu trôi, không bong tróc, tự nhiên như không trang điểm.',
+ 'Lila Beauty', 'Đỏ Cam', NULL, NULL, '4g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Water, Glycerin, Colorants, Preservatives', 
+ 'Thoa đều lên môi, để khô tự nhiên',
+ 'Tránh tiếp xúc với mắt. Ngưng sử dụng nếu có kích ứng.',
+ 4.0, 6.0, 1.5, 1.5, 10.0, 180000.0, 100000.0, 0.0, 180000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-006', 'user-002', NOW(), NULL, 'cat-013', NULL),
+('prod-010', 'Kem Chống Nắng SPF50+', 
+ 'Kem chống nắng phổ rộng SPF50+, bảo vệ da khỏi tia UV, không gây bết dính.',
+ 'Lila Beauty', NULL, 'Mọi loại da', 'Chống nắng, bảo vệ da', '50ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Zinc Oxide, Titanium Dioxide, Hyaluronic Acid', 
+ 'Thoa đều lên mặt và vùng da cần bảo vệ 15 phút trước khi ra nắng',
+ 'Thoa lại sau mỗi 2 giờ hoặc sau khi bơi, đổ mồ hôi.',
+ 50.0, 5.0, 5.0, 8.0, 10.0, 350000.0, 180000.0, 0.0, 350000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-007', 'user-002', NOW(), NULL, 'cat-018', NULL),
+('prod-011', 'Bút Kẻ Mắt Nước', 
+ 'Bút kẻ mắt dạng nước, mực đen đậm, không lem, dễ tẩy trang.',
+ 'Lila Beauty', 'Đen', NULL, NULL, '0.5ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Carbon Black, Acrylate Copolymer', 
+ 'Kẻ từ góc trong mắt ra ngoài, tạo đường mảnh hoặc đậm tùy ý',
+ 'Tránh tiếp xúc với mắt. Tháo bằng nước tẩy trang.',
+ 0.5, 1.5, 1.5, 12.0, 10.0, 150000.0, 80000.0, 0.0, 150000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-008', 'user-002', NOW(), NULL, 'cat-010', NULL),
+('prod-012', 'Sữa Rửa Mặt Dịu Nhẹ', 
+ 'Sữa rửa mặt công thức dịu nhẹ, làm sạch sâu, không làm khô da.',
+ 'Lila Beauty', NULL, 'Da nhạy cảm, da khô', 'Làm sạch, dưỡng ẩm', '150ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Glycerin, Hyaluronic Acid, Ceramides', 
+ 'Làm ướt mặt, lấy lượng vừa đủ massage nhẹ nhàng, rửa sạch với nước',
+ 'Tránh vùng mắt. Dùng 2 lần/ngày.',
+ 150.0, 6.0, 6.0, 15.0, 10.0, 280000.0, 150000.0, 0.0, 280000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-009', 'user-002', NOW(), NULL, 'cat-015', NULL),
+('prod-013', 'Nước Hoa Nam Hương Gỗ', 
+ 'Nước hoa nam hương gỗ mạnh mẽ, lưu hương lâu, phù hợp dùng hàng ngày.',
+ 'Lila Fragrance', 'Gỗ', NULL, NULL, '100ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 5 YEAR), 
+ 'Alcohol, Water, Fragrance, Wood Extract', 
+ 'Xịt lên cổ tay, cổ và sau tai. Không chà xát.',
+ 'Tránh tiếp xúc với mắt. Để xa tầm tay trẻ em.',
+ 100.0, 6.0, 6.0, 15.0, 10.0, 2000000.0, 1000000.0, 300000.0, 1700000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-010', 'user-002', NOW(), NULL, 'cat-020', NULL),
+('prod-014', 'Phấn Má Hồng', 
+ 'Phấn má hồng tự nhiên, dễ tán, độ bền cao, màu sắc đa dạng.',
+ 'Lila Beauty', 'Hồng Đào', NULL, NULL, '5g', 'Italy', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Talc, Mica, Iron Oxides, Titanium Dioxide', 
+ 'Dùng cọ phấn má tán đều lên gò má, blend kỹ vùng viền',
+ 'Tránh tiếp xúc với mắt. Test thử trên da tay trước.',
+ 5.0, 6.0, 6.0, 2.0, 10.0, 220000.0, 120000.0, 0.0, 220000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-011', 'user-002', NOW(), NULL, 'cat-007', NULL),
+('prod-015', 'Highlighter Tạo Khối', 
+ 'Highlighter tạo khối tự nhiên, ánh sáng đẹp, không bị vón cục.',
+ 'Lila Beauty', 'Vàng Kim', NULL, NULL, '6g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Mica, Titanium Dioxide, Iron Oxides', 
+ 'Dùng cọ highlight tán lên sống mũi, gò má, trán',
+ 'Tránh vùng mắt. Dùng lượng vừa phải để tránh quá bóng.',
+ 6.0, 6.0, 6.0, 2.0, 10.0, 260000.0, 140000.0, 0.0, 260000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-012', 'user-002', NOW(), NULL, 'cat-007', NULL),
+('prod-016', 'Kem Che Khuyết Điểm', 
+ 'Kem che khuyết điểm che phủ cao, không bết dính, tự nhiên.',
+ 'Lila Beauty', 'Nude', NULL, NULL, '10ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Dimethicone, Titanium Dioxide, Iron Oxides', 
+ 'Thoa lên vùng cần che, dùng ngón tay hoặc cọ blend đều',
+ 'Test thử trên da tay trước. Tránh vùng mắt.',
+ 10.0, 2.0, 2.0, 6.0, 10.0, 180000.0, 100000.0, 0.0, 180000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-013', 'user-002', NOW(), NULL, 'cat-008', NULL),
+('prod-017', 'Dưỡng Môi Lip Balm', 
+ 'Kem dưỡng môi mềm mịn, cấp ẩm tốt, có SPF bảo vệ môi.',
+ 'Lila Beauty', NULL, NULL, NULL, '4g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Beeswax, Jojoba Oil, Vitamin E, SPF15', 
+ 'Thoa đều lên môi, có thể dùng nhiều lần trong ngày',
+ 'Không nuốt. Tránh tiếp xúc với mắt.',
+ 4.0, 2.0, 2.0, 2.0, 10.0, 80000.0, 40000.0, 0.0, 80000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-014', 'user-002', NOW(), NULL, 'cat-014', NULL),
+('prod-018', 'Nước Hoa Unisex Hương Trái Cây', 
+ 'Nước hoa unisex hương trái cây tươi mát, phù hợp cả nam và nữ.',
+ 'Lila Fragrance', 'Trái Cây', NULL, NULL, '50ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 5 YEAR), 
+ 'Alcohol, Water, Fragrance, Fruit Extract', 
+ 'Xịt lên cổ tay, cổ và sau tai. Không chà xát.',
+ 'Tránh tiếp xúc với mắt. Để xa tầm tay trẻ em.',
+ 50.0, 5.0, 5.0, 12.0, 10.0, 1500000.0, 750000.0, 250000.0, 1250000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-015', 'user-002', NOW(), NULL, 'cat-021', NULL),
+('prod-019', 'Son Kem Lì Siêu Bền', 
+ 'Son kem lì siêu bền, không trôi màu, mềm mịn trên môi.',
+ 'Lila Beauty', 'Đỏ Cam', NULL, NULL, '4.5g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Beeswax, Jojoba Oil, Vitamin E, Colorants', 
+ 'Thoa đều lên môi, để khô tự nhiên',
+ 'Tránh tiếp xúc với mắt. Ngưng sử dụng nếu có kích ứng.',
+ 4.5, 7.0, 2.0, 2.0, 10.0, 220000.0, 120000.0, 0.0, 220000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-016', 'user-002', NOW(), NULL, 'cat-013', NULL),
+('prod-020', 'Kem Nền Cushion', 
+ 'Kem nền dạng cushion tiện lợi, che phủ tự nhiên, dễ mang theo.',
+ 'Lila Beauty', 'Natural', 'Mọi loại da', 'Che khuyết điểm', '15g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Dimethicone, Titanium Dioxide, Iron Oxides', 
+ 'Dùng bông cushion thoa đều lên mặt',
+ 'Test thử trên da tay trước. Tránh vùng mắt.',
+ 15.0, 6.0, 6.0, 2.0, 10.0, 380000.0, 200000.0, 0.0, 380000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-017', 'user-002', NOW(), NULL, 'cat-006', NULL),
+('prod-021', 'Palette Phấn Mắt 24 Màu', 
+ 'Bộ palette phấn mắt 24 màu cao cấp, đa dạng, dễ phối hợp.',
+ 'Lila Beauty', 'Đa màu', NULL, NULL, '24g', 'Italy', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Talc, Mica, Iron Oxides, Ultramarines', 
+ 'Dùng cọ phấn mắt để tán màu, kết hợp nhiều màu',
+ 'Tránh tiếp xúc với mắt. Ngưng sử dụng nếu có kích ứng.',
+ 24.0, 15.0, 10.0, 2.0, 10.0, 650000.0, 350000.0, 50000.0, 600000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-018', 'user-002', NOW(), NULL, 'cat-009', NULL),
+('prod-022', 'Serum Retinol Chống Lão Hóa', 
+ 'Serum Retinol chống lão hóa, giảm nếp nhăn, làm mịn da.',
+ 'Lila Beauty', NULL, 'Da thường, da khô', 'Chống lão hóa, giảm nếp nhăn', '30ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Retinol, Hyaluronic Acid, Niacinamide', 
+ 'Thoa 2-3 giọt lên mặt buổi tối, massage nhẹ nhàng',
+ 'Tránh ánh nắng sau khi dùng. Test thử trên da tay trước.',
+ 30.0, 3.0, 3.0, 10.0, 10.0, 680000.0, 350000.0, 0.0, 680000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-019', 'user-002', NOW(), NULL, 'cat-017', NULL),
+('prod-023', 'Nước Hoa Nữ Hương Hoa Nhài', 
+ 'Nước hoa nữ hương hoa nhài thanh khiết, quyến rũ, lưu hương lâu.',
+ 'Lila Fragrance', 'Trắng', NULL, NULL, '50ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 5 YEAR), 
+ 'Alcohol, Water, Fragrance, Jasmine Extract', 
+ 'Xịt lên cổ tay, cổ và sau tai. Không chà xát.',
+ 'Tránh tiếp xúc với mắt. Để xa tầm tay trẻ em.',
+ 50.0, 5.0, 5.0, 12.0, 10.0, 1100000.0, 550000.0, 100000.0, 1000000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-020', 'user-002', NOW(), NULL, 'cat-019', NULL),
+('prod-024', 'Gel Kẻ Mắt', 
+ 'Gel kẻ mắt mượt mà, dễ tán, độ bền cao, không lem.',
+ 'Lila Beauty', 'Đen', NULL, NULL, '3g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Carbon Black, Acrylate Copolymer', 
+ 'Dùng cọ kẻ mắt tán đều, tạo đường mảnh hoặc đậm',
+ 'Tránh tiếp xúc với mắt. Tháo bằng nước tẩy trang.',
+ 3.0, 2.0, 2.0, 8.0, 10.0, 160000.0, 85000.0, 0.0, 160000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-021', 'user-002', NOW(), NULL, 'cat-010', NULL),
+('prod-025', 'Mascara Chống Nước', 
+ 'Mascara chống nước, làm dài và cong mi, không vón cục.',
+ 'Lila Beauty', 'Đen', NULL, NULL, '8ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Acrylate Copolymer, Carbon Black, Beeswax', 
+ 'Chải từ chân mi lên ngọn, có thể chải nhiều lớp',
+ 'Tránh tiếp xúc với mắt. Tháo bằng nước tẩy trang chuyên dụng.',
+ 8.0, 2.0, 2.0, 8.0, 10.0, 300000.0, 160000.0, 0.0, 300000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-022', 'user-002', NOW(), NULL, 'cat-011', NULL),
+('prod-026', 'Toner Cấp Ẩm', 
+ 'Toner cấp ẩm sâu, làm mềm da, se khít lỗ chân lông.',
+ 'Lila Beauty', NULL, 'Da khô, da hỗn hợp', 'Cấp ẩm, làm mềm da', '200ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Hyaluronic Acid, Glycerin, Niacinamide', 
+ 'Thấm vào bông tẩy trang, lau nhẹ nhàng lên mặt',
+ 'Tránh vùng mắt. Test thử trên da tay trước.',
+ 200.0, 6.0, 6.0, 15.0, 10.0, 340000.0, 190000.0, 0.0, 340000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-023', 'user-002', NOW(), NULL, 'cat-016', NULL),
+('prod-027', 'Kem Dưỡng Ban Ngày', 
+ 'Kem dưỡng ban ngày nhẹ nhàng, cấp ẩm, có SPF bảo vệ da.',
+ 'Lila Beauty', NULL, 'Mọi loại da', 'Dưỡng ẩm, chống nắng', '50ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Glycerin, SPF30, Hyaluronic Acid', 
+ 'Thoa đều lên mặt buổi sáng, massage nhẹ nhàng',
+ 'Test thử trên da tay trước. Tránh vùng mắt.',
+ 50.0, 5.0, 5.0, 6.0, 10.0, 450000.0, 230000.0, 0.0, 450000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-024', 'user-002', NOW(), NULL, 'cat-018', NULL),
+('prod-028', 'Son Thỏi Classic', 
+ 'Son thỏi classic truyền thống, màu sắc đa dạng, bền màu.',
+ 'Lila Beauty', 'Đỏ', NULL, NULL, '3.5g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Beeswax, Jojoba Oil, Vitamin E, Colorants', 
+ 'Thoa đều lên môi, có thể dùng chì kẻ môi trước',
+ 'Không nuốt. Tránh tiếp xúc với mắt.',
+ 3.5, 7.0, 2.0, 2.0, 10.0, 200000.0, 110000.0, 0.0, 200000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-025', 'user-002', NOW(), NULL, 'cat-012', NULL),
+('prod-029', 'Sữa Rửa Mặt Tẩy Trang', 
+ 'Sữa rửa mặt kết hợp tẩy trang, làm sạch sâu, dịu nhẹ.',
+ 'Lila Beauty', NULL, 'Mọi loại da', 'Làm sạch, tẩy trang', '150ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Glycerin, Hyaluronic Acid, Ceramides', 
+ 'Làm ướt mặt, lấy lượng vừa đủ massage, rửa sạch',
+ 'Tránh vùng mắt. Dùng 2 lần/ngày.',
+ 150.0, 6.0, 6.0, 15.0, 10.0, 290000.0, 160000.0, 0.0, 290000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-026', 'user-002', NOW(), NULL, 'cat-015', NULL),
+('prod-030', 'Nước Hoa Nam Hương Gỗ Thơm', 
+ 'Nước hoa nam hương gỗ thơm mạnh mẽ, nam tính, lưu hương lâu.',
+ 'Lila Fragrance', 'Gỗ', NULL, NULL, '100ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 5 YEAR), 
+ 'Alcohol, Water, Fragrance, Wood Extract', 
+ 'Xịt lên cổ tay, cổ và sau tai. Không chà xát.',
+ 'Tránh tiếp xúc với mắt. Để xa tầm tay trẻ em.',
+ 100.0, 6.0, 6.0, 15.0, 10.0, 2100000.0, 1050000.0, 350000.0, 1750000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-027', 'user-002', NOW(), NULL, 'cat-020', NULL),
+('prod-031', 'Phấn Má Hồng Tự Nhiên', 
+ 'Phấn má hồng tự nhiên, dễ tán, màu sắc tươi tắn.',
+ 'Lila Beauty', 'Hồng', NULL, NULL, '5g', 'Italy', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Talc, Mica, Iron Oxides, Titanium Dioxide', 
+ 'Dùng cọ phấn má tán đều lên gò má',
+ 'Tránh tiếp xúc với mắt. Test thử trên da tay trước.',
+ 5.0, 6.0, 6.0, 2.0, 10.0, 240000.0, 130000.0, 0.0, 240000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-028', 'user-002', NOW(), NULL, 'cat-007', NULL),
+('prod-032', 'Highlighter Dạng Lỏng', 
+ 'Highlighter dạng lỏng dễ tán, ánh sáng tự nhiên, không bết.',
+ 'Lila Beauty', 'Vàng Hồng', NULL, NULL, '10ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Water, Mica, Titanium Dioxide, Iron Oxides', 
+ 'Dùng ngón tay hoặc cọ highlight tán lên sống mũi, gò má',
+ 'Tránh vùng mắt. Dùng lượng vừa phải.',
+ 10.0, 3.0, 3.0, 8.0, 10.0, 280000.0, 150000.0, 0.0, 280000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-029', 'user-002', NOW(), NULL, 'cat-007', NULL),
+('prod-033', 'Kem Che Khuyết Điểm Full Coverage', 
+ 'Kem che khuyết điểm che phủ cao, che được cả thâm và mụn.',
+ 'Lila Beauty', 'Nude', NULL, NULL, '10ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Dimethicone, Titanium Dioxide, Iron Oxides', 
+ 'Thoa lên vùng cần che, dùng ngón tay hoặc cọ blend',
+ 'Test thử trên da tay trước. Tránh vùng mắt.',
+ 10.0, 2.0, 2.0, 6.0, 10.0, 190000.0, 105000.0, 0.0, 190000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-030', 'user-002', NOW(), NULL, 'cat-008', NULL),
+('prod-034', 'Dưỡng Môi Có Màu', 
+ 'Dưỡng môi có màu, vừa dưỡng vừa tạo màu tự nhiên.',
+ 'Lila Beauty', 'Hồng', NULL, NULL, '4g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Beeswax, Jojoba Oil, Vitamin E, Colorants', 
+ 'Thoa đều lên môi, có thể dùng nhiều lần',
+ 'Không nuốt. Tránh tiếp xúc với mắt.',
+ 4.0, 2.0, 2.0, 2.0, 10.0, 90000.0, 45000.0, 0.0, 90000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-031', 'user-002', NOW(), NULL, 'cat-014', NULL),
+('prod-035', 'Nước Hoa Unisex Hương Biển', 
+ 'Nước hoa unisex hương biển tươi mát, phù hợp mọi mùa.',
+ 'Lila Fragrance', 'Xanh', NULL, NULL, '50ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 5 YEAR), 
+ 'Alcohol, Water, Fragrance, Marine Extract', 
+ 'Xịt lên cổ tay, cổ và sau tai. Không chà xát.',
+ 'Tránh tiếp xúc với mắt. Để xa tầm tay trẻ em.',
+ 50.0, 5.0, 5.0, 12.0, 10.0, 1600000.0, 800000.0, 300000.0, 1300000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-032', 'user-002', NOW(), NULL, 'cat-021', NULL),
+('prod-036', 'Son Lì Matte Siêu Bền', 
+ 'Son lì matte siêu bền, không trôi màu, không khô môi.',
+ 'Lila Beauty', 'Đỏ Đậm', NULL, NULL, '3.5g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Beeswax, Jojoba Oil, Vitamin E, Colorants', 
+ 'Thoa đều lên môi, để khô tự nhiên',
+ 'Tránh tiếp xúc với mắt. Ngưng sử dụng nếu có kích ứng.',
+ 3.5, 7.0, 2.0, 2.0, 10.0, 270000.0, 140000.0, 0.0, 270000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-033', 'user-002', NOW(), NULL, 'cat-013', NULL),
+('prod-037', 'Kem Nền BB Cream', 
+ 'Kem nền BB cream đa năng, che phủ, dưỡng da, chống nắng.',
+ 'Lila Beauty', 'Natural', 'Mọi loại da', 'Che phủ, dưỡng da', '50ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Dimethicone, Titanium Dioxide, SPF30', 
+ 'Thoa đều lên mặt bằng tay hoặc cọ',
+ 'Test thử trên da tay trước. Tránh vùng mắt.',
+ 50.0, 5.0, 5.0, 8.0, 10.0, 360000.0, 190000.0, 0.0, 360000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-034', 'user-002', NOW(), NULL, 'cat-006', NULL),
+('prod-038', 'Palette Phấn Mắt 6 Màu', 
+ 'Bộ palette phấn mắt 6 màu cơ bản, dễ sử dụng, giá cả hợp lý.',
+ 'Lila Beauty', 'Đa màu', NULL, NULL, '6g', 'Italy', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Talc, Mica, Iron Oxides, Ultramarines', 
+ 'Dùng cọ phấn mắt để tán màu',
+ 'Tránh tiếp xúc với mắt. Ngưng sử dụng nếu có kích ứng.',
+ 6.0, 8.0, 6.0, 2.0, 10.0, 280000.0, 150000.0, 0.0, 280000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-035', 'user-002', NOW(), NULL, 'cat-009', NULL),
+('prod-039', 'Serum Niacinamide Se Khít Lỗ Chân Lông', 
+ 'Serum Niacinamide se khít lỗ chân lông, kiểm soát dầu, làm mịn da.',
+ 'Lila Beauty', NULL, 'Da dầu, da hỗn hợp', 'Se khít lỗ chân lông, kiểm soát dầu', '30ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Niacinamide, Hyaluronic Acid, Salicylic Acid', 
+ 'Thoa 2-3 giọt lên mặt sau khi rửa mặt, massage nhẹ',
+ 'Tránh ánh nắng sau khi dùng. Test thử trên da tay trước.',
+ 30.0, 3.0, 3.0, 10.0, 10.0, 520000.0, 280000.0, 0.0, 520000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-036', 'user-002', NOW(), NULL, 'cat-017', NULL),
+('prod-040', 'Nước Hoa Nữ Hương Vanilla', 
+ 'Nước hoa nữ hương vanilla ngọt ngào, ấm áp, quyến rũ.',
+ 'Lila Fragrance', 'Vàng', NULL, NULL, '50ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 5 YEAR), 
+ 'Alcohol, Water, Fragrance, Vanilla Extract', 
+ 'Xịt lên cổ tay, cổ và sau tai. Không chà xát.',
+ 'Tránh tiếp xúc với mắt. Để xa tầm tay trẻ em.',
+ 50.0, 5.0, 5.0, 12.0, 10.0, 1300000.0, 650000.0, 250000.0, 1050000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-037', 'user-002', NOW(), NULL, 'cat-019', NULL),
+('prod-041', 'Bút Kẻ Mắt Dạng Bút Chì', 
+ 'Bút kẻ mắt dạng bút chì dễ sử dụng, không lem, dễ tẩy.',
+ 'Lila Beauty', 'Đen', NULL, NULL, '0.3g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Carbon Black, Acrylate Copolymer', 
+ 'Kẻ từ góc trong mắt ra ngoài, tạo đường mảnh',
+ 'Tránh tiếp xúc với mắt. Tháo bằng nước tẩy trang.',
+ 0.3, 1.5, 1.5, 12.0, 10.0, 120000.0, 65000.0, 0.0, 120000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-038', 'user-002', NOW(), NULL, 'cat-010', NULL),
+('prod-042', 'Mascara Làm Cong Mi', 
+ 'Mascara làm cong mi tự nhiên, không vón cục, dễ tháo.',
+ 'Lila Beauty', 'Đen', NULL, NULL, '8ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Acrylate Copolymer, Carbon Black, Beeswax', 
+ 'Chải từ chân mi lên ngọn, chải nhiều lớp',
+ 'Tránh tiếp xúc với mắt. Tháo bằng nước tẩy trang.',
+ 8.0, 2.0, 2.0, 8.0, 10.0, 260000.0, 140000.0, 0.0, 260000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-039', 'user-002', NOW(), NULL, 'cat-011', NULL),
+('prod-043', 'Toner Tẩy Tế Bào Chết', 
+ 'Toner tẩy tế bào chết nhẹ nhàng, làm sáng da, mịn màng.',
+ 'Lila Beauty', NULL, 'Da thường, da hỗn hợp', 'Tẩy tế bào chết, làm sáng da', '200ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, AHA, BHA, Hyaluronic Acid, Glycerin', 
+ 'Thấm vào bông tẩy trang, lau nhẹ nhàng lên mặt',
+ 'Tránh vùng mắt. Test thử trên da tay trước. Dùng buổi tối.',
+ 200.0, 6.0, 6.0, 15.0, 10.0, 380000.0, 200000.0, 0.0, 380000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-040', 'user-002', NOW(), NULL, 'cat-016', NULL),
+('prod-044', 'Kem Dưỡng Mắt', 
+ 'Kem dưỡng mắt chống quầng thâm, giảm nếp nhăn, làm sáng vùng mắt.',
+ 'Lila Beauty', NULL, 'Mọi loại da', 'Chống quầng thâm, giảm nếp nhăn', '15ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Caffeine, Retinol, Hyaluronic Acid', 
+ 'Thoa đều lên vùng mắt, massage nhẹ nhàng',
+ 'Tránh tiếp xúc với mắt. Test thử trước.',
+ 15.0, 2.0, 2.0, 5.0, 10.0, 480000.0, 250000.0, 0.0, 480000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-041', 'user-002', NOW(), NULL, 'cat-018', NULL),
+('prod-045', 'Son Tint Màu Nước', 
+ 'Son tint màu nước tự nhiên, lâu trôi, không bong tróc.',
+ 'Lila Beauty', 'Đỏ Hồng', NULL, NULL, '4g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Water, Glycerin, Colorants, Preservatives', 
+ 'Thoa đều lên môi, để khô tự nhiên',
+ 'Tránh tiếp xúc với mắt. Ngưng sử dụng nếu có kích ứng.',
+ 4.0, 6.0, 1.5, 1.5, 10.0, 170000.0, 95000.0, 0.0, 170000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-042', 'user-002', NOW(), NULL, 'cat-013', NULL),
+('prod-046', 'Kem Chống Nắng SPF30', 
+ 'Kem chống nắng SPF30 nhẹ nhàng, không bết dính, phù hợp da nhạy cảm.',
+ 'Lila Beauty', NULL, 'Da nhạy cảm', 'Chống nắng, bảo vệ da', '50ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Zinc Oxide, Titanium Dioxide, Hyaluronic Acid', 
+ 'Thoa đều lên mặt 15 phút trước khi ra nắng',
+ 'Thoa lại sau mỗi 2 giờ hoặc sau khi bơi.',
+ 50.0, 5.0, 5.0, 8.0, 10.0, 320000.0, 170000.0, 0.0, 320000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-043', 'user-002', NOW(), NULL, 'cat-018', NULL),
+('prod-047', 'Sữa Rửa Mặt Tạo Bọt', 
+ 'Sữa rửa mặt tạo bọt dày, làm sạch sâu, không làm khô da.',
+ 'Lila Beauty', NULL, 'Mọi loại da', 'Làm sạch, tạo bọt', '120ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Glycerin, Hyaluronic Acid, Surfactants', 
+ 'Làm ướt mặt, tạo bọt, massage nhẹ, rửa sạch',
+ 'Tránh vùng mắt. Dùng 2 lần/ngày.',
+ 120.0, 6.0, 6.0, 12.0, 10.0, 270000.0, 145000.0, 0.0, 270000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-044', 'user-002', NOW(), NULL, 'cat-015', NULL),
+('prod-048', 'Nước Hoa Nam Hương Xạ Hương', 
+ 'Nước hoa nam hương xạ hương mạnh mẽ, nam tính, lưu hương lâu.',
+ 'Lila Fragrance', 'Nâu', NULL, NULL, '100ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 5 YEAR), 
+ 'Alcohol, Water, Fragrance, Musk Extract', 
+ 'Xịt lên cổ tay, cổ và sau tai. Không chà xát.',
+ 'Tránh tiếp xúc với mắt. Để xa tầm tay trẻ em.',
+ 100.0, 6.0, 6.0, 15.0, 10.0, 2200000.0, 1100000.0, 400000.0, 1800000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-045', 'user-002', NOW(), NULL, 'cat-020', NULL),
+('prod-049', 'Phấn Má Dạng Kem', 
+ 'Phấn má dạng kem dễ tán, màu sắc tự nhiên, độ bền cao.',
+ 'Lila Beauty', 'Hồng Cam', NULL, NULL, '5g', 'Italy', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Water, Dimethicone, Iron Oxides, Titanium Dioxide', 
+ 'Dùng ngón tay hoặc cọ phấn má tán đều lên gò má',
+ 'Tránh tiếp xúc với mắt. Test thử trên da tay trước.',
+ 5.0, 6.0, 6.0, 2.0, 10.0, 250000.0, 135000.0, 0.0, 250000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-046', 'user-002', NOW(), NULL, 'cat-007', NULL),
+('prod-050', 'Highlighter Dạng Bột', 
+ 'Highlighter dạng bột mịn, ánh sáng đẹp, không bị vón cục.',
+ 'Lila Beauty', 'Vàng Hồng', NULL, NULL, '6g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Mica, Titanium Dioxide, Iron Oxides', 
+ 'Dùng cọ highlight tán lên sống mũi, gò má, trán',
+ 'Tránh vùng mắt. Dùng lượng vừa phải.',
+ 6.0, 6.0, 6.0, 2.0, 10.0, 270000.0, 145000.0, 0.0, 270000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-047', 'user-002', NOW(), NULL, 'cat-007', NULL) AS new
+ON DUPLICATE KEY UPDATE 
+    name = new.name, 
+    description = new.description, 
+    category_id = new.category_id,
+    price = new.price,
+    status = new.status,
+    updated_at = NOW();
 ```
 
 ---

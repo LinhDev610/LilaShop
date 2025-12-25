@@ -179,6 +179,9 @@ export const API_ROUTES = {
         unreadCount: '/chat/unread-count',
         customerSupport: '/chat/customer-support',
     },
+    chatbot: {
+        ask: '/api/chatbot/ask',
+    },
 };
 
 // =========== GHN Constants ===========

@@ -488,3 +488,34 @@ $font-primary: var(--font-primary);
         }
     }
 }
+
+.ai-option {
+    background: linear-gradient(135deg, white, #fdf2f4) !important;
+}
+
+.message.ai {
+    justify-content: flex-start;
+    margin-top: 20px !important;
+
+    .message-content {
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9) !important;
+        position: relative;
+
+        &::before {
+            content: "Lila AI Assistant";
+            font-size: 10px;
+            font-weight: 800;
+            color: #9333ea;
+            position: absolute;
+            top: -22px;
+            left: 0;
+            text-transform: uppercase;
+        }
+    }
+}
+
+.typing-indicator {
+    font-size: 13px;
+    font-weight: 600;
+    color: #9333ea;
+}
