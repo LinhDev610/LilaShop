@@ -500,8 +500,6 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
 
     const handleBackToMenu = () => {
         setViewMode('menu');
-        // Reset AI sessionId when going back to menu if we want a fresh start, 
-        // or keep it to continue session. Let's keep it for now.
     };
 
     const handleSelectAIChat = () => {
