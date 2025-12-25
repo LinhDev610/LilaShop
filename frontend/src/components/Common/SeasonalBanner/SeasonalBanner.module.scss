@@ -1,11 +1,12 @@
 .seasonal-banner-container {
-    width: 100%;
-    max-width: 1200px;
+    width: 90%;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0;
 
     @media (max-width: 768px) {
-        padding: 0 15px;
+        width: 100%;
+        padding: 0;
     }
 }
 

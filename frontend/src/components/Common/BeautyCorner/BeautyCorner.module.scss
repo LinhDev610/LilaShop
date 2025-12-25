@@ -1,8 +1,13 @@
 .wrapper {
-    width: 100%;
-    max-width: 1200px;
+    width: 90%;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 20px 0;
+
+    @media (max-width: 768px) {
+        width: 100%;
+        padding: 20px 15px;
+    }
 }
 
 .header {
@@ -30,16 +35,16 @@
 .view-all-btn {
     font-size: 1rem;
     font-weight: 600;
-    color: #C13584;
+    color: #873435;
     text-decoration: none;
-    border: 1px solid #C13584;
+    border: 1px solid #873435;
     padding: 8px 20px;
     border-radius: 20px;
     transition: all 0.3s;
     white-space: nowrap;
 
     &:hover {
-        background: #C13584;
+        background: #873435;
         color: white;
     }
 }
@@ -52,8 +57,9 @@
     text-transform: uppercase;
     letter-spacing: 1px;
 
-    background: linear-gradient(45deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%);
+    background: linear-gradient(45deg, #873435 0%, #a14b4b 99%, #a14b4b 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     display: inline-block;
 }
@@ -113,8 +119,8 @@
     top: 15px;
     left: 15px;
     background: rgba(255, 255, 255, 0.9);
-    color: #C13584;
-    /* Instagram-ish pink/purple */
+    color: #873435;
+    /* brand color */
     padding: 6px 12px;
     border-radius: 20px;
     font-size: 0.8rem;
@@ -148,7 +154,7 @@
         transition: color 0.2s;
 
         &:hover {
-            color: #C13584;
+            color: #873435;
         }
     }
 }
@@ -160,6 +166,7 @@
     margin-bottom: 20px;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     flex: 1;
@@ -168,7 +175,7 @@
 .readMore {
     font-size: 0.9rem;
     font-weight: 600;
-    color: #C13584;
+    color: #873435;
     text-decoration: none;
     align-self: flex-start;
 

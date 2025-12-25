@@ -74,18 +74,20 @@
 
 .change-password-btn {
     padding: 10px 20px;
-    background: #1A3C5A;
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #ffffff;
     border: none;
     border-radius: 6px;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.2s ease;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+    transition: all 0.2s ease;
 }
 
 .change-password-btn:hover {
-    background: #0f2a3f;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(124, 58, 237, 0.35);
 }
 
 .form-container {
@@ -125,7 +127,7 @@
 
 .form-input:focus {
     outline: none;
-    border-color: #1A3C5A;
+    border-color: #7C3AED;
 }
 
 .form-input:disabled {
@@ -178,8 +180,8 @@
 
 .cancel-btn {
     background: #fff;
-    color: #1A3C5A;
-    border: 1px solid #1A3C5A;
+    color: #7C3AED;
+    border: 1px solid #7C3AED;
 }
 
 .cancel-btn:hover:not(:disabled) {
@@ -187,12 +189,14 @@
 }
 
 .save-btn {
-    background: #1A3C5A;
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #ffffff;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
 }
 
 .save-btn:hover:not(:disabled) {
-    background: #0f2a3f;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(124, 58, 237, 0.35);
 }
 
 .modal-overlay {
@@ -276,4 +280,3 @@
     color: #EF4444;
     font-size: 16px;
 }
-

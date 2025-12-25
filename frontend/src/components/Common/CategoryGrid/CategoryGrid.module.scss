@@ -2,8 +2,9 @@
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 24px;
-    padding: 10px 40px;
+    padding: 10px 0;
     background: #FFFFFF;
+    width: 90%;
     max-width: 1400px;
     margin: 0 auto;
 
@@ -13,8 +14,9 @@
 
     @media (max-width: 640px) {
         grid-template-columns: repeat(2, 1fr);
-        padding: 8px 20px;
+        padding: 8px 15px;
         gap: 20px;
+        width: 100%;
     }
 }
 
@@ -32,9 +34,9 @@
     color: inherit;
 
     &:hover {
-        border-color: #B76E79;
+        border-color: #873435;
         transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(183, 110, 121, 0.1);
+        box-shadow: 0 4px 16px rgba(135, 52, 53, 0.1);
     }
 }
 
@@ -42,7 +44,7 @@
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #F7E7CE 0%, #D4A5A5 100%);
+    background: linear-gradient(135deg, #F7E7CE 0%, #a14b4b 100%);
     display: flex;
     align-items: center;
     justify-content: center;

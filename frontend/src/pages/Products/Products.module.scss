@@ -14,7 +14,7 @@
 }
 
 .error {
-    color: #C75B5B;
+    color: #873435;
 }
 
 .products-header {
@@ -50,7 +50,7 @@
 
 .filter-select {
     padding: 10px 16px;
-    border: 2px solid rgba(183, 110, 121, 0.15);
+    border: 2px solid rgba(87, 52, 53, 0.15);
     border-radius: 8px;
     background: #FFFFFF;
     font-size: 16px;
@@ -60,8 +60,8 @@
 
     &:focus {
         outline: none;
-        border-color: #B76E79;
-        box-shadow: 0 0 0 3px rgba(183, 110, 121, 0.1);
+        border-color: #873435;
+        box-shadow: 0 0 0 3px rgba(87, 52, 53, 0.1);
     }
 }
 
@@ -89,7 +89,7 @@
 
 .pagination-btn {
     padding: 10px 20px;
-    border: 2px solid rgba(183, 110, 121, 0.15);
+    border: 2px solid rgba(87, 52, 53, 0.15);
     background: #FFFFFF;
     border-radius: 8px;
     font-size: 16px;
@@ -98,8 +98,8 @@
     transition: all 0.3s ease;
 
     &:hover:not(.disabled) {
-        border-color: #B76E79;
-        color: #B76E79;
+        border-color: #873435;
+        color: #873435;
     }
 
     &.disabled {
@@ -117,7 +117,7 @@
     min-width: 40px;
     height: 40px;
     padding: 0 12px;
-    border: 2px solid rgba(183, 110, 121, 0.15);
+    border: 2px solid rgba(87, 52, 53, 0.15);
     background: #FFFFFF;
     border-radius: 8px;
     font-size: 16px;
@@ -126,14 +126,13 @@
     transition: all 0.3s ease;
 
     &:hover {
-        border-color: #B76E79;
-        color: #B76E79;
+        border-color: #873435;
+        color: #873435;
     }
 
     &.active {
-        background: linear-gradient(135deg, #B76E79 0%, #A85A66 100%);
-        border-color: #B76E79;
+        background: linear-gradient(135deg, #873435 0%, #6d2829 100%);
+        border-color: #873435;
         color: #FFFFFF;
     }
 }
-

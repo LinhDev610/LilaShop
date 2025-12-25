@@ -1,6 +1,6 @@
 .add-banner-page {
     padding: 24px;
-    background: #f2ebdd;
+    background: linear-gradient(135deg, #FDFBFF 0%, #F8F4FF 100%);
     min-height: 100vh;
 }
 
@@ -53,16 +53,18 @@
     padding: 0 12px;
     border-radius: 8px;
     border: none;
-    background: #13324a;
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #fff;
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
     transition: background 0.2s ease;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
 }
 
 .dashboard-btn:hover {
-    background: #0f2a3f;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(124, 58, 237, 0.35);
 }
 
 .icon-left {
@@ -129,8 +131,8 @@
     }
 
     &.active {
-        border-color: #B76E79;
-        background: linear-gradient(135deg, #B76E79 0%, #A85A66 100%);
+        border-color: #7C3AED;
+        background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
         color: #ffffff;
     }
 }
@@ -161,7 +163,7 @@
     font-size: 13px;
     color: #6b7280;
     line-height: 1.5;
-    
+
     &.warning {
         color: #dc2626;
         font-weight: 500;
@@ -273,7 +275,8 @@
 .form-textarea:focus,
 .form-select:focus {
     outline: none;
-    border-color: #1A3C5A;
+    border-color: #7C3AED;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 
 .form-textarea {
@@ -409,12 +412,14 @@
 }
 
 .btn-submit {
-    background: #1A3C5A;
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #fff;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
 }
 
 .btn-submit:hover:not(:disabled) {
-    background: #0f2a3f;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(124, 58, 237, 0.35);
 }
 
 /* Modal */
@@ -502,7 +507,8 @@
 
 .search-input:focus {
     outline: none;
-    border-color: #1A3C5A;
+    border-color: #7C3AED;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 
 .search-input::placeholder {
@@ -528,7 +534,7 @@
 
 .product-option:hover {
     background: #f9fafb;
-    border-color: #1A3C5A;
+    border-color: #7C3AED;
 }
 
 .no-products {
@@ -537,4 +543,3 @@
     font-size: 14px;
     padding: 20px;
 }
-

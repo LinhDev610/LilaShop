@@ -1,315 +1,380 @@
+// OrderManagementPage.scss - Standardized with Content Management style
+@import '../../../../assets/styles/GlobalStyles/GlobalStyles.scss';
+
 .page {
-    padding: 12px 8px 24px;
-    background: #f2ebdd;
+    padding: 28px 32px;
+    background: linear-gradient(135deg, #FDFBFF 0%, #F8F4FF 100%);
     min-height: calc(100vh - 60px);
+
+    @media (max-width: 768px) {
+        padding: 20px 16px;
+    }
 }
 
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 28px;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
 }
 
 .title {
-    font-size: 24px;
-    font-weight: 800;
-    color: #1b2b34;
+    font-size: 26px;
+    font-weight: 700;
+    color: #1a1d29;
+    margin: 0;
+    letter-spacing: -0.5px;
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(90deg, #7C3AED, #DB2777);
+        border-radius: 2px;
+    }
 }
 
 .dashboard-btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    height: 40px;
-    padding: 0 16px;
-    border-radius: 10px;
+    gap: 8px;
+    height: 42px;
+    padding: 0 20px;
+    border-radius: 12px;
     border: none;
-    background: #13324a;
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #fff;
     cursor: pointer;
     font-size: 14px;
-    font-weight: 500;
-}
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.35);
+    transition: all 0.3s ease;
 
-.dashboard-btn:hover {
-    opacity: 0.9;
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(124, 58, 237, 0.45);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
 }
 
 .icon-left {
     display: inline-flex;
+    transition: transform 0.2s ease;
+
+    .dashboard-btn:hover & {
+        transform: translateX(-3px);
+    }
 }
 
 .tabs-container {
-    display: inline-flex;
+    display: flex;
     gap: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+    padding: 6px;
+    background: #fff;
+    border-radius: 14px;
+    width: fit-content;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
 }
 
 .tab {
-    border: 1px solid #d7d3c9;
-    background: #f7f2e7;
-    color: #1b2b34;
-    border-radius: 999px;
-    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    color: #5a6178;
+    border-radius: 10px;
+    padding: 10px 24px;
     font-weight: 600;
+    font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+
+    &:hover {
+        color: #7C3AED;
+        background: rgba(124, 58, 237, 0.05);
+    }
 
     &.active {
-        background: #0f2c44;
+        background: #7C3AED;
         color: #fff;
-        border-color: #0f2c44;
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
     }
 }
 
 .section {
-    margin-top: 0;
-    margin-bottom: 0;
-}
-
-.section + .section {
-    margin-top: 24px;
+    margin-bottom: 32px;
 }
 
 .section-title {
     font-size: 20px;
     font-weight: 700;
-    color: #1b2b34;
-    margin-bottom: 12px;
-    margin-top: 0;
+    color: #1a1d29;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    &::before {
+        content: '';
+        width: 4px;
+        height: 20px;
+        background: #7C3AED;
+        border-radius: 2px;
+    }
 }
 
 .wrap {
-    margin-top: 12px;
-}
-
-.section:first-child .wrap :global(.search-sort-container) {
-    margin-bottom: 16px;
-}
-
-.section:nth-of-type(2) :global(.search-sort-container) {
-    margin-bottom: 0;
+    background: #fff;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
 .info-row {
-    margin: 8px 0;
+    margin: 12px 0;
+    padding: 12px 16px;
+    border-radius: 10px;
     font-size: 14px;
-    color: #374151;
-}
+    font-weight: 500;
 
-.info-row.error {
-    color: #b91c1c;
+    &.success {
+        background: #ecfccb;
+        color: #365314;
+        border: 1px solid #bef264;
+    }
+
+    &.error {
+        background: #fee2e2;
+        color: #b91c1c;
+        border: 1px solid #fca5a5;
+    }
 }
 
 .card {
     background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    padding: 0;
-    border: none;
+    border-radius: 16px;
     overflow: hidden;
-    margin-top: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    margin-top: 20px;
 }
 
 .card-header {
-    padding: 12px 16px;
-    font-weight: 800;
+    padding: 16px 24px;
+    font-weight: 700;
     font-size: 16px;
-    color: #1b2b34;
-    background: #ffffff;
-    border-bottom: 1px solid #eef2f4;
+    color: #1a1d29;
+    background: linear-gradient(135deg, #FDFBFF 0%, #F8F4FF 100%);
+    border-bottom: 1px solid #e8ecf1;
 }
 
+/* Table Base */
 .table {
     width: 100%;
     border-collapse: collapse;
-}
 
-.table thead th {
-    text-align: center;
-    padding: 12px 60px; /* tăng khoảng cách ngang giữa các cột tiêu đề */
-    font-size: 14px;
-    font-weight: 700;
-    color: #fff;
-    background: #173a55;
-}
+    th {
+        padding: 16px 24px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: #6b7280;
+        border-bottom: 2px solid #eef2f6;
+        white-space: nowrap;
+    }
 
-.table tbody td {
-    padding: 16px 24px; /* tăng khoảng cách ngang giữa các cột + trên/dưới giữa các hàng */
-    border-top: 1px solid #e5e7eb;
-    color: #000;
-    font-size: 14px;
-    text-align: center;
-}
+    td {
+        padding: 16px 24px;
+        font-size: 14px;
+        color: #1f2937;
+        vertical-align: middle;
+        border-bottom: 1px solid #f0f2f5;
+    }
 
-/* Giảm khoảng trắng bên phải cột "Thao tác" nhưng vẫn giữ dòng kẻ full chiều ngang */
-.table thead th:last-child,
-.table tbody td:last-child {
-    padding-right: 8px;
+    tbody tr {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f0f2f5;
+
+        &:nth-child(even) {
+            background: #fafbfd;
+        }
+
+        &:hover {
+            background: linear-gradient(90deg, rgba(124, 58, 237, 0.04), rgba(219, 39, 119, 0.04));
+            transform: scale(1.001);
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+    }
 }
 
 .code-cell {
     font-weight: 600;
+    color: #374151;
 }
 
 .user-cell {
-    text-align: left;
+    .username {
+        font-weight: 500;
+        color: #111827;
+        margin-bottom: 2px;
+    }
+
+    .email {
+        font-size: 12px;
+        color: #6b7280;
+    }
 }
 
-.username {
-    font-weight: 500;
-}
-
-.email {
-    font-size: 12px;
-    color: #6b7280;
+.status-cell {
+    min-width: 120px;
 }
 
 .status-pill {
-    display: flex; /* giúp dòng trạng thái chiếm trọn chiều ngang ô */
-    align-items: center;
-    justify-content: center;
-    width: 100%; /* kéo dài pill trạng thái hết chiều ngang ô (hết cột) */
-    min-width: 110px;
+    display: inline-flex;
     padding: 6px 12px;
-    border-radius: 999px;
+    border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
-    color: #fff;
-}
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 
-.status-pill.pending {
-    background: #f59e0b;
-}
+    &.pending {
+        background: #fef3c7;
+        color: #d97706;
+    }
 
-.status-pill.processing {
-    background: #2563eb;
-}
+    &.processing {
+        background: #dbeafe;
+        color: #2563eb;
+    }
 
-.status-pill.shipping {
-    background: #8b5cf6;
-}
+    &.shipping {
+        background: #e0e7ff;
+        color: #4f46e5;
+    }
 
-.status-pill.completed {
-    background: #10b981;
-}
+    &.completed {
+        background: #dcfce7;
+        color: #16a34a;
+    }
 
-.status-pill.cancelled {
-    background: #ef4444;
-}
+    &.cancelled,
+    &.return-rejected {
+        background: #fee2e2;
+        color: #dc2626;
+    }
 
-.status-pill.return-requested {
-    background: #fbbf24;
-}
+    &.return-requested {
+        background: #ffedd5;
+        color: #ea580c;
+    }
 
-.status-pill.refunded {
-    background: #10b981;
-}
-
-.status-pill.return-rejected {
-    background: #ef4444;
-}
-
-/* Tăng khoảng cách giữa cột trạng thái và cột thao tác */
-.status-cell {
-    text-align: left;
-    padding-right: 24px; /* khoảng trống giữa pill trạng thái và đường kẻ cột */
+    &.refunded {
+        background: #f3e8ff;
+        color: #9333ea;
+    }
 }
 
 .actions-cell {
-    display: flex;
-    justify-content: flex-start;
-    gap: 12px;
-    padding-left: 20px; /* dịch cụm nút sang phải 10px */
-    text-align: left;
+    min-width: 160px;
+    text-align: right;
 }
 
 .action-buttons {
     display: flex;
-    gap: 12px;
-}
-
-.refund-section {
-    .table thead th {
-        padding: 12px 24px;
-    }
-
-    .table tbody td {
-        padding: 12px 16px;
-    }
-
-    .status-cell {
-        padding-right: 12px;
-        text-align: center;
-    }
-
-    .actions-cell {
-        justify-content: center;
-        padding-left: 0;
-    }
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
 }
 
 .btn {
+    padding: 6px 12px;
     border-radius: 6px;
-    padding: 6px 18px; /* tăng chiều ngang nút thao tác */
-    border: none;
     font-size: 13px;
-    cursor: pointer;
     font-weight: 500;
-    transition: background-color 0.2s ease, box-shadow 0.2s ease;
-}
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
 
-.btn.view {
-    background: #e5e7eb;
-    color: #111827;
-}
+    &.view {
+        background: rgba(124, 58, 237, 0.1);
+        color: #7C3AED;
+        border: 1px solid rgba(124, 58, 237, 0.1);
 
-.btn.view:hover {
-    background: #d1d5db;
-}
+        &:hover {
+            background: rgba(124, 58, 237, 0.2);
+            transform: translateY(-1px);
+        }
+    }
 
-.btn.confirm {
-    background: #173a55;
-    color: #fff;
-}
+    &.confirm {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: #fff;
+        box-shadow: 0 3px 8px rgba(5, 150, 105, 0.2);
 
-.btn.confirm:hover {
-    background: #0f2a3f;
-}
+        &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 12px rgba(5, 150, 105, 0.3);
+        }
+    }
 
-.btn.cancel {
-    background: #fee2e2;
-    color: #b91c1c;
-}
+    &.cancel {
+        background: linear-gradient(135deg, #ee4444 0%, #dc2626 100%);
+        color: #fff;
+        box-shadow: 0 3px 8px rgba(239, 68, 68, 0.2);
 
-.btn.cancel:hover {
-    background: #fecaca;
+        &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 12px rgba(239, 68, 68, 0.3);
+        }
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
 }
 
 .empty {
     text-align: center;
-    padding: 24px 0;
-    color: #6b7280;
+    padding: 60px 0;
+    color: #9ca3af;
+    font-style: italic;
+    font-size: 15px;
 }
 
-// Pagination
 .pagination {
-    margin-top: 16px;
+    margin-top: 24px;
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 12px;
+    gap: 16px;
 }
 
 .pagination-btn {
-    min-width: 96px;
-    height: 40px;
-    border-radius: 999px;
-    border: 1px solid #ccd5e3;
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
     background: #fff;
     font-weight: 600;
-    color: #1a3c5a;
+    color: #374151;
     cursor: pointer;
     transition: all 0.2s ease;
 
@@ -319,38 +384,23 @@
     }
 
     &:not(:disabled):hover {
-        background: #1a3c5a;
-        color: #fff;
-        border-color: #1a3c5a;
+        background: #f9fafb;
+        border-color: #7C3AED;
+        color: #7C3AED;
     }
 }
 
 .pagination-info {
     font-weight: 600;
-    color: #1a3c5a;
+    color: #4b5563;
+    font-size: 14px;
 }
 
-// Override SearchAndSort margin trong section thứ 2
-.second-section {
-    margin-top: -24px !important;
-    padding-top: 0 !important;
-    
-    .search-wrapper {
-        margin-bottom: 0 !important;
-        
-        :global(.search-sort-container) {
-            margin-bottom: 0 !important;
-        }
-    }
-    
-    // Override trực tiếp SearchAndSort container
-    :global(.search-sort-container) {
-        margin-bottom: 0 !important;
-    }
-}
+@media (max-width: 1024px) {
 
-@media (max-width: 768px) {
-    .actions-cell {
-        flex-direction: column;
+    .table thead th,
+    .table tbody td {
+        padding: 14px 12px;
+        font-size: 13px;
     }
 }

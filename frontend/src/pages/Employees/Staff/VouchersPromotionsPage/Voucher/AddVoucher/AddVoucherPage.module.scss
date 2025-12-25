@@ -1,6 +1,7 @@
 .wrap {
     padding: 24px;
-    background: #f2ebdd; /* Light beige background */
+    padding: 24px;
+    background: linear-gradient(135deg, #FDFBFF 0%, #F8F4FF 100%);
     min-height: calc(100vh - 60px);
 }
 
@@ -59,7 +60,7 @@
     padding: 0 16px;
     border-radius: 10px;
     border: none;
-    background: #13324a; /* Dark blue */
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #fff;
     cursor: pointer;
     font-size: 14px;
@@ -108,7 +109,7 @@
 }
 
 /* Tăng khoảng cách cho form-row đầu tiên (chứa Mã voucher) */
-.form-card > .form-row:first-of-type {
+.form-card>.form-row:first-of-type {
     margin-top: 24px;
 }
 
@@ -197,7 +198,8 @@
 
 .form-input:focus {
     outline: none;
-    border-color: #13324a;
+    border-color: #7C3AED;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 
 .hint {
@@ -414,7 +416,8 @@
 }
 
 .btn-reset {
-    background: #7A7A7A; /* Grey */
+    background: #7A7A7A;
+    /* Grey */
     color: #fff;
 }
 
@@ -423,12 +426,15 @@
 }
 
 .btn-submit {
-    background: #13324a; /* Dark blue */
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #fff;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
 }
 
 .btn-submit:hover {
-    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(124, 58, 237, 0.35);
+    opacity: 0.95;
 }
 
 .option-section {
@@ -757,4 +763,3 @@
         width: 100%;
     }
 }
-

@@ -18,6 +18,8 @@ const categoryIcons = {
     'Hair Care': '💇‍♀️',
     'Nước hoa': '🌸',
     'Fragrance': '🌸',
+    'Phụ kiện trang điểm': '🖌️',
+    'Accessories': '🖌️',
     'Quà tặng': '🎁',
     'Gift Sets': '🎁',
 };

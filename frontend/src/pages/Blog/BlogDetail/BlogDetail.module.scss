@@ -28,7 +28,7 @@
         border-bottom: none; // Force remove any border underline
 
         &:hover {
-            color: var(--color-brand, #C75B5B);
+            color: var(--color-brand, #873435);
             text-decoration: none;
         }
 
@@ -55,7 +55,7 @@
     .blog-category {
         display: inline-block;
         background: transparent;
-        color: var(--color-brand, #C75B5B);
+        color: var(--color-brand, #873435);
         padding: 0;
         border-radius: 0;
         font-size: 0.9rem;
@@ -182,7 +182,7 @@
     }
 
     blockquote {
-        border-left: 4px solid var(--color-brand, #C75B5B);
+        border-left: 4px solid var(--color-brand, #873435);
         padding-left: 24px;
         margin: 40px 0;
         font-style: italic;
@@ -213,8 +213,8 @@
         border-radius: 6px;
 
         &:hover {
-            color: var(--color-brand, #C75B5B);
-            border-color: var(--color-brand, #C75B5B);
+            color: var(--color-brand, #873435);
+            border-color: var(--color-brand, #873435);
             background: #fff;
             transform: translateX(-5px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);

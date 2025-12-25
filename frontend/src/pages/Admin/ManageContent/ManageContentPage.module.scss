@@ -21,7 +21,7 @@
         left: 0;
         width: 60px;
         height: 4px;
-        background: linear-gradient(90deg, #1A3C5A, #2d5a80);
+        background: linear-gradient(90deg, #7C3AED, #DB2777);
         border-radius: 2px;
     }
 }
@@ -51,13 +51,13 @@
 
     &:hover {
         color: #1A3C5A;
-        background: rgba(26, 60, 90, 0.08);
+        background: rgba(124, 58, 237, 0.08);
     }
 
     &.active {
         color: #fff;
-        background: linear-gradient(135deg, #1A3C5A 0%, #2d5a80 100%);
-        box-shadow: 0 4px 12px rgba(26, 60, 90, 0.3);
+        background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
     }
 }
 
@@ -83,7 +83,7 @@
         content: '';
         width: 4px;
         height: 24px;
-        background: linear-gradient(180deg, #1A3C5A, #2d5a80);
+        background: linear-gradient(180deg, #7C3AED, #DB2777);
         border-radius: 2px;
     }
 }
@@ -95,7 +95,7 @@
 }
 
 .content-table thead {
-    background: linear-gradient(135deg, #1A3C5A 0%, #234b6e 100%);
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
 }
 
 .content-table th {
@@ -206,7 +206,7 @@
 
 // View button
 .view-btn {
-    background: linear-gradient(135deg, #1A3C5A 0%, #2d5a80 100%);
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #fff;
     border: none;
     border-radius: 10px;

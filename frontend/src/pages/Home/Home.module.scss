@@ -2,7 +2,7 @@
 // Color Palette
 $primary: var(--color-text-primary); // #1a1a1a
 $secondary: var(--color-text-description); // #4a4a4a
-$accent: var(--color-brand); // #C75B5B
+$accent: var(--color-brand); // #873435
 $bg-white: #FFFFFF;
 $bg-light: #FAFAFA;
 $bg-lighter: #F5F5F5;
@@ -26,8 +26,8 @@ $shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.05);
 $shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.06);
 
 // Legacy aliases for compatibility
-$primary-color: $accent; // #B76E79
-$primary-light: #D4A5A5;
+$primary-color: $accent; // #873435
+$primary-light: #a14b4b;
 $accent-gold: #C9A959;
 $accent-light: #F7E7CE;
 $bg-cream: #FDF8F5;
@@ -35,11 +35,11 @@ $text-primary: $primary; // #2D2D2D
 $text-secondary: $secondary; // #6B6B6B
 $text-light: #FFFFFF;
 $border-warm: rgba(183, 110, 121, 0.15);
-$sale-red: #C75B5B;
+$sale-red: #873435;
 $deep-brown: $primary;
 $soft-brown: $secondary;
 $rose-gold: $accent;
-$dusty-rose: #D4A5A5;
+$dusty-rose: #a14b4b;
 $soft-gold: #C9A959;
 $champagne: #F7E7CE;
 $cream: #FDF8F5;
@@ -95,11 +95,19 @@ $radius-full: 9999px;
 }
 
 .hero-container {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0;
+    width: 90% !important;
+    max-width: 1400px !important;
+    margin: 20px auto !important;
     padding: 0;
     overflow: hidden;
+    border-radius: $radius-md;
+    box-shadow: $shadow-soft;
+
+    @media (max-width: 768px) {
+        width: 100% !important;
+        margin: 0 !important;
+        border-radius: 0;
+    }
 }
 
 // Voucher Section - Minimalist

@@ -1,9 +1,9 @@
 :root {
-    /* Brand / accent (rose-gold) */
-    --nb-accent: #B76E79; // giữ brand
-    --nb-accent-2: #A85A66; // đậm hơn cho gradient
-    --nb-accent-soft: rgba(183, 110, 121, 0.10);
-    --nb-accent-soft-2: rgba(183, 110, 121, 0.14);
+    /* Brand / accent (#873435) */
+    --nb-accent: #873435; // giữ brand
+    --nb-accent-2: #6d2829; // đậm hơn cho gradient
+    --nb-accent-soft: rgba(135, 52, 53, 0.10);
+    --nb-accent-soft-2: rgba(135, 52, 53, 0.14);
 
     /* Neutrals */
     --nb-bg: rgba(255, 255, 255, 0.92);
@@ -99,7 +99,7 @@
     &.active {
         background: linear-gradient(135deg, var(--nb-accent) 0%, var(--nb-accent-2) 100%);
         color: #fff;
-        box-shadow: 0 6px 16px rgba(183, 110, 121, 0.22);
+        box-shadow: 0 6px 16px rgba(135, 52, 53, 0.22);
     }
 }
 
@@ -142,10 +142,10 @@
     &.active {
         background: linear-gradient(135deg, var(--nb-accent) 0%, var(--nb-accent-2) 100%);
         color: #fff;
-        box-shadow: 0 6px 16px rgba(183, 110, 121, 0.22);
+        box-shadow: 0 6px 16px rgba(135, 52, 53, 0.22);
 
         &:hover {
-            box-shadow: 0 10px 22px rgba(183, 110, 121, 0.26);
+            box-shadow: 0 10px 22px rgba(135, 52, 53, 0.26);
         }
     }
 }
@@ -156,7 +156,7 @@
     left: 10px;
     right: 10px;
     height: 3px;
-    background: linear-gradient(90deg, var(--nb-accent) 0%, rgba(183, 110, 121, 0.25) 60%, transparent 100%);
+    background: linear-gradient(90deg, var(--nb-accent) 0%, rgba(135, 52, 53, 0.25) 60%, transparent 100%);
     border-radius: 999px;
     z-index: 2;
 }
@@ -237,7 +237,7 @@
     }
 
     &.active {
-        background: rgba(183, 110, 121, 0.12);
+        background: rgba(135, 52, 53, 0.12);
         color: var(--nb-accent);
         border-left-color: var(--nb-accent);
     }
@@ -387,7 +387,7 @@
         border: none;
 
         &:hover {
-            background-color: rgba(183, 110, 121, 0.1);
+            background-color: rgba(135, 52, 53, 0.1);
         }
     }
 
