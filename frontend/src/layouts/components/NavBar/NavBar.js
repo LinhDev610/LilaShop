@@ -174,6 +174,7 @@ function NavBar() {
     const isPromotion = pathname === routes.promotion;
     const isNewProduct = pathname === routes.newproduct;
     const isCustomerSupport = pathname === routes.customerSupport;
+    const isBlog = pathname === routes.blog || pathname.startsWith('/blog/');
 
     // Fetch categories
     useEffect(() => {
@@ -594,6 +595,32 @@ function NavBar() {
                         </motion.span>
                         <AnimatePresence>
                             {isNewProduct && (
+                                <motion.div
+                                    className={cx('nav-link-underline')}
+                                    variants={underlineVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="hidden"
+                                />
+                            )}
+                        </AnimatePresence>
+                    </Link>
+                </motion.div>
+
+                <motion.div
+                    className={cx('nav-link-wrapper')}
+                    whileHover="hover"
+                    whileTap="tap"
+                >
+                    <Link
+                        to={routes.blog}
+                        className={cx('nav-link', { active: isBlog })}
+                    >
+                        <motion.span variants={navLinkVariants}>
+                            BLOG LÀM ĐẸP
+                        </motion.span>
+                        <AnimatePresence>
+                            {isBlog && (
                                 <motion.div
                                     className={cx('nav-link-underline')}
                                     variants={underlineVariants}

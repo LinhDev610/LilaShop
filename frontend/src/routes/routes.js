@@ -86,6 +86,8 @@ import ReturnPolicyPage from '../pages/SupportUser/ReturnPolicy';
 import CategoryPage from '../pages/Category';
 import ProductsPage from '../pages/Products';
 import ArticlesPage from '../pages/Articles';
+import Blog from '../pages/Blog/Blog';
+import BlogDetail from '../pages/Blog/BlogDetail/BlogDetail';
 
 // Public routes
 const publicRoutes = [
@@ -112,6 +114,8 @@ const publicRoutes = [
     { path: '/forgot-password', component: ForgotPassword },
     { path: '/verify-code', component: VerifyCode },
     { path: '/account', component: Account },
+    { path: '/blog', component: Blog },
+    { path: '/blog/:id', component: BlogDetail },
 ];
 
 // Private routes

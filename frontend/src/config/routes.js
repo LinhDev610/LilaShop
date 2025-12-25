@@ -17,6 +17,8 @@ const routes = {
     newproduct: '/new-product',
     products: '/products',
     article: (id) => `/article/${id}`,
+    blog: '/blog',
+    blogDetail: (id) => `/blog/${id}`,
 
     // Customer Support routes
     customerSupportHome: '/customer-support',

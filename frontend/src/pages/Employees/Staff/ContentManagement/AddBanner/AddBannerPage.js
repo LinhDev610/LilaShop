@@ -328,20 +328,22 @@ export default function AddBannerPage() {
             return;
         }
 
-        // Validation ngày tháng
-        if (!formData.startDate) {
-            notifyError('Vui lòng chọn ngày bắt đầu');
-            return;
-        }
+        // Validation ngày tháng (chỉ bắt buộc với Banner và Seasonal)
+        if (contentType !== 'trending') {
+            if (!formData.startDate) {
+                notifyError('Vui lòng chọn ngày bắt đầu');
+                return;
+            }
 
-        if (!formData.endDate) {
-            notifyError('Vui lòng chọn ngày kết thúc');
-            return;
-        }
+            if (!formData.endDate) {
+                notifyError('Vui lòng chọn ngày kết thúc');
+                return;
+            }
 
-        if (new Date(formData.endDate) <= new Date(formData.startDate)) {
-            notifyError('Ngày kết thúc phải sau ngày bắt đầu');
-            return;
+            if (new Date(formData.endDate) <= new Date(formData.startDate)) {
+                notifyError('Ngày kết thúc phải sau ngày bắt đầu');
+                return;
+            }
         }
 
         setIsSubmitting(true);
@@ -648,27 +650,31 @@ export default function AddBannerPage() {
                         />
                     </div>
 
-                    <div className={cx('form-group', 'date-group')}>
-                        <label className={cx('form-label')}>Ngày bắt đầu</label>
-                        <input
-                            type="date"
-                            name="startDate"
-                            value={formData.startDate}
-                            onChange={handleInputChange}
-                            className={cx('form-input')}
-                        />
-                    </div>
+                    {contentType !== 'trending' && (
+                        <>
+                            <div className={cx('form-group', 'date-group')}>
+                                <label className={cx('form-label')}>Ngày bắt đầu</label>
+                                <input
+                                    type="date"
+                                    name="startDate"
+                                    value={formData.startDate}
+                                    onChange={handleInputChange}
+                                    className={cx('form-input')}
+                                />
+                            </div>
 
-                    <div className={cx('form-group', 'date-group')}>
-                        <label className={cx('form-label')}>Ngày kết thúc</label>
-                        <input
-                            type="date"
-                            name="endDate"
-                            value={formData.endDate}
-                            onChange={handleInputChange}
-                            className={cx('form-input')}
-                        />
-                    </div>
+                            <div className={cx('form-group', 'date-group')}>
+                                <label className={cx('form-label')}>Ngày kết thúc</label>
+                                <input
+                                    type="date"
+                                    name="endDate"
+                                    value={formData.endDate}
+                                    onChange={handleInputChange}
+                                    className={cx('form-input')}
+                                />
+                            </div>
+                        </>
+                    )}
 
                     {/* Danh sách sản phẩm - Chỉ hiển thị cho Bộ sưu tập */}
                     {contentType === 'seasonal' && (

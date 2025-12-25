@@ -6,8 +6,42 @@
 }
 
 .header {
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
     margin-bottom: 40px;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 15px;
+    }
+}
+
+.title-group {
+    text-align: left;
+
+    @media (max-width: 768px) {
+        text-align: center;
+    }
+}
+
+.view-all-btn {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #C13584;
+    text-decoration: none;
+    border: 1px solid #C13584;
+    padding: 8px 20px;
+    border-radius: 20px;
+    transition: all 0.3s;
+    white-space: nowrap;
+
+    &:hover {
+        background: #C13584;
+        color: white;
+    }
 }
 
 .title {

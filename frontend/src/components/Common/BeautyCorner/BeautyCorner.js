@@ -31,8 +31,13 @@ function BeautyCorner({ tips = [] }) {
     return (
         <div className={cx('wrapper')}>
             <div className={cx('header')}>
-                <h2 className={cx('title')}>Góc Làm Đẹp & Bí Quyết</h2>
-                <p className={cx('subtitle')}>Cập nhật xu hướng và kiến thức chăm sóc sắc đẹp mới nhất</p>
+                <div className={cx('title-group')}>
+                    <h2 className={cx('title')}>Góc Làm Đẹp & Bí Quyết</h2>
+                    <p className={cx('subtitle')}>Cập nhật xu hướng và kiến thức chăm sóc sắc đẹp mới nhất</p>
+                </div>
+                <Link to="/blog" className={cx('view-all-btn')}>
+                    Xem tất cả &rarr;
+                </Link>
             </div>
 
             {displayTips.length > 0 ? (

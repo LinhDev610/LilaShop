@@ -296,7 +296,6 @@ function Home() {
         };
     }, [API_BASE_URL]);
 
-    // State for specific event banner (latest one with products)
     const [eventBanner, setEventBanner] = useState(null);
     const [eventProducts, setEventProducts] = useState([]);
 
