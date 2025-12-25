@@ -111,6 +111,57 @@ function DefaultHeader() {
         };
     }, []);
 
+    const [placeholder, setPlaceholder] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [loopNum, setLoopNum] = useState(0);
+    const [typingSpeed, setTypingSpeed] = useState(150);
+
+    const placeholders = [
+        "Tìm kiếm sản phẩm...",
+        "Son môi chính hãng...",
+        "Kem dưỡng da...",
+        "Mặt nạ dưỡng ẩm...",
+        "Nước hoa cao cấp..."
+    ];
+
+    useEffect(() => {
+        const i = loopNum % placeholders.length;
+        const fullText = placeholders[i];
+
+        const handleTyping = () => {
+            setPlaceholder(isDeleting
+                ? fullText.substring(0, placeholder.length - 1)
+                : fullText.substring(0, placeholder.length + 1)
+            );
+
+            if (isDeleting) {
+                setTypingSpeed(10);
+            } else {
+                setTypingSpeed(20 + Math.random() * 20);
+            }
+        };
+
+        let timer;
+        if (!isDeleting && placeholder === fullText) {
+            timer = setTimeout(() => setIsDeleting(true), 1200);
+        } else if (isDeleting && placeholder === '') {
+            setIsDeleting(false);
+            setLoopNum(loopNum + 1);
+            timer = setTimeout(() => { }, 100);
+        } else {
+            timer = setTimeout(handleTyping, typingSpeed);
+        }
+
+        return () => clearTimeout(timer);
+    }, [placeholder, isDeleting, loopNum, typingSpeed]);
+
+    useEffect(() => {
+        if (location.pathname === '/search') {
+            const params = new URLSearchParams(location.search);
+            setSearchTerm(params.get('q') || '');
+        }
+    }, [location.pathname, location.search]);
+
     useEffect(() => {
         if (location.pathname === '/search') {
             const params = new URLSearchParams(location.search);
@@ -308,7 +359,7 @@ function DefaultHeader() {
                     <form className={cx('search')} onSubmit={handleSearchSubmit}>
                         <input
                             type="text"
-                            placeholder="Tìm kiếm theo tên sản phẩm,…"
+                            placeholder={placeholder}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             onFocus={() => {

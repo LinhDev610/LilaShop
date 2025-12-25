@@ -674,7 +674,18 @@ function Home() {
                     />
                 </motion.section>
 
-                {/* 7. Customer Reviews */}
+                {/* 7. Beauty Corner (Blog) */}
+                <motion.section
+                    className={cx('section')}
+                    variants={sectionVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "0px" }}
+                >
+                    <BeautyCorner tips={trendingBanners} />
+                </motion.section>
+
+                {/* 8. Customer Reviews */}
                 <motion.section
                     className={cx('section')}
                     variants={sectionVariants}
@@ -685,7 +696,7 @@ function Home() {
                     <CustomerReviews />
                 </motion.section>
 
-                {/* 8. Voucher Strip */}
+                {/* 9. Voucher Strip */}
                 {!vouchersLoading && vouchers.length > 0 && (
                     <motion.section
                         className={cx('section', 'voucher-section')}
@@ -711,13 +722,13 @@ function Home() {
                     </motion.section>
                 )}
 
-                {/* 9. Services */}
+                {/* 10. Services */}
                 <motion.section
                     className={cx('section', 'services')}
                     variants={sectionVariants}
                     initial="hidden"
                     whileInView="visible"
-                    viewport={{ once: true, margin: "-100px" }}
+                    viewport={{ once: true, margin: "-10px" }}
                 >
                     <motion.div
                         className={cx('services-grid')}
@@ -727,17 +738,6 @@ function Home() {
                             <ServiceItem key={idx} service={service} index={idx} />
                         ))}
                     </motion.div>
-                </motion.section>
-
-                {/* 10. Beauty Corner (Blog) */}
-                <motion.section
-                    className={cx('section')}
-                    variants={sectionVariants}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, margin: "0px" }}
-                >
-                    <BeautyCorner tips={trendingBanners} />
                 </motion.section>
 
                 {/* 11. Newsletter */}
