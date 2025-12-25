@@ -32,7 +32,6 @@ function ManageCategoriesPage() {
     });
 
     // ========== Helper Functions ==========
-    // Dùng utils để đọc token thống nhất với các trang chi tiết
     const getToken = () => getStoredToken('token') || token;
 
     // Chuẩn hóa id danh mục từ object trả về API (hỗ trợ nhiều schema)
@@ -101,12 +100,45 @@ function ManageCategoriesPage() {
                 });
             }
 
-            setFilteredCategories(filtered);
+            // Sắp xếp theo thứ tự cha con
+            const sortHierarchically = (cats) => {
+                const map = {};
+                const roots = [];
+                // Tạo map và tìm các node gốc
+                cats.forEach(c => {
+                    map[c.id] = { ...c, children: [] };
+                });
+
+                cats.forEach(c => {
+                    if (c.parentId && map[c.parentId]) {
+                        map[c.parentId].children.push(map[c.id]);
+                    } else {
+                        roots.push(map[c.id]);
+                    }
+                });
+
+                // Lấy các node gốc
+                const result = [];
+                const traverse = (nodes, level = 0) => {
+                    // Sắp xếp nodes theo tên hoặc id nếu cần, hiện tại chỉ giữ nguyên thứ tự hoặc sắp xếp theo tên
+                    nodes.sort((a, b) => a.name.localeCompare(b.name));
+
+                    nodes.forEach(node => {
+                        result.push({ ...node, level }); // Thêm level cho UI indentation nếu cần
+                        if (node.children.length > 0) {
+                            traverse(node.children, level + 1);
+                        }
+                    });
+                };
+                traverse(roots);
+                return result;
+            };
+            setFilteredCategories(sortHierarchically(filtered));
         },
         [allCategories],
     );
 
-    // Apply filters when search term or sort changes
+    // Apply filters when search term or sort change
     useEffect(() => {
         applyFilters(searchTerm, sortBy);
     }, [applyFilters, searchTerm, sortBy]);
@@ -265,8 +297,8 @@ function ManageCategoriesPage() {
     const categorySearchPlaceholder = 'Tìm kiếm theo tên, mô tả, mã danh mục...';
     const categorySortOptions = [
         { value: 'all', label: 'Tất cả' },
-        { value: 'active', label: 'Hoạt động' },
-        { value: 'locked', label: 'Đã khóa' },
+        { value: 'active', label: 'Hiển thị' },
+        { value: 'locked', label: 'Ẩn' },
     ];
 
     const additionalButtons = [
@@ -338,7 +370,16 @@ function ManageCategoriesPage() {
                             filteredCategories.map((category) => (
                                 <tr key={category.id} className={cx('table-row')}>
                                     <td>{category.id}</td>
-                                    <td>{category.name}</td>
+                                    <td>
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            {category.level > 0 && (
+                                                <span style={{ marginRight: '8px', color: '#9CA3AF', paddingLeft: `${(category.level - 1) * 20}px` }}>
+                                                    └──
+                                                </span>
+                                            )}
+                                            {category.name}
+                                        </div>
+                                    </td>
                                     <td>{category.description || '-'}</td>
                                     <td>{category.parentName || '-'}</td>
                                     <td>{category.productCount || 0}</td>

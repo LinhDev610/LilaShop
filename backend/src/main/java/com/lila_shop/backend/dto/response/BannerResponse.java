@@ -19,6 +19,7 @@ public class BannerResponse {
     String description;
     String imageUrl;
     String linkUrl;
+    String contentType; // 'banner', 'seasonal', 'trending'
     Boolean status;
     Boolean pendingReview;
     Integer orderIndex;

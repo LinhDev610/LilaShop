@@ -795,31 +795,54 @@ public class OrderService {
             return;
         }
 
-        int sold = product.getQuantitySold() != null ? product.getQuantitySold() : 0;
-        product.setQuantitySold(sold + quantity);
+        // Lock product & variant để tránh xung đột (Pessimistic Lock)
+        // Re-fetch entity với lock để đảm bảo chúng ta có dữ liệu mới nhất
+        Product lockedProduct = productRepository.findByIdWithLock(product.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+
+        int sold = lockedProduct.getQuantitySold() != null ? lockedProduct.getQuantitySold() : 0;
+        lockedProduct.setQuantitySold(sold + quantity);
 
         if (variant != null) {
-            Integer stock = variant.getStockQuantity();
+            ProductVariant lockedVariant = productVariantRepository.findByIdWithLock(variant.getId())
+                    .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+
+            Integer stock = lockedVariant.getStockQuantity();
             if (stock == null)
                 stock = 0;
-            int updatedStock = stock - quantity;
-            variant.setStockQuantity(Math.max(0, updatedStock));
-        } else if (product.getInventory() != null) {
-            Integer stock = product.getInventory().getStockQuantity();
-            if (stock == null) {
-                stock = 0;
+
+            if (stock < quantity) {
+                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION,
+                        "Sản phẩm '" + lockedVariant.getName() + "' vừa hết hàng (Tồn: " + stock + ", Yêu cầu: "
+                                + quantity + ")");
             }
+
+            int updatedStock = stock - quantity;
+            lockedVariant.setStockQuantity(updatedStock);
+            // Save locked variant được xử lý bởi commit giao dịch
+            productVariantRepository.save(lockedVariant);
+        } else if (lockedProduct.getInventory() != null) {
+            Integer stock = lockedProduct.getInventory().getStockQuantity();
+            if (stock == null)
+                stock = 0;
+
+            if (stock < quantity) {
+                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION,
+                        "Sản phẩm '" + lockedProduct.getName() + "' vừa hết hàng (Tồn: " + stock + ", Yêu cầu: "
+                                + quantity + ")");
+            }
+
             int updatedStock = stock - quantity;
             int normalizedStock = Math.max(0, updatedStock);
-            product.getInventory().setStockQuantity(normalizedStock);
-            product.getInventory().setLastUpdated(LocalDate.now());
+            lockedProduct.getInventory().setStockQuantity(normalizedStock);
+            lockedProduct.getInventory().setLastUpdated(LocalDate.now());
 
             if (stock > 40 && normalizedStock <= 40) {
-                notifyStaffLowStock(product, normalizedStock);
+                notifyStaffLowStock(lockedProduct, normalizedStock);
             }
         }
 
-        productRepository.save(product);
+        productRepository.save(lockedProduct);
     }
 
     private PaymentMethod resolvePaymentMethod(String value) {

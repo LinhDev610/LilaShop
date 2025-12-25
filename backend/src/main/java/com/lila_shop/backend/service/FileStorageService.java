@@ -21,14 +21,32 @@ public class FileStorageService {
 
     private final Cloudinary cloudinary;
 
+    public String getApiKey() {
+        return cloudinary.config.apiKey;
+    }
+
+    public String getCloudName() {
+        return cloudinary.config.cloudName;
+    }
+
     /**
      * Upload product/voucher/promotion/avatar media file to Cloudinary
      * 
      * @param file File to upload
      * @return Cloudinary URL of the uploaded file
      */
-    public String storeProductMedia(MultipartFile file) {
-        return uploadToCloudinary(file, CloudinaryFolderConstants.PRODUCT_MEDIA_FOLDER);
+    public String storeProductMedia(MultipartFile file, String categoryId, String productId) {
+        StringBuilder folder = new StringBuilder(CloudinaryFolderConstants.PRODUCT_MEDIA_FOLDER);
+
+        if (categoryId != null && !categoryId.isBlank()) {
+            folder.append("/").append(categoryId);
+        }
+
+        if (productId != null && !productId.isBlank()) {
+            folder.append("/").append(productId);
+        }
+
+        return uploadToCloudinary(file, folder.toString());
     }
 
     public String storeVoucherMedia(MultipartFile file) {
@@ -131,6 +149,16 @@ public class FileStorageService {
     }
 
     /**
+     * Generate signature for Client-side upload
+     * 
+     * @param params Parameters to sign (timestamp, folder, etc.)
+     * @return Signature string
+     */
+    public String generateSignature(Map<String, Object> params) {
+        return cloudinary.apiSignRequest(params, cloudinary.config.apiSecret);
+    }
+
+    /**
      * Extract public_id from Cloudinary URL
      * 
      * Cloudinary URL format:
@@ -151,14 +179,14 @@ public class FileStorageService {
 
             String pathAfterUpload = url.substring(uploadIndex + "/upload/".length());
 
-            // Remove version if present (format: v1234567890/)
+            // Remove version nếu có (format: v1234567890/)
             if (pathAfterUpload.startsWith("v") && pathAfterUpload.indexOf('/') > 0) {
                 int versionEndIndex = pathAfterUpload.indexOf('/');
                 pathAfterUpload = pathAfterUpload.substring(versionEndIndex + 1);
             }
 
-            // Remove transformation if present (format: w_500,h_500/ or c_scale,w_500/)
-            // Transformation typically contains underscore or comma
+            // Remove transformation nếu có (format: w_500,h_500/ or c_scale,w_500/)
+            // Transformation thường chứa dấu gạch ngang hoặc dấu phẩy
             while (pathAfterUpload.matches("^[^/]+_[^/]+/.*") ||
                     pathAfterUpload.matches("^[^/]+,[^/]+/.*")) {
                 int slashIndex = pathAfterUpload.indexOf('/');
@@ -179,6 +207,25 @@ public class FileStorageService {
         } catch (Exception e) {
             log.warn("Error extracting public_id from URL {}: {}", url, e.getMessage());
             return null;
+        }
+    }
+
+    public void deleteProductFolder(String categoryId, String productId) {
+        if (categoryId == null || productId == null) {
+            return;
+        }
+
+        String folderPath = CloudinaryFolderConstants.PRODUCT_MEDIA_FOLDER + "/" + categoryId + "/" + productId;
+
+        try {
+            // 1. Delete all resources in the folder first
+            cloudinary.api().deleteResourcesByPrefix(folderPath, ObjectUtils.emptyMap());
+
+            // 2. Delete the folder itself
+            cloudinary.api().deleteFolder(folderPath, ObjectUtils.emptyMap());
+
+        } catch (Exception e) {
+            log.warn("Failed to delete Cloudinary folder {}: {}", folderPath, e.getMessage());
         }
     }
 }

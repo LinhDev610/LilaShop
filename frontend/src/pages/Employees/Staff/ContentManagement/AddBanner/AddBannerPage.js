@@ -4,8 +4,10 @@ import classNames from 'classnames/bind';
 import styles from './AddBannerPage.module.scss';
 import { getApiBaseUrl, getStoredToken, getUserRole } from '../../../../../services/utils';
 import { normalizeMediaUrl, filterByKeyword } from '../../../../../services/productUtils';
+import { uploadBannerMedia } from '../../../../../services/CloudinaryService';
 import { useNotification } from '../../../../../components/Common/Notification';
 import useDebounce from '../../../../../hooks/useDebounce';
+import RichTextEditor from '../../../../../components/Common/RichTextEditor';
 
 const cx = classNames.bind(styles);
 
@@ -16,13 +18,14 @@ export default function AddBannerPage() {
     const API_BASE_URL = useMemo(() => getApiBaseUrl(), []);
     const fileInputRef = useRef(null);
     const { success: notifySuccess, error: notifyError } = useNotification();
+    const [contentType, setContentType] = useState('banner'); // 'banner', 'seasonal', 'trending'
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        status: false, // false = Chờ duyệt, true = Đã duyệt
         imageFile: null,
         imageUrl: '',
         productIds: [],
+        linkUrl: '', // For seasonal collection link
         createdDate: new Date().toISOString().split('T')[0], // Ngày tạo (mặc định là hôm nay)
         startDate: '', // Ngày bắt đầu
         endDate: '', // Ngày kết thúc
@@ -37,6 +40,20 @@ export default function AddBannerPage() {
 
     // Debounce search term for better performance
     const debouncedSearchTerm = useDebounce(productSearchTerm, 300);
+
+    // Reset form fields when contentType changes (only in create mode)
+    useEffect(() => {
+        if (!isEditMode) {
+            setFormData(prev => ({
+                ...prev,
+                description: '', // Reset description
+                linkUrl: '', // Reset linkUrl
+                productIds: [], // Reset productIds
+                selectedProducts: [], // Reset selected products
+            }));
+            setSelectedProducts([]); // Clear selected products
+        }
+    }, [contentType, isEditMode]);
 
     // Fetch user role to check if admin
     useEffect(() => {
@@ -173,13 +190,18 @@ export default function AddBannerPage() {
                         return '';
                     };
 
+                    // Set content type if available
+                    if (banner.contentType) {
+                        setContentType(banner.contentType);
+                    }
+
                     setFormData({
                         title: banner.title || '',
                         description: banner.description || '',
-                        status: false, // Always set to false (chờ duyệt) when editing
                         imageFile: null,
                         imageUrl: banner.imageUrl || '',
                         productIds: banner.productIds || [],
+                        linkUrl: banner.linkUrl || '',
                         createdDate: banner.createdAt
                             ? new Date(banner.createdAt).toISOString().split('T')[0]
                             : new Date().toISOString().split('T')[0],
@@ -248,13 +270,6 @@ export default function AddBannerPage() {
         }
     };
 
-    const handleStatusChange = (e) => {
-        const value = e.target.value;
-        setFormData((prev) => ({
-            ...prev,
-            status: value === 'true',
-        }));
-    };
 
     const handleAddProduct = () => {
         setProductSearchTerm('');
@@ -276,8 +291,8 @@ export default function AddBannerPage() {
                 ...prev,
                 productIds: [...prev.productIds, product.id],
             }));
+            // Keep modal open for multiple selection
         }
-        setShowProductModal(false);
     };
 
     const handleRemoveProduct = (productId) => {
@@ -293,16 +308,42 @@ export default function AddBannerPage() {
 
         // Validation
         if (!formData.title || !formData.title.trim()) {
-            notifyError('Vui lòng nhập tiêu đề banner');
+            const contentTypeLabel = contentType === 'banner' ? 'banner/slider' : contentType === 'seasonal' ? 'bộ sưu tập' : 'blog làm đẹp';
+            notifyError(`Vui lòng nhập tiêu đề cho ${contentTypeLabel}`);
             return;
         }
         if (!isEditMode && !formData.imageFile) {
-            notifyError('Vui lòng chọn ảnh banner');
+            const contentTypeLabel = contentType === 'banner' ? 'banner/slider' : contentType === 'seasonal' ? 'bộ sưu tập' : 'blog làm đẹp';
+            notifyError(`Vui lòng chọn ảnh cho ${contentTypeLabel}`);
             return;
         }
         if (isEditMode && !formData.imageFile && !formData.imageUrl) {
-            notifyError('Vui lòng chọn ảnh banner');
+            const contentTypeLabel = contentType === 'banner' ? 'banner/slider' : contentType === 'seasonal' ? 'bộ sưu tập' : 'blog làm đẹp';
+            notifyError(`Vui lòng chọn ảnh cho ${contentTypeLabel}`);
             return;
+        }
+
+        if (contentType === 'seasonal' && (!formData.productIds || formData.productIds.length === 0)) {
+            notifyError('Bộ sưu tập cần có ít nhất 1 sản phẩm. Vui lòng thêm sản phẩm.');
+            return;
+        }
+
+        // Validation ngày tháng (chỉ bắt buộc với Banner và Seasonal)
+        if (contentType !== 'trending') {
+            if (!formData.startDate) {
+                notifyError('Vui lòng chọn ngày bắt đầu');
+                return;
+            }
+
+            if (!formData.endDate) {
+                notifyError('Vui lòng chọn ngày kết thúc');
+                return;
+            }
+
+            if (new Date(formData.endDate) <= new Date(formData.startDate)) {
+                notifyError('Ngày kết thúc phải sau ngày bắt đầu');
+                return;
+            }
         }
 
         setIsSubmitting(true);
@@ -319,39 +360,36 @@ export default function AddBannerPage() {
 
             // Step 1: Upload image if new file is selected
             if (formData.imageFile) {
-                const formDataUpload = new FormData();
-                formDataUpload.append('files', formData.imageFile);
-
-                const uploadResponse = await fetch(`${API_BASE_URL}/media/upload-banner`, {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: formDataUpload,
-                });
-
-                if (!uploadResponse.ok) {
-                    throw new Error('Không thể upload ảnh');
-                }
-
-                const uploadData = await uploadResponse.json();
-                imageUrl = uploadData?.result?.[0] || '';
-
-                if (!imageUrl) {
-                    throw new Error('Không thể lấy URL ảnh');
+                try {
+                    const urls = await uploadBannerMedia([formData.imageFile]);
+                    if (urls && urls.length > 0) {
+                        imageUrl = urls[0];
+                    } else {
+                        throw new Error('Không thể upload ảnh, vui lòng thử lại');
+                    }
+                } catch (uploadErr) {
+                    console.error('Upload failed:', uploadErr);
+                    throw new Error('Không thể upload ảnh: ' + (uploadErr.message || 'Lỗi không xác định'));
                 }
             }
 
             // Step 2: Create or Update banner
+            // Normalize dates: empty string becomes null, so banner shows immediately
+            const normalizeDate = (dateStr) => {
+                if (!dateStr || dateStr.trim() === '') return null;
+                return dateStr.trim();
+            };
+
             const bannerPayload = {
                 title: formData.title.trim(),
                 description: formData.description.trim() || '',
                 imageUrl: imageUrl,
-                linkUrl: '',
-                status: false, // Always set to false (chờ duyệt) when staff submits
-                productIds: formData.productIds,
-                startDate: formData.startDate || null,
-                endDate: formData.endDate || null,
+                linkUrl: contentType === 'banner' ? (formData.linkUrl || '') : '', // Only include linkUrl for 'banner' type
+                status: true, // Staff tạo content mặc định đã duyệt (không cần admin duyệt)
+                productIds: contentType === 'seasonal' ? formData.productIds : [], // Only include productIds for 'seasonal' type
+                contentType: contentType, // Store content type
+                startDate: normalizeDate(formData.startDate), // null if empty = hiển thị ngay
+                endDate: normalizeDate(formData.endDate), // null if empty = không giới hạn
             };
 
             // Don't send rejectionReason - keep the old one
@@ -438,11 +476,48 @@ export default function AddBannerPage() {
             </div>
 
             <div className={cx('form-container')}>
-                <h2 className={cx('form-title')}>{isEditMode ? 'Sửa banner/slider' : 'Thêm banner/slider mới'}</h2>
+                <h2 className={cx('form-title')}>
+                    {isEditMode
+                        ? `Sửa ${contentType === 'banner' ? 'banner/slider' : contentType === 'seasonal' ? 'bộ sưu tập' : 'blog làm đẹp'}`
+                        : 'Thêm nội dung mới'}
+                </h2>
+
+                {/* Content Type Selector */}
+                {!isEditMode && (
+                    <div className={cx('form-group')}>
+                        <label className={cx('form-label')}>Loại nội dung</label>
+                        <div className={cx('content-type-selector')}>
+                            <button
+                                type="button"
+                                className={cx('content-type-btn', { active: contentType === 'banner' })}
+                                onClick={() => setContentType('banner')}
+                            >
+                                Banner/Slider
+                            </button>
+                            <button
+                                type="button"
+                                className={cx('content-type-btn', { active: contentType === 'seasonal' })}
+                                onClick={() => setContentType('seasonal')}
+                            >
+                                Bộ Sưu Tập
+                            </button>
+                            <button
+                                type="button"
+                                className={cx('content-type-btn', { active: contentType === 'trending' })}
+                                onClick={() => setContentType('trending')}
+                            >
+                                Blog Làm Đẹp
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit}>
                     <div className={cx('form-group')}>
-                        <label className={cx('form-label')}>Ảnh banner</label>
+                        <label className={cx('form-label')}>
+                            {contentType === 'banner' ? 'Ảnh banner/slider' : contentType === 'seasonal' ? 'Ảnh bộ sưu tập' : 'Ảnh blog làm đẹp'}
+                            <span className={cx('required-label')}> *</span>
+                        </label>
                         <div className={cx('file-upload-section')}>
                             <label className={cx('file-upload-btn')}>
                                 <input
@@ -488,47 +563,81 @@ export default function AddBannerPage() {
                     </div>
 
                     <div className={cx('form-group')}>
-                        <label className={cx('form-label')}>Tiêu đề</label>
+                        <label className={cx('form-label')}>
+                            Tiêu đề
+                            <span className={cx('required-label')}> *</span>
+                        </label>
                         <input
                             type="text"
                             name="title"
                             value={formData.title}
                             onChange={handleInputChange}
-                            placeholder="Nhập tiêu đề banner..."
+                            placeholder={
+                                contentType === 'banner'
+                                    ? "Nhập tiêu đề banner/slider..."
+                                    : contentType === 'seasonal'
+                                        ? "Nhập tên bộ sưu tập..."
+                                        : "Nhập tiêu đề blog làm đẹp..."
+                            }
                             className={cx('form-input')}
                         />
                     </div>
 
-                    <div className={cx('form-group')}>
-                        <label className={cx('form-label')}>Mô tả</label>
-                        <textarea
-                            name="description"
-                            value={formData.description}
-                            onChange={handleInputChange}
-                            placeholder="Nhập mô tả ngắn..."
-                            className={cx('form-textarea')}
-                            rows={4}
-                        />
-                    </div>
+                    {/* Mô tả - Hiển thị cho Bộ sưu tập và Xu hướng làm đẹp */}
+                    {contentType === 'seasonal' && (
+                        <div className={cx('form-group')}>
+                            <label className={cx('form-label')}>
+                                Mô tả (Giới thiệu về bộ sưu tập)
+                            </label>
+                            <textarea
+                                name="description"
+                                value={formData.description}
+                                onChange={handleInputChange}
+                                placeholder="Nhập mô tả về bộ sưu tập, các sản phẩm nổi bật, chủ đề..."
+                                className={cx('form-textarea')}
+                                rows={4}
+                            />
+                        </div>
+                    )}
 
-                    <div className={cx('form-group')}>
-                        <label className={cx('form-label')}>Trạng thái</label>
-                        <select
-                            name="status"
-                            value={formData.status.toString()}
-                            onChange={handleStatusChange}
-                            disabled={!isAdmin}
-                            className={cx('form-select', { disabled: !isAdmin })}
-                        >
-                            <option value="false">Chờ duyệt</option>
-                            <option value="true">Đã duyệt</option>
-                        </select>
-                        {!isAdmin && (
-                            <p className={cx('hint-text')}>
-                                Chỉ Admin mới có thể thay đổi trạng thái
-                            </p>
-                        )}
-                    </div>
+                    {/* Rich Text Editor cho Xu hướng làm đẹp */}
+                    {contentType === 'trending' && (
+                        <div className={cx('form-group')}>
+                            <label className={cx('form-label')}>
+                                Nội dung bài viết (Mô tả về blog làm đẹp)
+                                <span className={cx('required-label')}> *</span>
+                            </label>
+                            <RichTextEditor
+                                value={formData.description}
+                                onChange={(html) => {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        description: html
+                                    }));
+                                }}
+                                placeholder="Nhập nội dung bài viết về blog làm đẹp, tips, hướng dẫn... Bạn có thể sử dụng các công cụ định dạng ở trên để làm đẹp bài viết."
+                            />
+                        </div>
+                    )}
+
+                    {/* Link URL - Chỉ hiển thị cho Banner/Slider */}
+                    {contentType === 'banner' && (
+                        <div className={cx('form-group')}>
+                            <label className={cx('form-label')}>
+                                Link URL (Link khi click vào banner)
+                                <span className={cx('optional-label')}> (Tùy chọn)</span>
+                            </label>
+                            <input
+                                type="url"
+                                name="linkUrl"
+                                value={formData.linkUrl}
+                                onChange={handleInputChange}
+                                placeholder="https://example.com/page"
+                                className={cx('form-input')}
+                            />
+                        </div>
+                    )}
+
 
                     <div className={cx('form-group', 'date-group')}>
                         <label className={cx('form-label')}>Ngày tạo</label>
@@ -541,55 +650,73 @@ export default function AddBannerPage() {
                         />
                     </div>
 
-                    <div className={cx('form-group', 'date-group')}>
-                        <label className={cx('form-label')}>Ngày bắt đầu</label>
-                        <input
-                            type="date"
-                            name="startDate"
-                            value={formData.startDate}
-                            onChange={handleInputChange}
-                            className={cx('form-input')}
-                        />
-                    </div>
-
-                    <div className={cx('form-group', 'date-group')}>
-                        <label className={cx('form-label')}>Ngày kết thúc</label>
-                        <input
-                            type="date"
-                            name="endDate"
-                            value={formData.endDate}
-                            onChange={handleInputChange}
-                            className={cx('form-input')}
-                        />
-                    </div>
-
-                    <div className={cx('form-group')}>
-                        <label className={cx('form-label')}>Danh sách sản phẩm trong banner</label>
-                        {selectedProducts.length > 0 && (
-                            <div className={cx('product-list')}>
-                                {selectedProducts.map((product) => (
-                                    <div key={product.id} className={cx('product-item')}>
-                                        <span className={cx('product-name')}>{product.name}</span>
-                                        <button
-                                            type="button"
-                                            className={cx('btn', 'muted')}
-                                            onClick={() => handleRemoveProduct(product.id)}
-                                        >
-                                            Xóa
-                                        </button>
-                                    </div>
-                                ))}
+                    {contentType !== 'trending' && (
+                        <>
+                            <div className={cx('form-group', 'date-group')}>
+                                <label className={cx('form-label')}>Ngày bắt đầu</label>
+                                <input
+                                    type="date"
+                                    name="startDate"
+                                    value={formData.startDate}
+                                    onChange={handleInputChange}
+                                    className={cx('form-input')}
+                                />
                             </div>
-                        )}
-                        <button
-                            type="button"
-                            className={cx('add-product-btn')}
-                            onClick={handleAddProduct}
-                        >
-                            <span className={cx('plus-icon')}>+</span>
-                            Thêm sản phẩm
-                        </button>
-                    </div>
+
+                            <div className={cx('form-group', 'date-group')}>
+                                <label className={cx('form-label')}>Ngày kết thúc</label>
+                                <input
+                                    type="date"
+                                    name="endDate"
+                                    value={formData.endDate}
+                                    onChange={handleInputChange}
+                                    className={cx('form-input')}
+                                />
+                            </div>
+                        </>
+                    )}
+
+                    {/* Danh sách sản phẩm - Chỉ hiển thị cho Bộ sưu tập */}
+                    {contentType === 'seasonal' && (
+                        <div className={cx('form-group')}>
+                            <label className={cx('form-label')}>
+                                Danh sách sản phẩm trong bộ sưu tập
+                                <span className={cx('required-label')}> *</span>
+                            </label>
+                            {selectedProducts.length > 0 && (
+                                <div className={cx('product-list')}>
+                                    {selectedProducts.map((product) => (
+                                        <div key={product.id} className={cx('product-item')}>
+                                            <span className={cx('product-name')}>{product.name}</span>
+                                            <button
+                                                type="button"
+                                                className={cx('btn', 'muted')}
+                                                onClick={() => handleRemoveProduct(product.id)}
+                                            >
+                                                Xóa
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {selectedProducts.length === 0 && (
+                                <p className={cx('form-hint', 'warning')}>
+                                    ⚠️ Vui lòng thêm ít nhất 1 sản phẩm vào bộ sưu tập
+                                </p>
+                            )}
+                            <button
+                                type="button"
+                                className={cx('add-product-btn')}
+                                onClick={handleAddProduct}
+                            >
+                                <span className={cx('plus-icon')}>+</span>
+                                Thêm sản phẩm
+                            </button>
+                            <p className={cx('form-hint')}>
+                                Chọn các sản phẩm sẽ được hiển thị trong bộ sưu tập này
+                            </p>
+                        </div>
+                    )}
 
                     <div className={cx('form-actions')}>
                         <button
@@ -605,7 +732,7 @@ export default function AddBannerPage() {
                             className={cx('btn', 'btn-submit')}
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? 'Đang gửi...' : 'Gửi duyệt'}
+                            {isSubmitting ? 'Đang gửi...' : 'Xác nhận'}
                         </button>
                     </div>
                 </form>
@@ -653,6 +780,15 @@ export default function AddBannerPage() {
                                             : 'Không còn sản phẩm nào để thêm'}
                                     </p>
                                 )}
+                            </div>
+                            <div className={cx('modal-footer')} style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '10px', borderTop: '1px solid #eee' }}>
+                                <button
+                                    className={cx('btn', 'btn-submit')}
+                                    onClick={() => setShowProductModal(false)}
+                                    style={{ padding: '8px 20px' }}
+                                >
+                                    Hoàn tất
+                                </button>
                             </div>
                         </div>
                     </div>

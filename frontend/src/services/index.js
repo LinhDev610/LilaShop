@@ -22,3 +22,4 @@ export {
 // Re-export các helper về product / voucher
 export * from './productUtils';
 export * from './voucherPromotionUtils';
+export { default as chatbotService } from './chatbot';

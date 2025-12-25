@@ -4,6 +4,7 @@ import classNames from 'classnames/bind';
 import styles from './UpdateContentPage.module.scss';
 import { getApiBaseUrl, getStoredToken, formatDateTime } from '../../../../../services/utils';
 import { normalizeMediaUrl } from '../../../../../services/productUtils';
+import { uploadBannerMedia } from '../../../../../services/CloudinaryService';
 import { useNotification } from '../../../../../components/Common/Notification';
 
 const cx = classNames.bind(styles);
@@ -251,26 +252,16 @@ export default function UpdateContentPage() {
 
             // Upload image if new file is selected
             if (formData.imageFile) {
-                const formDataUpload = new FormData();
-                formDataUpload.append('files', formData.imageFile);
-
-                const uploadResponse = await fetch(`${API_BASE_URL}/media/upload-banner`, {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: formDataUpload,
-                });
-
-                if (!uploadResponse.ok) {
-                    throw new Error('Không thể upload ảnh');
-                }
-
-                const uploadData = await uploadResponse.json();
-                imageUrl = uploadData?.result?.[0] || '';
-
-                if (!imageUrl) {
-                    throw new Error('Không thể lấy URL ảnh');
+                try {
+                    const urls = await uploadBannerMedia([formData.imageFile]);
+                    if (urls && urls.length > 0) {
+                        imageUrl = urls[0];
+                    } else {
+                        throw new Error('Không thể upload ảnh, vui lòng thử lại');
+                    }
+                } catch (uploadErr) {
+                    console.error('Upload failed:', uploadErr);
+                    throw new Error('Không thể upload ảnh: ' + (uploadErr.message || 'Lỗi không xác định'));
                 }
             }
 

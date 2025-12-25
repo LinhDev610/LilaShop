@@ -1,6 +1,7 @@
 package com.lila_shop.backend.dto.request;
 
 import com.lila_shop.backend.enums.ProductStatus;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
@@ -74,6 +75,7 @@ public class ProductUpdateRequest {
     Double purchasePrice;
 
     @DecimalMin(value = "0.0", message = "Thuế phải lớn hơn hoặc bằng 0")
+    @DecimalMax(value = "1.0", message = "Thuế tối đa là 1.0 (100%)")
     Double tax;
 
     @DecimalMin(value = "0.0", message = "Giá trị giảm giá phải lớn hơn hoặc bằng 0")

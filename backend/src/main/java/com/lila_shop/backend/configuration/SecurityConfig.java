@@ -22,36 +22,38 @@ import org.springframework.web.filter.CorsFilter;
 public class SecurityConfig {
     // API không cần xác thực (ai cũng có thể gọi được).
     private static final String[] PUBLIC_POST_ENDPOINTS = {
-        "/users",
-        "/auth/token",
-        "/auth/introspect",
-        "/auth/logout",
-        "/auth/refresh",
-        "/auth/send-otp",
-        "/auth/verify-otp",
-        "/auth/reset-password",
-        "/shipments/ghn/fees",
-        "/api/momo/ipn-handler"
+            "/users",
+            "/auth/token",
+            "/auth/introspect",
+            "/auth/logout",
+            "/auth/refresh",
+            "/auth/send-otp",
+            "/auth/verify-otp",
+            "/auth/reset-password",
+            "/shipments/ghn/fees",
+            "/api/momo/ipn-handler",
+            "/api/chatbot/ask"
     };
 
     private static final String[] PUBLIC_GET_ENDPOINTS = {
-        "/product_media/**",
-        "/voucher_media/**",
-        "/promotion_media/**",
-        "/profile_media/**",
-        "/reviews/**",
-        "/categories/**",
-        "/vouchers/**",
-        "/promotions/**",
-        "/products/**",
-        "/uploads/**",
-        "/assets/**",
-        "/static/**",
-        "/banners/active",
-        "/shipments/ghn/provinces",
-        "/shipments/ghn/districts",
-        "/shipments/ghn/wards",
-        "/error" // Allow error endpoint to be accessed without authentication
+            "/product_media/**",
+            "/voucher_media/**",
+            "/promotion_media/**",
+            "/profile_media/**",
+            "/reviews/**",
+            "/categories/**",
+            "/vouchers/**",
+            "/promotions/**",
+            "/products/**",
+            "/uploads/**",
+            "/assets/**",
+            "/static/**",
+            "/banners/active",
+            "/banners/**", // Allow public access to banner detail endpoints
+            "/shipments/ghn/provinces",
+            "/shipments/ghn/districts",
+            "/shipments/ghn/wards",
+            "/error" // Allow error endpoint to be accessed without authentication
     };
 
     private final CustomJwtDecoder customJwtDecoder;

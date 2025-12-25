@@ -15,6 +15,10 @@ const routes = {
     customerAccountPassword: '/customer-account/password',
     promotion: '/promotion',
     newproduct: '/new-product',
+    products: '/products',
+    article: (id) => `/article/${id}`,
+    blog: '/blog',
+    blogDetail: (id) => `/blog/${id}`,
 
     // Customer Support routes
     customerSupportHome: '/customer-support',

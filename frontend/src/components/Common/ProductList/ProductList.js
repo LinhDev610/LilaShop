@@ -60,12 +60,12 @@ const ProductList = memo(function ProductList({
 
         if (productsRef.current) {
             const container = productsRef.current;
-            const cardWidth = container.querySelector('.product-card')?.offsetWidth || 280;
-            const gap = 65; // gap giữa các card
+            const cardWidth = container.querySelector('.hot-product')?.offsetWidth || 280;
+            const gap = 24; // gap giữa các card
             const scrollAmount = cardWidth + gap;
 
-            container.scrollBy({
-                left: -scrollAmount,
+            container.scrollTo({
+                left: container.scrollLeft - scrollAmount,
                 behavior: 'smooth'
             });
         }
@@ -77,12 +77,12 @@ const ProductList = memo(function ProductList({
 
         if (productsRef.current) {
             const container = productsRef.current;
-            const cardWidth = container.querySelector('.product-card')?.offsetWidth || 280;
-            const gap = 65; // gap giữa các card
+            const cardWidth = container.querySelector('.hot-product')?.offsetWidth || 280;
+            const gap = 24; // gap giữa các card
             const scrollAmount = cardWidth + gap;
 
-            container.scrollBy({
-                left: scrollAmount,
+            container.scrollTo({
+                left: container.scrollLeft + scrollAmount,
                 behavior: 'smooth'
             });
         }

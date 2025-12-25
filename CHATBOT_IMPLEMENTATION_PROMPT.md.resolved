@@ -1,0 +1,2503 @@
+# PROMPT CHI TIẾT: XÂY DỰNG HỆ THỐNG CHATBOT AI CHO WEBSITE MỸ PHẨM
+
+## 📋 TỔNG QUAN HỆ THỐNG
+
+Xây dựng một hệ thống Chatbot AI tư vấn sản phẩm mỹ phẩm với các đặc điểm sau:
+
+### Công Nghệ Sử Dụng
+- **Backend**: Spring Boot (Java) hoặc Node.js/Python
+- **Frontend**: ReactJS hoặc framework tương đương
+- **AI Service**: Google Gemini API (hoặc OpenAI GPT, Claude)
+- **Database**: MySQL/PostgreSQL
+- **Cache**: In-memory cache hoặc Redis
+
+### Mục Tiêu
+- Tư vấn sản phẩm mỹ phẩm dựa trên database thực tế 
+- Tư vấn sản phẩm theo nhu cầu người dùng
++ Da dầu / khô / nhạy cảm
++ Có mụn không? mụn viêm hay mụn ẩn
++ Ngân sách bao nhiêu?
++ Thích thương hiệu nào?
++ Bot lọc sản phẩm phù hợp trong DB: “Dựa trên da dầu – mụn – ngân sách 300k, mình gợi ý 3 sản phẩm sau…”,
++ Cái này khác search/filter thông thường ở chỗ: người dùng không cần biết mỹ phẩm, chatbot dẫn dắt như nhân viên bán hàng
+-> Trong mục chat trước hết đưa ra các mục cho khách hàng chọn tìm kiếm theo lĩnh vực nào, nhu cầu ra sao, đưa ra các mục cho khách chọn, sau đó AI sẽ đi theo danh mục đó để đọc danh sách sản phẩm thay vì tải hết sẽ vừa khién khách khi bắt đầu dễ chọn, dễ tìm kiếm, tối ưu tốc độ, dung lượng, và đưa ra các danh mục phù hợp với nhu cầu của khách (danh mục chọn phải đúng như trong DB)
+- Chatbot = Trợ lý chăm sóc da cá nhân:
++ Xây dựng routine chăm sóc da
++ Chatbot có thể tạo:
+    + Routine sáng / tối
+    + Thứ tự dùng mỹ phẩm
+    + Thời gian chờ giữa các bước
+    + Ví dụ:
+    “Sáng: Sữa rửa mặt → Toner → Serum → Kem chống nắng
+    Tối: Tẩy trang → SRM → Treatment → Kem dưỡng”
+- Gợi ý combo & khuyến mãi
+- Chatbot nói chuyện như chuyên gia da liễu (giới hạn)
++ Không chẩn đoán bệnh
++ Chỉ tư vấn mức mỹ phẩm
++ Có cảnh báo: “Không thay thế bác sĩ”
+Chatbot so sánh sản phẩm
++ “Sản phẩm A và B khác nhau ở đâu?”
++ Bot trả lời:
++ Thành phần chính
++ Đối tượng phù hợp
++ Giá & dung tích
+- Duy trì context conversation qua sessionId
+- Hỗ trợ filter sản phẩm theo danh mục, thương hiệu, loại da
+- Tối ưu performance với caching mechanism
+
+---
+
+## 🏗️ KIẾN TRÚC HỆ THỐNG
+
+### 1. Luồng Dữ Liệu (Data Flow)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  User gửi câu hỏi qua Frontend                                  │
+│  "Bạn có sản phẩm nào cho da dầu không?"                        │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  ChatbotController.ask()                                        │
+│  POST /api/chatbot/ask                                          │
+│  Body: { message: "...", sessionId: "..." }                     │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  ChatbotService.ask()                                           │
+│  - Kiểm tra cache sản phẩm                                      │
+│  - Nếu cache hết hạn → refreshProductsContext()                 │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  ProductService.getActiveProducts()                             │
+│  - Query database lấy sản phẩm có status = APPROVED            │
+│  - Áp dụng promotion (nếu có)                                   │
+│  - Convert Entity → DTO                                         │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Format thành Text Context                                      │
+│  "DANH SÁCH SẢN PHẨM:                                          │
+│   1. Tên: Kem dưỡng ẩm | Giá: 250,000 VNĐ | Loại da: Da dầu"  │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Đưa vào Prompt cho Gemini AI                                   │
+│  systemPrompt + productsContext + userMessage                   │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Gọi Gemini API                                                 │
+│  POST https://generativelanguage.googleapis.com/...             │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Gemini AI phân tích và trả lời                                │
+│  "Chúng tôi có sản phẩm Kem dưỡng ẩm cho da dầu..."            │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Lưu vào Conversation History (sessionId)                       │
+│  Trả về Frontend                                                │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 💾 CẤU TRÚC DATABASE
+
+```sql
+CREATE TABLE `address` (
+  `address_id` varchar(255) PRIMARY KEY NOT NULL,
+  `address` varchar(255),
+  `country` varchar(255),
+  `created_at` datetime(6),
+  `is_default` bit(1),
+  `districtid` varchar(255),
+  `district_name` varchar(255),
+  `postal_code` varchar(255),
+  `provinceid` varchar(255),
+  `province_name` varchar(255),
+  `recipient_name` varchar(255),
+  `recipient_phone_number` varchar(255),
+  `updated_at` datetime(6),
+  `ward_code` varchar(255),
+  `ward_name` varchar(255)
+);
+
+CREATE TABLE `banner_products` (
+  `banner_id` varchar(255) NOT NULL,
+  `product_id` varchar(255) NOT NULL
+);
+
+CREATE TABLE `banners` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `content_type` varchar(50),
+  `created_at` datetime(6) NOT NULL,
+  `description` text,
+  `end_date` date,
+  `image_url` varchar(255) NOT NULL,
+  `link_url` varchar(255),
+  `order_index` int,
+  `pending_review` bit(1),
+  `rejection_reason` text,
+  `start_date` date,
+  `status` bit(1) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `update_at` datetime(6) NOT NULL,
+  `created_by` varchar(255)
+);
+
+CREATE TABLE `cart` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `applied_voucher_code` varchar(255),
+  `subtotal` double,
+  `total_amount` double,
+  `voucher_discount` double,
+  `user_id` varchar(255) UNIQUE
+);
+
+CREATE TABLE `cart_item` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `final_price` double,
+  `quantity` int,
+  `unit_price` double,
+  `cart_id` varchar(255),
+  `product_id` varchar(255),
+  `variant_id` varchar(255)
+);
+
+CREATE TABLE `categories` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `created_at` datetime(6),
+  `description` text,
+  `name` varchar(255) UNIQUE NOT NULL,
+  `status` bit(1) NOT NULL,
+  `updated_at` datetime(6),
+  `parent_id` varchar(255)
+);
+
+CREATE TABLE `chat_messages` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `is_read` bit(1) NOT NULL,
+  `message` text NOT NULL,
+  `read_at` datetime(6),
+  `receiver_id` varchar(255) NOT NULL,
+  `sender_id` varchar(255) NOT NULL
+);
+
+CREATE TABLE `expired_promotions` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `approved_at` datetime(6),
+  `approved_by` varchar(255),
+  `code` varchar(255),
+  `description` varchar(255),
+  `discount_value` double NOT NULL,
+  `expired_at` datetime(6),
+  `expiry_date` date NOT NULL,
+  `image_url` varchar(255),
+  `is_active` bit(1),
+  `max_discount_value` double,
+  `min_order_value` double,
+  `name` varchar(255) NOT NULL,
+  `rejection_reason` varchar(255),
+  `start_date` date NOT NULL,
+  `status` varchar(255) NOT NULL,
+  `submitted_at` datetime(6),
+  `submitted_by` varchar(255),
+  `usage_count` int
+);
+
+CREATE TABLE `expired_vouchers` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `apply_scope` enum(ORDER,CATEGORY,PRODUCT),
+  `approved_at` datetime(6),
+  `approved_by` varchar(255),
+  `code` varchar(255) UNIQUE NOT NULL,
+  `description` varchar(255),
+  `discount_value` double,
+  `discount_value_type` enum(PERCENTAGE,AMOUNT),
+  `expired_at` datetime(6),
+  `expiry_date` date,
+  `image_url` varchar(255),
+  `is_active` bit(1),
+  `max_discount_value` double,
+  `max_order_value` double,
+  `min_order_value` double,
+  `name` varchar(255),
+  `rejection_reason` varchar(255),
+  `start_date` date,
+  `status` varchar(255),
+  `submitted_at` datetime(6),
+  `submitted_by` varchar(255),
+  `usage_count` int,
+  `usage_limit` int
+);
+
+CREATE TABLE `financial_records` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `amount` double NOT NULL,
+  `occurred_at` datetime(6) NOT NULL,
+  `payment_method` enum(MOMO,COD),
+  `record_type` enum(ORDER_PAYMENT,REFUND,COMPENSATION) NOT NULL,
+  `order_id` varchar(255),
+  `product_id` varchar(255)
+);
+
+CREATE TABLE `invalidated_token` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `expiry_time` datetime(6)
+);
+
+CREATE TABLE `inventory` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `last_updated` date NOT NULL,
+  `stock_quantity` int NOT NULL,
+  `product_id` varchar(255) UNIQUE NOT NULL
+);
+
+CREATE TABLE `notifications` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `is_read` bit(1) NOT NULL,
+  `link` varchar(512),
+  `message` text NOT NULL,
+  `read_at` datetime(6),
+  `title` varchar(255) NOT NULL,
+  `type` varchar(255) NOT NULL
+);
+
+CREATE TABLE `order_items` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `final_price` double,
+  `quantity` int,
+  `unit_price` double,
+  `order_id` varchar(255),
+  `product_id` varchar(255),
+  `variant_id` varchar(255)
+);
+
+CREATE TABLE `orders` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `admin_processing_note` text,
+  `cancellation_reason` text,
+  `cancellation_source` enum(CUSTOMER,STAFF),
+  `cart_item_ids` text,
+  `order_code` varchar(255) UNIQUE,
+  `expected_delivery_date` date,
+  `note` text,
+  `order_date` date,
+  `order_date_time` datetime(6),
+  `is_paid` bit(1),
+  `payment_method` enum(MOMO,COD),
+  `payment_reference` varchar(255),
+  `payment_status` enum(INIT,PENDING,PAID,FAILED,CANCELLED),
+  `refund_account_holder` varchar(255),
+  `refund_account_number` varchar(50),
+  `refund_amount` double,
+  `refund_bank` varchar(100),
+  `refund_confirmed_amount` double,
+  `refund_confirmed_penalty` double,
+  `refund_confirmed_second_shipping_fee` double,
+  `refund_description` text,
+  `refund_email` varchar(255),
+  `refund_media_urls` text,
+  `refund_method` varchar(100),
+  `refund_penalty_amount` double,
+  `refund_reason_type` varchar(50),
+  `refund_rejection_reason` text,
+  `refund_rejection_source` varchar(50),
+  `refund_return_address` text,
+  `refund_return_fee` double,
+  `refund_second_shipping_fee` double,
+  `refund_selected_product_ids` text,
+  `refund_total_paid` double,
+  `return_checked_date` date,
+  `shipping_address` varchar(255),
+  `shipping_fee` double,
+  `staff_inspection_result` text,
+  `status` enum(CREATED,CONFIRMED,PAID,SHIPPED,DELIVERED,CANCELLED,RETURN_REQUESTED,RETURN_CS_CONFIRMED,RETURN_STAFF_CONFIRMED,REFUNDED,RETURN_REJECTED),
+  `total_amount` double,
+  `address_id` varchar(255),
+  `cart_id` varchar(255) UNIQUE,
+  `user_id` varchar(255)
+);
+
+CREATE TABLE `otp` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `code` varchar(6) NOT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `expires_at` datetime(6) NOT NULL,
+  `is_used` bit(1) NOT NULL
+);
+
+CREATE TABLE `payment` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `amount` double,
+  `payment_date` date,
+  `payment_method` enum(MOMO,COD),
+  `status` enum(INIT,PENDING,PAID,FAILED,CANCELLED),
+  `order_id` varchar(255) UNIQUE
+);
+
+CREATE TABLE `permission` (
+  `name` varchar(255) PRIMARY KEY NOT NULL,
+  `description` varchar(255),
+  `permissions` varchar(255)
+);
+
+CREATE TABLE `product_media` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `display_order` int,
+  `is_default` bit(1) NOT NULL,
+  `media_type` varchar(255),
+  `media_url` varchar(255),
+  `product_id` varchar(255) NOT NULL
+);
+
+CREATE TABLE `product_variants` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `created_at` datetime(6),
+  `is_default` bit(1),
+  `name` varchar(255),
+  `price` double NOT NULL,
+  `purchase_price` double,
+  `shade_hex` varchar(255),
+  `shade_name` varchar(255),
+  `stock_quantity` int,
+  `tax` double,
+  `unit_price` double,
+  `updated_at` datetime(6),
+  `product_id` varchar(255) NOT NULL
+);
+
+CREATE TABLE `products` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `approved_at` datetime(6),
+  `brand` varchar(255),
+  `created_at` datetime(6),
+  `description` text,
+  `discount_value` double,
+  `expiry_date` date,
+  `height` double,
+  `ingredients` text,
+  `length` double,
+  `name` varchar(255) NOT NULL,
+  `origin` varchar(255),
+  `price` double NOT NULL,
+  `purchase_price` double,
+  `quantity_sold` int,
+  `rejection_reason` text,
+  `safety_note` text,
+  `shade_color` varchar(255),
+  `skin_concern` varchar(255),
+  `skin_type` varchar(255),
+  `status` enum(PENDING,APPROVED,REJECTED,DISABLED) NOT NULL,
+  `tax` double,
+  `unit_price` double NOT NULL,
+  `updated_at` datetime(6),
+  `usage_instructions` text,
+  `volume` varchar(255),
+  `weight` double,
+  `width` double,
+  `approved_by` varchar(255),
+  `category_id` varchar(255),
+  `default_media_id` varchar(255) UNIQUE,
+  `promotion_id` varchar(255),
+  `submitted_by` varchar(255)
+);
+
+CREATE TABLE `promotion_categories` (
+  `promotion_id` varchar(255) NOT NULL,
+  `category_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`promotion_id`, `category_id`)
+);
+
+CREATE TABLE `promotion_products` (
+  `promotion_id` varchar(255) NOT NULL,
+  `product_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`promotion_id`, `product_id`)
+);
+
+CREATE TABLE `promotions` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `apply_scope` enum(ORDER,CATEGORY,PRODUCT) NOT NULL,
+  `approved_at` datetime(6),
+  `code` varchar(255) UNIQUE NOT NULL,
+  `description` varchar(255),
+  `discount_value` double NOT NULL,
+  `discount_value_type` enum(PERCENTAGE,AMOUNT) NOT NULL,
+  `expiry_date` date NOT NULL,
+  `image_url` varchar(255),
+  `is_active` bit(1),
+  `loss_threshold` double,
+  `max_discount_value` double,
+  `min_order_value` double,
+  `name` varchar(255) NOT NULL,
+  `rejection_reason` varchar(255),
+  `start_date` date NOT NULL,
+  `status` enum(PENDING_APPROVAL,APPROVED,REJECTED,EXPIRED,DISABLED) NOT NULL,
+  `submitted_at` datetime(6),
+  `total_loss` double,
+  `usage_count` int,
+  `approved_by` varchar(255),
+  `submitted_by` varchar(255)
+);
+
+CREATE TABLE `reviews` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `comment` text,
+  `created_at` datetime(6) NOT NULL,
+  `name_display` varchar(255),
+  `rating` int NOT NULL,
+  `reply` text,
+  `reply_at` datetime(6),
+  `product_id` varchar(255) NOT NULL,
+  `user_id` varchar(255) NOT NULL
+);
+
+CREATE TABLE `role` (
+  `name` varchar(255) PRIMARY KEY NOT NULL,
+  `description` varchar(255)
+);
+
+CREATE TABLE `shipment` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `estimated_delivery` date,
+  `order_code` varchar(255),
+  `provider` enum(GHN),
+  `shipped_date` date,
+  `status` enum(CREATED,PICKED_UP,IN_TRANSIT,DELIVERED,FAILED,CANCELLED),
+  `total_fee` bigint,
+  `order_id` varchar(255) UNIQUE
+);
+
+CREATE TABLE `support_tickets` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `assigned_to` enum(CS,ADMIN) NOT NULL,
+  `content` text,
+  `created_at` datetime(6) NOT NULL,
+  `customer_name` varchar(255),
+  `email` varchar(255),
+  `handler_id` varchar(255),
+  `handler_note` text,
+  `order_code` varchar(255) NOT NULL,
+  `phone` varchar(255),
+  `status` enum(NEW,IN_PROGRESS,RESOLVED,ESCALATED) NOT NULL,
+  `updated_at` datetime(6) NOT NULL
+);
+
+CREATE TABLE `user_addresses` (
+  `user_id` varchar(255) NOT NULL,
+  `address_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`user_id`, `address_id`)
+);
+
+CREATE TABLE `user_notifications` (
+  `user_id` varchar(255) NOT NULL,
+  `notification_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`user_id`, `notification_id`)
+);
+
+CREATE TABLE `user_voucher_usage` (
+  `user_id` varchar(255) NOT NULL,
+  `voucher_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`user_id`, `voucher_id`)
+);
+
+CREATE TABLE `users` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `is_active` bit(1),
+  `address` varchar(255),
+  `avatar_url` varchar(255),
+  `create_at` date,
+  `email` varchar(255),
+  `full_name` varchar(255),
+  `password` varchar(255),
+  `phone_number` varchar(255),
+  `role` varchar(255)
+);
+
+CREATE TABLE `voucher_categories` (
+  `voucher_id` varchar(255) NOT NULL,
+  `category_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`voucher_id`, `category_id`)
+);
+
+CREATE TABLE `voucher_products` (
+  `voucher_id` varchar(255) NOT NULL,
+  `product_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`voucher_id`, `product_id`)
+);
+
+CREATE TABLE `vouchers` (
+  `id` varchar(255) PRIMARY KEY NOT NULL,
+  `apply_scope` enum(ORDER,CATEGORY,PRODUCT) NOT NULL,
+  `approved_at` datetime(6),
+  `code` varchar(255) UNIQUE NOT NULL,
+  `comment` text,
+  `discount_value` double,
+  `discount_value_type` enum(PERCENTAGE,AMOUNT) NOT NULL,
+  `expiry_date` date,
+  `image_url` varchar(255),
+  `is_active` bit(1),
+  `loss_threshold` double,
+  `max_discount_value` double,
+  `max_order_value` double,
+  `min_order_value` double,
+  `name` varchar(255),
+  `rejection_reason` varchar(255),
+  `start_date` date,
+  `status` enum(PENDING_APPROVAL,APPROVED,REJECTED,EXPIRED,DISABLED) NOT NULL,
+  `submitted_at` datetime(6),
+  `total_loss` double,
+  `usage_count` int,
+  `usage_limit` int,
+  `usage_per_user` int,
+  `approved_by` varchar(255),
+  `submitted_by` varchar(255)
+);
+
+ALTER TABLE `banner_products` ADD FOREIGN KEY (`banner_id`) REFERENCES `banners` (`id`);
+
+ALTER TABLE `banner_products` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `banners` ADD FOREIGN KEY (`created_by`) REFERENCES `users` (`id`);
+
+ALTER TABLE `users` ADD FOREIGN KEY (`id`) REFERENCES `cart` (`user_id`);
+
+ALTER TABLE `cart_item` ADD FOREIGN KEY (`cart_id`) REFERENCES `cart` (`id`);
+
+ALTER TABLE `cart_item` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `cart_item` ADD FOREIGN KEY (`variant_id`) REFERENCES `product_variants` (`id`);
+
+ALTER TABLE `categories` ADD FOREIGN KEY (`parent_id`) REFERENCES `categories` (`id`);
+
+ALTER TABLE `chat_messages` ADD FOREIGN KEY (`receiver_id`) REFERENCES `users` (`id`);
+
+ALTER TABLE `chat_messages` ADD FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`);
+
+ALTER TABLE `financial_records` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `financial_records` ADD FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`);
+
+ALTER TABLE `products` ADD FOREIGN KEY (`id`) REFERENCES `inventory` (`product_id`);
+
+ALTER TABLE `order_items` ADD FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`);
+
+ALTER TABLE `order_items` ADD FOREIGN KEY (`variant_id`) REFERENCES `product_variants` (`id`);
+
+ALTER TABLE `order_items` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `orders` ADD FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+ALTER TABLE `orders` ADD FOREIGN KEY (`address_id`) REFERENCES `address` (`address_id`);
+
+ALTER TABLE `cart` ADD FOREIGN KEY (`id`) REFERENCES `orders` (`cart_id`);
+
+ALTER TABLE `orders` ADD FOREIGN KEY (`id`) REFERENCES `payment` (`order_id`);
+
+ALTER TABLE `permission` ADD FOREIGN KEY (`permissions`) REFERENCES `role` (`name`);
+
+ALTER TABLE `product_media` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `product_variants` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `products` ADD FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`);
+
+ALTER TABLE `products` ADD FOREIGN KEY (`promotion_id`) REFERENCES `promotions` (`id`);
+
+ALTER TABLE `products` ADD FOREIGN KEY (`submitted_by`) REFERENCES `users` (`id`);
+
+ALTER TABLE `product_media` ADD FOREIGN KEY (`id`) REFERENCES `products` (`default_media_id`);
+
+ALTER TABLE `products` ADD FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`);
+
+ALTER TABLE `promotion_categories` ADD FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`);
+
+ALTER TABLE `promotion_categories` ADD FOREIGN KEY (`promotion_id`) REFERENCES `promotions` (`id`);
+
+ALTER TABLE `promotion_products` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `promotion_products` ADD FOREIGN KEY (`promotion_id`) REFERENCES `promotions` (`id`);
+
+ALTER TABLE `promotions` ADD FOREIGN KEY (`submitted_by`) REFERENCES `users` (`id`);
+
+ALTER TABLE `promotions` ADD FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`);
+
+ALTER TABLE `reviews` ADD FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+ALTER TABLE `reviews` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `orders` ADD FOREIGN KEY (`id`) REFERENCES `shipment` (`order_id`);
+
+ALTER TABLE `user_addresses` ADD FOREIGN KEY (`address_id`) REFERENCES `address` (`address_id`);
+
+ALTER TABLE `user_addresses` ADD FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+ALTER TABLE `user_notifications` ADD FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+ALTER TABLE `user_notifications` ADD FOREIGN KEY (`notification_id`) REFERENCES `notifications` (`id`);
+
+ALTER TABLE `user_voucher_usage` ADD FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+ALTER TABLE `user_voucher_usage` ADD FOREIGN KEY (`voucher_id`) REFERENCES `vouchers` (`id`);
+
+ALTER TABLE `users` ADD FOREIGN KEY (`role`) REFERENCES `role` (`name`);
+
+ALTER TABLE `voucher_categories` ADD FOREIGN KEY (`voucher_id`) REFERENCES `vouchers` (`id`);
+
+ALTER TABLE `voucher_categories` ADD FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`);
+
+ALTER TABLE `voucher_products` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+ALTER TABLE `voucher_products` ADD FOREIGN KEY (`voucher_id`) REFERENCES `vouchers` (`id`);
+
+ALTER TABLE `vouchers` ADD FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`);
+
+ALTER TABLE `vouchers` ADD FOREIGN KEY (`submitted_by`) REFERENCES `users` (`id`);
+
+```
+
+### Dữ Liệu Mẫu
+
+```sql
+-- Danh mục cha
+INSERT INTO categories (id, name, description, status, created_at, updated_at, parent_id) VALUES
+('cat-001', 'Mỹ phẩm trang điểm mặt', 'Các sản phẩm chăm sóc và trang điểm cho khuôn mặt', TRUE, NOW(), NOW(), NULL),
+('cat-002', 'Trang điểm và chăm sóc mắt', 'Các sản phẩm trang điểm và chăm sóc mắt', TRUE, NOW(), NOW(), NULL);
+
+-- Danh mục con
+INSERT INTO categories (id, name, description, status, created_at, updated_at, parent_id) VALUES
+('cat-006', 'Kem nền & Phấn nền', 'Kem nền và phấn nền cho mặt', TRUE, NOW(), NOW(), 'cat-001'),
+('cat-007', 'Phấn má & Highlighter', 'Phấn má hồng và highlight tạo khối', TRUE, NOW(), NOW(), 'cat-001');
+
+-- Sản phẩm
+INSERT INTO products (id, name, description, brand, shade_color, skin_type, skin_concern, volume, origin, 
+                      expiry_date, ingredients, usage_instructions, safety_note, weight, length, width, height, 
+                      tax, unit_price, purchase_price, discount_value, price, quantity_sold, status, 
+                      created_at, updated_at, submitted_by, approved_by, approved_at, rejection_reason, category_id, promotion_id) VALUES
+('prod-001', 'Son Lì Matte Luxury', 
+ 'Son môi lì matte cao cấp, lâu trôi, không khô môi. Màu sắc đa dạng, phù hợp mọi tone da.',
+ 'Lila Beauty', 'Đỏ Ruby', NULL, NULL, '3.5g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Beeswax, Jojoba Oil, Vitamin E, Colorants', 
+ 'Thoa đều lên môi, có thể dùng chì kẻ môi trước để tạo viền',
+ 'Không nuốt. Tránh tiếp xúc với mắt. Ngưng sử dụng nếu có kích ứng.',
+ 5.0, 7.0, 2.0, 2.0, 10.0, 250000.0, 150000.0, 0.0, 250000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-004', 'user-002', NOW(), NULL, 'cat-013', NULL),
+('prod-002', 'Kem Nền Full Coverage', 
+ 'Kem nền che phủ hoàn hảo, không bết dính, giữ lớp trang điểm lâu trôi suốt 12 giờ.',
+ 'Lila Beauty', 'Nude Beige', 'Mọi loại da', 'Che khuyết điểm', '30ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Dimethicone, Titanium Dioxide, Iron Oxides', 
+ 'Thoa đều lên mặt bằng cọ hoặc bông mút, blend kỹ vùng viền',
+ 'Test thử trên da tay trước khi dùng. Tránh vùng mắt.',
+ 30.0, 5.0, 5.0, 8.0, 10.0, 450000.0, 250000.0, 50000.0, 400000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-004', 'user-002', NOW(), NULL, 'cat-006', NULL),
+('prod-003', 'Palette Phấn Mắt 12 Màu', 
+ 'Bộ palette phấn mắt 12 màu đa dạng, dễ phối hợp, độ bám màu cao, không bị vón cục.',
+ 'Lila Beauty', 'Đa màu', NULL, NULL, '12g', 'Italy', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Talc, Mica, Iron Oxides, Ultramarines', 
+ 'Dùng cọ phấn mắt để tán màu, có thể kết hợp nhiều màu để tạo hiệu ứng',
+ 'Tránh tiếp xúc với mắt. Ngưng sử dụng nếu có kích ứng.',
+ 12.0, 12.0, 8.0, 2.0, 10.0, 380000.0, 200000.0, 0.0, 380000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-005', 'user-002', NOW(), NULL, 'cat-009', NULL),
+('prod-004', 'Serum Vitamin C Sáng Da', 
+ 'Serum chứa Vitamin C tinh khiết, giúp làm sáng da, giảm thâm nám, đều màu da.',
+ 'Lila Beauty', NULL, 'Da thường, da khô, da hỗn hợp', 'Làm sáng da, giảm thâm', '30ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Ascorbic Acid, Hyaluronic Acid, Niacinamide', 
+ 'Thoa 2-3 giọt lên mặt sau khi rửa mặt, massage nhẹ nhàng. Dùng buổi tối.',
+ 'Tránh ánh nắng sau khi dùng. Test thử trên da tay trước.',
+ 30.0, 3.0, 3.0, 10.0, 10.0, 550000.0, 300000.0, 0.0, 550000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-005', 'user-002', NOW(), NULL, 'cat-017', NULL),
+('prod-005', 'Nước Hoa Hương Hoa Hồng', 
+ 'Nước hoa nữ hương hoa hồng quyến rũ, lưu hương lâu, phù hợp dùng hàng ngày.',
+ 'Lila Fragrance', 'Hồng', NULL, NULL, '50ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 5 YEAR), 
+ 'Alcohol, Water, Fragrance, Rose Extract', 
+ 'Xịt lên cổ tay, cổ và sau tai. Không chà xát.',
+ 'Tránh tiếp xúc với mắt. Để xa tầm tay trẻ em.',
+ 50.0, 5.0, 5.0, 12.0, 10.0, 1200000.0, 600000.0, 200000.0, 1000000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-006', 'user-002', NOW(), NULL, 'cat-019', NULL),
+('prod-006', 'Mascara Làm Dài Mi', 
+ 'Mascara công thức không vón cục, làm dài và cong mi tự nhiên, chống nước.',
+ 'Lila Beauty', 'Đen', NULL, NULL, '8ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Acrylate Copolymer, Carbon Black, Beeswax', 
+ 'Chải từ chân mi lên ngọn, có thể chải nhiều lớp',
+ 'Tránh tiếp xúc với mắt. Tháo bằng nước tẩy trang chuyên dụng.',
+ 8.0, 2.0, 2.0, 8.0, 10.0, 280000.0, 150000.0, 0.0, 280000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-006', 'user-002', NOW(), NULL, 'cat-011', NULL),
+('prod-007', 'Toner Cân Bằng Da', 
+ 'Toner làm sạch sâu, cân bằng độ pH da, se khít lỗ chân lông, cấp ẩm nhẹ.',
+ 'Lila Beauty', NULL, 'Mọi loại da', 'Cân bằng da, se khít lỗ chân lông', '200ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Witch Hazel, Hyaluronic Acid, Niacinamide, Glycerin', 
+ 'Thấm vào bông tẩy trang, lau nhẹ nhàng lên mặt sau khi rửa mặt',
+ 'Tránh vùng mắt. Test thử trên da tay trước.',
+ 200.0, 6.0, 6.0, 15.0, 10.0, 320000.0, 180000.0, 0.0, 320000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-004', 'user-002', NOW(), NULL, 'cat-016', NULL),
+('prod-008', 'Kem Dưỡng Ẩm Ban Đêm', 
+ 'Kem dưỡng ẩm ban đêm giàu dưỡng chất, phục hồi da trong khi ngủ, mềm mịn sáng hôm sau.',
+ 'Lila Beauty', NULL, 'Da khô, da hỗn hợp', 'Dưỡng ẩm, phục hồi da', '50ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Glycerin, Ceramides, Shea Butter, Hyaluronic Acid', 
+ 'Thoa đều lên mặt và cổ trước khi đi ngủ, massage nhẹ nhàng',
+ 'Test thử trên da tay trước. Tránh vùng mắt.',
+ 50.0, 5.0, 5.0, 6.0, 10.0, 420000.0, 220000.0, 0.0, 420000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-005', 'user-002', NOW(), NULL, 'cat-018', NULL),
+('prod-009', 'Son Tint Lâu Trôi', 
+ 'Son tint màu nước, lâu trôi, không bong tróc, tự nhiên như không trang điểm.',
+ 'Lila Beauty', 'Đỏ Cam', NULL, NULL, '4g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Water, Glycerin, Colorants, Preservatives', 
+ 'Thoa đều lên môi, để khô tự nhiên',
+ 'Tránh tiếp xúc với mắt. Ngưng sử dụng nếu có kích ứng.',
+ 4.0, 6.0, 1.5, 1.5, 10.0, 180000.0, 100000.0, 0.0, 180000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-006', 'user-002', NOW(), NULL, 'cat-013', NULL),
+('prod-010', 'Kem Chống Nắng SPF50+', 
+ 'Kem chống nắng phổ rộng SPF50+, bảo vệ da khỏi tia UV, không gây bết dính.',
+ 'Lila Beauty', NULL, 'Mọi loại da', 'Chống nắng, bảo vệ da', '50ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Zinc Oxide, Titanium Dioxide, Hyaluronic Acid', 
+ 'Thoa đều lên mặt và vùng da cần bảo vệ 15 phút trước khi ra nắng',
+ 'Thoa lại sau mỗi 2 giờ hoặc sau khi bơi, đổ mồ hôi.',
+ 50.0, 5.0, 5.0, 8.0, 10.0, 350000.0, 180000.0, 0.0, 350000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-007', 'user-002', NOW(), NULL, 'cat-018', NULL),
+('prod-011', 'Bút Kẻ Mắt Nước', 
+ 'Bút kẻ mắt dạng nước, mực đen đậm, không lem, dễ tẩy trang.',
+ 'Lila Beauty', 'Đen', NULL, NULL, '0.5ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Carbon Black, Acrylate Copolymer', 
+ 'Kẻ từ góc trong mắt ra ngoài, tạo đường mảnh hoặc đậm tùy ý',
+ 'Tránh tiếp xúc với mắt. Tháo bằng nước tẩy trang.',
+ 0.5, 1.5, 1.5, 12.0, 10.0, 150000.0, 80000.0, 0.0, 150000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-008', 'user-002', NOW(), NULL, 'cat-010', NULL),
+('prod-012', 'Sữa Rửa Mặt Dịu Nhẹ', 
+ 'Sữa rửa mặt công thức dịu nhẹ, làm sạch sâu, không làm khô da.',
+ 'Lila Beauty', NULL, 'Da nhạy cảm, da khô', 'Làm sạch, dưỡng ẩm', '150ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Glycerin, Hyaluronic Acid, Ceramides', 
+ 'Làm ướt mặt, lấy lượng vừa đủ massage nhẹ nhàng, rửa sạch với nước',
+ 'Tránh vùng mắt. Dùng 2 lần/ngày.',
+ 150.0, 6.0, 6.0, 15.0, 10.0, 280000.0, 150000.0, 0.0, 280000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-009', 'user-002', NOW(), NULL, 'cat-015', NULL),
+('prod-013', 'Nước Hoa Nam Hương Gỗ', 
+ 'Nước hoa nam hương gỗ mạnh mẽ, lưu hương lâu, phù hợp dùng hàng ngày.',
+ 'Lila Fragrance', 'Gỗ', NULL, NULL, '100ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 5 YEAR), 
+ 'Alcohol, Water, Fragrance, Wood Extract', 
+ 'Xịt lên cổ tay, cổ và sau tai. Không chà xát.',
+ 'Tránh tiếp xúc với mắt. Để xa tầm tay trẻ em.',
+ 100.0, 6.0, 6.0, 15.0, 10.0, 2000000.0, 1000000.0, 300000.0, 1700000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-010', 'user-002', NOW(), NULL, 'cat-020', NULL),
+('prod-014', 'Phấn Má Hồng', 
+ 'Phấn má hồng tự nhiên, dễ tán, độ bền cao, màu sắc đa dạng.',
+ 'Lila Beauty', 'Hồng Đào', NULL, NULL, '5g', 'Italy', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Talc, Mica, Iron Oxides, Titanium Dioxide', 
+ 'Dùng cọ phấn má tán đều lên gò má, blend kỹ vùng viền',
+ 'Tránh tiếp xúc với mắt. Test thử trên da tay trước.',
+ 5.0, 6.0, 6.0, 2.0, 10.0, 220000.0, 120000.0, 0.0, 220000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-011', 'user-002', NOW(), NULL, 'cat-007', NULL),
+('prod-015', 'Highlighter Tạo Khối', 
+ 'Highlighter tạo khối tự nhiên, ánh sáng đẹp, không bị vón cục.',
+ 'Lila Beauty', 'Vàng Kim', NULL, NULL, '6g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Mica, Titanium Dioxide, Iron Oxides', 
+ 'Dùng cọ highlight tán lên sống mũi, gò má, trán',
+ 'Tránh vùng mắt. Dùng lượng vừa phải để tránh quá bóng.',
+ 6.0, 6.0, 6.0, 2.0, 10.0, 260000.0, 140000.0, 0.0, 260000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-012', 'user-002', NOW(), NULL, 'cat-007', NULL),
+('prod-016', 'Kem Che Khuyết Điểm', 
+ 'Kem che khuyết điểm che phủ cao, không bết dính, tự nhiên.',
+ 'Lila Beauty', 'Nude', NULL, NULL, '10ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Dimethicone, Titanium Dioxide, Iron Oxides', 
+ 'Thoa lên vùng cần che, dùng ngón tay hoặc cọ blend đều',
+ 'Test thử trên da tay trước. Tránh vùng mắt.',
+ 10.0, 2.0, 2.0, 6.0, 10.0, 180000.0, 100000.0, 0.0, 180000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-013', 'user-002', NOW(), NULL, 'cat-008', NULL),
+('prod-017', 'Dưỡng Môi Lip Balm', 
+ 'Kem dưỡng môi mềm mịn, cấp ẩm tốt, có SPF bảo vệ môi.',
+ 'Lila Beauty', NULL, NULL, NULL, '4g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Beeswax, Jojoba Oil, Vitamin E, SPF15', 
+ 'Thoa đều lên môi, có thể dùng nhiều lần trong ngày',
+ 'Không nuốt. Tránh tiếp xúc với mắt.',
+ 4.0, 2.0, 2.0, 2.0, 10.0, 80000.0, 40000.0, 0.0, 80000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-014', 'user-002', NOW(), NULL, 'cat-014', NULL),
+('prod-018', 'Nước Hoa Unisex Hương Trái Cây', 
+ 'Nước hoa unisex hương trái cây tươi mát, phù hợp cả nam và nữ.',
+ 'Lila Fragrance', 'Trái Cây', NULL, NULL, '50ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 5 YEAR), 
+ 'Alcohol, Water, Fragrance, Fruit Extract', 
+ 'Xịt lên cổ tay, cổ và sau tai. Không chà xát.',
+ 'Tránh tiếp xúc với mắt. Để xa tầm tay trẻ em.',
+ 50.0, 5.0, 5.0, 12.0, 10.0, 1500000.0, 750000.0, 250000.0, 1250000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-015', 'user-002', NOW(), NULL, 'cat-021', NULL),
+('prod-019', 'Son Kem Lì Siêu Bền', 
+ 'Son kem lì siêu bền, không trôi màu, mềm mịn trên môi.',
+ 'Lila Beauty', 'Đỏ Cam', NULL, NULL, '4.5g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Beeswax, Jojoba Oil, Vitamin E, Colorants', 
+ 'Thoa đều lên môi, để khô tự nhiên',
+ 'Tránh tiếp xúc với mắt. Ngưng sử dụng nếu có kích ứng.',
+ 4.5, 7.0, 2.0, 2.0, 10.0, 220000.0, 120000.0, 0.0, 220000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-016', 'user-002', NOW(), NULL, 'cat-013', NULL),
+('prod-020', 'Kem Nền Cushion', 
+ 'Kem nền dạng cushion tiện lợi, che phủ tự nhiên, dễ mang theo.',
+ 'Lila Beauty', 'Natural', 'Mọi loại da', 'Che khuyết điểm', '15g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Dimethicone, Titanium Dioxide, Iron Oxides', 
+ 'Dùng bông cushion thoa đều lên mặt',
+ 'Test thử trên da tay trước. Tránh vùng mắt.',
+ 15.0, 6.0, 6.0, 2.0, 10.0, 380000.0, 200000.0, 0.0, 380000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-017', 'user-002', NOW(), NULL, 'cat-006', NULL),
+('prod-021', 'Palette Phấn Mắt 24 Màu', 
+ 'Bộ palette phấn mắt 24 màu cao cấp, đa dạng, dễ phối hợp.',
+ 'Lila Beauty', 'Đa màu', NULL, NULL, '24g', 'Italy', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Talc, Mica, Iron Oxides, Ultramarines', 
+ 'Dùng cọ phấn mắt để tán màu, kết hợp nhiều màu',
+ 'Tránh tiếp xúc với mắt. Ngưng sử dụng nếu có kích ứng.',
+ 24.0, 15.0, 10.0, 2.0, 10.0, 650000.0, 350000.0, 50000.0, 600000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-018', 'user-002', NOW(), NULL, 'cat-009', NULL),
+('prod-022', 'Serum Retinol Chống Lão Hóa', 
+ 'Serum Retinol chống lão hóa, giảm nếp nhăn, làm mịn da.',
+ 'Lila Beauty', NULL, 'Da thường, da khô', 'Chống lão hóa, giảm nếp nhăn', '30ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Retinol, Hyaluronic Acid, Niacinamide', 
+ 'Thoa 2-3 giọt lên mặt buổi tối, massage nhẹ nhàng',
+ 'Tránh ánh nắng sau khi dùng. Test thử trên da tay trước.',
+ 30.0, 3.0, 3.0, 10.0, 10.0, 680000.0, 350000.0, 0.0, 680000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-019', 'user-002', NOW(), NULL, 'cat-017', NULL),
+('prod-023', 'Nước Hoa Nữ Hương Hoa Nhài', 
+ 'Nước hoa nữ hương hoa nhài thanh khiết, quyến rũ, lưu hương lâu.',
+ 'Lila Fragrance', 'Trắng', NULL, NULL, '50ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 5 YEAR), 
+ 'Alcohol, Water, Fragrance, Jasmine Extract', 
+ 'Xịt lên cổ tay, cổ và sau tai. Không chà xát.',
+ 'Tránh tiếp xúc với mắt. Để xa tầm tay trẻ em.',
+ 50.0, 5.0, 5.0, 12.0, 10.0, 1100000.0, 550000.0, 100000.0, 1000000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-020', 'user-002', NOW(), NULL, 'cat-019', NULL),
+('prod-024', 'Gel Kẻ Mắt', 
+ 'Gel kẻ mắt mượt mà, dễ tán, độ bền cao, không lem.',
+ 'Lila Beauty', 'Đen', NULL, NULL, '3g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Carbon Black, Acrylate Copolymer', 
+ 'Dùng cọ kẻ mắt tán đều, tạo đường mảnh hoặc đậm',
+ 'Tránh tiếp xúc với mắt. Tháo bằng nước tẩy trang.',
+ 3.0, 2.0, 2.0, 8.0, 10.0, 160000.0, 85000.0, 0.0, 160000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-021', 'user-002', NOW(), NULL, 'cat-010', NULL),
+('prod-025', 'Mascara Chống Nước', 
+ 'Mascara chống nước, làm dài và cong mi, không vón cục.',
+ 'Lila Beauty', 'Đen', NULL, NULL, '8ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Acrylate Copolymer, Carbon Black, Beeswax', 
+ 'Chải từ chân mi lên ngọn, có thể chải nhiều lớp',
+ 'Tránh tiếp xúc với mắt. Tháo bằng nước tẩy trang chuyên dụng.',
+ 8.0, 2.0, 2.0, 8.0, 10.0, 300000.0, 160000.0, 0.0, 300000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-022', 'user-002', NOW(), NULL, 'cat-011', NULL),
+('prod-026', 'Toner Cấp Ẩm', 
+ 'Toner cấp ẩm sâu, làm mềm da, se khít lỗ chân lông.',
+ 'Lila Beauty', NULL, 'Da khô, da hỗn hợp', 'Cấp ẩm, làm mềm da', '200ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Hyaluronic Acid, Glycerin, Niacinamide', 
+ 'Thấm vào bông tẩy trang, lau nhẹ nhàng lên mặt',
+ 'Tránh vùng mắt. Test thử trên da tay trước.',
+ 200.0, 6.0, 6.0, 15.0, 10.0, 340000.0, 190000.0, 0.0, 340000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-023', 'user-002', NOW(), NULL, 'cat-016', NULL),
+('prod-027', 'Kem Dưỡng Ban Ngày', 
+ 'Kem dưỡng ban ngày nhẹ nhàng, cấp ẩm, có SPF bảo vệ da.',
+ 'Lila Beauty', NULL, 'Mọi loại da', 'Dưỡng ẩm, chống nắng', '50ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Glycerin, SPF30, Hyaluronic Acid', 
+ 'Thoa đều lên mặt buổi sáng, massage nhẹ nhàng',
+ 'Test thử trên da tay trước. Tránh vùng mắt.',
+ 50.0, 5.0, 5.0, 6.0, 10.0, 450000.0, 230000.0, 0.0, 450000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-024', 'user-002', NOW(), NULL, 'cat-018', NULL),
+('prod-028', 'Son Thỏi Classic', 
+ 'Son thỏi classic truyền thống, màu sắc đa dạng, bền màu.',
+ 'Lila Beauty', 'Đỏ', NULL, NULL, '3.5g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Beeswax, Jojoba Oil, Vitamin E, Colorants', 
+ 'Thoa đều lên môi, có thể dùng chì kẻ môi trước',
+ 'Không nuốt. Tránh tiếp xúc với mắt.',
+ 3.5, 7.0, 2.0, 2.0, 10.0, 200000.0, 110000.0, 0.0, 200000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-025', 'user-002', NOW(), NULL, 'cat-012', NULL),
+('prod-029', 'Sữa Rửa Mặt Tẩy Trang', 
+ 'Sữa rửa mặt kết hợp tẩy trang, làm sạch sâu, dịu nhẹ.',
+ 'Lila Beauty', NULL, 'Mọi loại da', 'Làm sạch, tẩy trang', '150ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Glycerin, Hyaluronic Acid, Ceramides', 
+ 'Làm ướt mặt, lấy lượng vừa đủ massage, rửa sạch',
+ 'Tránh vùng mắt. Dùng 2 lần/ngày.',
+ 150.0, 6.0, 6.0, 15.0, 10.0, 290000.0, 160000.0, 0.0, 290000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-026', 'user-002', NOW(), NULL, 'cat-015', NULL),
+('prod-030', 'Nước Hoa Nam Hương Gỗ Thơm', 
+ 'Nước hoa nam hương gỗ thơm mạnh mẽ, nam tính, lưu hương lâu.',
+ 'Lila Fragrance', 'Gỗ', NULL, NULL, '100ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 5 YEAR), 
+ 'Alcohol, Water, Fragrance, Wood Extract', 
+ 'Xịt lên cổ tay, cổ và sau tai. Không chà xát.',
+ 'Tránh tiếp xúc với mắt. Để xa tầm tay trẻ em.',
+ 100.0, 6.0, 6.0, 15.0, 10.0, 2100000.0, 1050000.0, 350000.0, 1750000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-027', 'user-002', NOW(), NULL, 'cat-020', NULL),
+('prod-031', 'Phấn Má Hồng Tự Nhiên', 
+ 'Phấn má hồng tự nhiên, dễ tán, màu sắc tươi tắn.',
+ 'Lila Beauty', 'Hồng', NULL, NULL, '5g', 'Italy', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Talc, Mica, Iron Oxides, Titanium Dioxide', 
+ 'Dùng cọ phấn má tán đều lên gò má',
+ 'Tránh tiếp xúc với mắt. Test thử trên da tay trước.',
+ 5.0, 6.0, 6.0, 2.0, 10.0, 240000.0, 130000.0, 0.0, 240000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-028', 'user-002', NOW(), NULL, 'cat-007', NULL),
+('prod-032', 'Highlighter Dạng Lỏng', 
+ 'Highlighter dạng lỏng dễ tán, ánh sáng tự nhiên, không bết.',
+ 'Lila Beauty', 'Vàng Hồng', NULL, NULL, '10ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Water, Mica, Titanium Dioxide, Iron Oxides', 
+ 'Dùng ngón tay hoặc cọ highlight tán lên sống mũi, gò má',
+ 'Tránh vùng mắt. Dùng lượng vừa phải.',
+ 10.0, 3.0, 3.0, 8.0, 10.0, 280000.0, 150000.0, 0.0, 280000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-029', 'user-002', NOW(), NULL, 'cat-007', NULL),
+('prod-033', 'Kem Che Khuyết Điểm Full Coverage', 
+ 'Kem che khuyết điểm che phủ cao, che được cả thâm và mụn.',
+ 'Lila Beauty', 'Nude', NULL, NULL, '10ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Dimethicone, Titanium Dioxide, Iron Oxides', 
+ 'Thoa lên vùng cần che, dùng ngón tay hoặc cọ blend',
+ 'Test thử trên da tay trước. Tránh vùng mắt.',
+ 10.0, 2.0, 2.0, 6.0, 10.0, 190000.0, 105000.0, 0.0, 190000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-030', 'user-002', NOW(), NULL, 'cat-008', NULL),
+('prod-034', 'Dưỡng Môi Có Màu', 
+ 'Dưỡng môi có màu, vừa dưỡng vừa tạo màu tự nhiên.',
+ 'Lila Beauty', 'Hồng', NULL, NULL, '4g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Beeswax, Jojoba Oil, Vitamin E, Colorants', 
+ 'Thoa đều lên môi, có thể dùng nhiều lần',
+ 'Không nuốt. Tránh tiếp xúc với mắt.',
+ 4.0, 2.0, 2.0, 2.0, 10.0, 90000.0, 45000.0, 0.0, 90000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-031', 'user-002', NOW(), NULL, 'cat-014', NULL),
+('prod-035', 'Nước Hoa Unisex Hương Biển', 
+ 'Nước hoa unisex hương biển tươi mát, phù hợp mọi mùa.',
+ 'Lila Fragrance', 'Xanh', NULL, NULL, '50ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 5 YEAR), 
+ 'Alcohol, Water, Fragrance, Marine Extract', 
+ 'Xịt lên cổ tay, cổ và sau tai. Không chà xát.',
+ 'Tránh tiếp xúc với mắt. Để xa tầm tay trẻ em.',
+ 50.0, 5.0, 5.0, 12.0, 10.0, 1600000.0, 800000.0, 300000.0, 1300000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-032', 'user-002', NOW(), NULL, 'cat-021', NULL),
+('prod-036', 'Son Lì Matte Siêu Bền', 
+ 'Son lì matte siêu bền, không trôi màu, không khô môi.',
+ 'Lila Beauty', 'Đỏ Đậm', NULL, NULL, '3.5g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Beeswax, Jojoba Oil, Vitamin E, Colorants', 
+ 'Thoa đều lên môi, để khô tự nhiên',
+ 'Tránh tiếp xúc với mắt. Ngưng sử dụng nếu có kích ứng.',
+ 3.5, 7.0, 2.0, 2.0, 10.0, 270000.0, 140000.0, 0.0, 270000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-033', 'user-002', NOW(), NULL, 'cat-013', NULL),
+('prod-037', 'Kem Nền BB Cream', 
+ 'Kem nền BB cream đa năng, che phủ, dưỡng da, chống nắng.',
+ 'Lila Beauty', 'Natural', 'Mọi loại da', 'Che phủ, dưỡng da', '50ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Dimethicone, Titanium Dioxide, SPF30', 
+ 'Thoa đều lên mặt bằng tay hoặc cọ',
+ 'Test thử trên da tay trước. Tránh vùng mắt.',
+ 50.0, 5.0, 5.0, 8.0, 10.0, 360000.0, 190000.0, 0.0, 360000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-034', 'user-002', NOW(), NULL, 'cat-006', NULL),
+('prod-038', 'Palette Phấn Mắt 6 Màu', 
+ 'Bộ palette phấn mắt 6 màu cơ bản, dễ sử dụng, giá cả hợp lý.',
+ 'Lila Beauty', 'Đa màu', NULL, NULL, '6g', 'Italy', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Talc, Mica, Iron Oxides, Ultramarines', 
+ 'Dùng cọ phấn mắt để tán màu',
+ 'Tránh tiếp xúc với mắt. Ngưng sử dụng nếu có kích ứng.',
+ 6.0, 8.0, 6.0, 2.0, 10.0, 280000.0, 150000.0, 0.0, 280000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-035', 'user-002', NOW(), NULL, 'cat-009', NULL),
+('prod-039', 'Serum Niacinamide Se Khít Lỗ Chân Lông', 
+ 'Serum Niacinamide se khít lỗ chân lông, kiểm soát dầu, làm mịn da.',
+ 'Lila Beauty', NULL, 'Da dầu, da hỗn hợp', 'Se khít lỗ chân lông, kiểm soát dầu', '30ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Niacinamide, Hyaluronic Acid, Salicylic Acid', 
+ 'Thoa 2-3 giọt lên mặt sau khi rửa mặt, massage nhẹ',
+ 'Tránh ánh nắng sau khi dùng. Test thử trên da tay trước.',
+ 30.0, 3.0, 3.0, 10.0, 10.0, 520000.0, 280000.0, 0.0, 520000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-036', 'user-002', NOW(), NULL, 'cat-017', NULL),
+('prod-040', 'Nước Hoa Nữ Hương Vanilla', 
+ 'Nước hoa nữ hương vanilla ngọt ngào, ấm áp, quyến rũ.',
+ 'Lila Fragrance', 'Vàng', NULL, NULL, '50ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 5 YEAR), 
+ 'Alcohol, Water, Fragrance, Vanilla Extract', 
+ 'Xịt lên cổ tay, cổ và sau tai. Không chà xát.',
+ 'Tránh tiếp xúc với mắt. Để xa tầm tay trẻ em.',
+ 50.0, 5.0, 5.0, 12.0, 10.0, 1300000.0, 650000.0, 250000.0, 1050000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-037', 'user-002', NOW(), NULL, 'cat-019', NULL),
+('prod-041', 'Bút Kẻ Mắt Dạng Bút Chì', 
+ 'Bút kẻ mắt dạng bút chì dễ sử dụng, không lem, dễ tẩy.',
+ 'Lila Beauty', 'Đen', NULL, NULL, '0.3g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Carbon Black, Acrylate Copolymer', 
+ 'Kẻ từ góc trong mắt ra ngoài, tạo đường mảnh',
+ 'Tránh tiếp xúc với mắt. Tháo bằng nước tẩy trang.',
+ 0.3, 1.5, 1.5, 12.0, 10.0, 120000.0, 65000.0, 0.0, 120000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-038', 'user-002', NOW(), NULL, 'cat-010', NULL),
+('prod-042', 'Mascara Làm Cong Mi', 
+ 'Mascara làm cong mi tự nhiên, không vón cục, dễ tháo.',
+ 'Lila Beauty', 'Đen', NULL, NULL, '8ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Acrylate Copolymer, Carbon Black, Beeswax', 
+ 'Chải từ chân mi lên ngọn, chải nhiều lớp',
+ 'Tránh tiếp xúc với mắt. Tháo bằng nước tẩy trang.',
+ 8.0, 2.0, 2.0, 8.0, 10.0, 260000.0, 140000.0, 0.0, 260000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-039', 'user-002', NOW(), NULL, 'cat-011', NULL),
+('prod-043', 'Toner Tẩy Tế Bào Chết', 
+ 'Toner tẩy tế bào chết nhẹ nhàng, làm sáng da, mịn màng.',
+ 'Lila Beauty', NULL, 'Da thường, da hỗn hợp', 'Tẩy tế bào chết, làm sáng da', '200ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, AHA, BHA, Hyaluronic Acid, Glycerin', 
+ 'Thấm vào bông tẩy trang, lau nhẹ nhàng lên mặt',
+ 'Tránh vùng mắt. Test thử trên da tay trước. Dùng buổi tối.',
+ 200.0, 6.0, 6.0, 15.0, 10.0, 380000.0, 200000.0, 0.0, 380000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-040', 'user-002', NOW(), NULL, 'cat-016', NULL),
+('prod-044', 'Kem Dưỡng Mắt', 
+ 'Kem dưỡng mắt chống quầng thâm, giảm nếp nhăn, làm sáng vùng mắt.',
+ 'Lila Beauty', NULL, 'Mọi loại da', 'Chống quầng thâm, giảm nếp nhăn', '15ml', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Caffeine, Retinol, Hyaluronic Acid', 
+ 'Thoa đều lên vùng mắt, massage nhẹ nhàng',
+ 'Tránh tiếp xúc với mắt. Test thử trước.',
+ 15.0, 2.0, 2.0, 5.0, 10.0, 480000.0, 250000.0, 0.0, 480000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-041', 'user-002', NOW(), NULL, 'cat-018', NULL),
+('prod-045', 'Son Tint Màu Nước', 
+ 'Son tint màu nước tự nhiên, lâu trôi, không bong tróc.',
+ 'Lila Beauty', 'Đỏ Hồng', NULL, NULL, '4g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Water, Glycerin, Colorants, Preservatives', 
+ 'Thoa đều lên môi, để khô tự nhiên',
+ 'Tránh tiếp xúc với mắt. Ngưng sử dụng nếu có kích ứng.',
+ 4.0, 6.0, 1.5, 1.5, 10.0, 170000.0, 95000.0, 0.0, 170000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-042', 'user-002', NOW(), NULL, 'cat-013', NULL),
+('prod-046', 'Kem Chống Nắng SPF30', 
+ 'Kem chống nắng SPF30 nhẹ nhàng, không bết dính, phù hợp da nhạy cảm.',
+ 'Lila Beauty', NULL, 'Da nhạy cảm', 'Chống nắng, bảo vệ da', '50ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Zinc Oxide, Titanium Dioxide, Hyaluronic Acid', 
+ 'Thoa đều lên mặt 15 phút trước khi ra nắng',
+ 'Thoa lại sau mỗi 2 giờ hoặc sau khi bơi.',
+ 50.0, 5.0, 5.0, 8.0, 10.0, 320000.0, 170000.0, 0.0, 320000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-043', 'user-002', NOW(), NULL, 'cat-018', NULL),
+('prod-047', 'Sữa Rửa Mặt Tạo Bọt', 
+ 'Sữa rửa mặt tạo bọt dày, làm sạch sâu, không làm khô da.',
+ 'Lila Beauty', NULL, 'Mọi loại da', 'Làm sạch, tạo bọt', '120ml', 'Nhật Bản', 
+ DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 
+ 'Water, Glycerin, Hyaluronic Acid, Surfactants', 
+ 'Làm ướt mặt, tạo bọt, massage nhẹ, rửa sạch',
+ 'Tránh vùng mắt. Dùng 2 lần/ngày.',
+ 120.0, 6.0, 6.0, 12.0, 10.0, 270000.0, 145000.0, 0.0, 270000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-044', 'user-002', NOW(), NULL, 'cat-015', NULL),
+('prod-048', 'Nước Hoa Nam Hương Xạ Hương', 
+ 'Nước hoa nam hương xạ hương mạnh mẽ, nam tính, lưu hương lâu.',
+ 'Lila Fragrance', 'Nâu', NULL, NULL, '100ml', 'Pháp', 
+ DATE_ADD(CURDATE(), INTERVAL 5 YEAR), 
+ 'Alcohol, Water, Fragrance, Musk Extract', 
+ 'Xịt lên cổ tay, cổ và sau tai. Không chà xát.',
+ 'Tránh tiếp xúc với mắt. Để xa tầm tay trẻ em.',
+ 100.0, 6.0, 6.0, 15.0, 10.0, 2200000.0, 1100000.0, 400000.0, 1800000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-045', 'user-002', NOW(), NULL, 'cat-020', NULL),
+('prod-049', 'Phấn Má Dạng Kem', 
+ 'Phấn má dạng kem dễ tán, màu sắc tự nhiên, độ bền cao.',
+ 'Lila Beauty', 'Hồng Cam', NULL, NULL, '5g', 'Italy', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Water, Dimethicone, Iron Oxides, Titanium Dioxide', 
+ 'Dùng ngón tay hoặc cọ phấn má tán đều lên gò má',
+ 'Tránh tiếp xúc với mắt. Test thử trên da tay trước.',
+ 5.0, 6.0, 6.0, 2.0, 10.0, 250000.0, 135000.0, 0.0, 250000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-046', 'user-002', NOW(), NULL, 'cat-007', NULL),
+('prod-050', 'Highlighter Dạng Bột', 
+ 'Highlighter dạng bột mịn, ánh sáng đẹp, không bị vón cục.',
+ 'Lila Beauty', 'Vàng Hồng', NULL, NULL, '6g', 'Hàn Quốc', 
+ DATE_ADD(CURDATE(), INTERVAL 3 YEAR), 
+ 'Mica, Titanium Dioxide, Iron Oxides', 
+ 'Dùng cọ highlight tán lên sống mũi, gò má, trán',
+ 'Tránh vùng mắt. Dùng lượng vừa phải.',
+ 6.0, 6.0, 6.0, 2.0, 10.0, 270000.0, 145000.0, 0.0, 270000.0, 0, 'APPROVED',
+ NOW(), NOW(), 'user-047', 'user-002', NOW(), NULL, 'cat-007', NULL) AS new
+ON DUPLICATE KEY UPDATE 
+    name = new.name, 
+    description = new.description, 
+    category_id = new.category_id,
+    price = new.price,
+    status = new.status,
+    updated_at = NOW();
+```
+
+---
+
+## 🔧 IMPLEMENTATION CHI TIẾT
+
+### PHẦN 1: BACKEND SERVICE
+
+#### 1.1. ChatbotController (API Endpoint)
+
+**Spring Boot (Java):**
+
+```java
+@RestController
+@RequestMapping("/api/chatbot")
+@RequiredArgsConstructor
+@Slf4j
+public class ChatbotController {
+    
+    private final ChatbotService chatbotService;
+    
+    @PostMapping("/ask")
+    public ApiResponse<ChatResponse> ask(@Valid @RequestBody ChatRequest request) {
+        log.info("Chatbot request received: {}", request.getMessage());
+        ChatResponse response = chatbotService.ask(request);
+        return ApiResponse.<ChatResponse>builder()
+                .result(response)
+                .build();
+    }
+}
+```
+
+**Node.js (Express):**
+
+```javascript
+const express = require('express');
+const router = express.Router();
+const chatbotService = require('../services/chatbotService');
+
+router.post('/ask', async (req, res) => {
+    try {
+        const { message, sessionId } = req.body;
+        console.log('Chatbot request received:', message);
+        
+        const response = await chatbotService.ask(message, sessionId);
+        
+        res.json({
+            code: 1000,
+            result: response
+        });
+    } catch (error) {
+        console.error('Chatbot error:', error);
+        res.status(500).json({
+            code: 5000,
+            message: 'Internal server error'
+        });
+    }
+});
+
+module.exports = router;
+```
+
+**Python (Flask):**
+
+```python
+from flask import Blueprint, request, jsonify
+from services.chatbot_service import ChatbotService
+import logging
+
+chatbot_bp = Blueprint('chatbot', __name__)
+chatbot_service = ChatbotService()
+
+@chatbot_bp.route('/ask', methods=['POST'])
+def ask():
+    try:
+        data = request.get_json()
+        message = data.get('message')
+        session_id = data.get('sessionId')
+        
+        logging.info(f'Chatbot request received: {message}')
+        
+        response = chatbot_service.ask(message, session_id)
+        
+        return jsonify({
+            'code': 1000,
+            'result': response
+        })
+    except Exception as e:
+        logging.error(f'Chatbot error: {str(e)}')
+        return jsonify({
+            'code': 5000,
+            'message': 'Internal server error'
+        }), 500
+```
+
+---
+
+#### 1.2. ChatbotService (Core Logic)
+
+**Các Chức Năng Chính:**
+
+1. **Cache Mechanism**: Cache sản phẩm trong 30 phút
+2. **Conversation History**: Lưu lịch sử chat theo sessionId
+3. **Smart Context**: Chỉ đưa context cần thiết vào prompt
+4. **Error Handling**: Xử lý retry cho quota exceeded
+
+**Spring Boot (Java) - Core Methods:**
+
+```java
+@Service
+@Slf4j
+public class ChatbotService {
+    
+    // Constants
+    private static final String GEMINI_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
+    private static final long PRODUCTS_CACHE_TTL = 30 * 60 * 1000; // 30 phút
+    
+    // Dependencies
+    private final WebClient webClient;
+    private final ProductService productService;
+    private final CategoryService categoryService;
+    private final String apiKey;
+    private final String model;
+    
+    // Cache
+    private String cachedProductsContext = "";
+    private long lastProductsCacheUpdate = 0;
+    
+    // Conversation history (có thể dùng Redis cho production)
+    private final Map<String, List<GeminiContent>> conversationHistory = new HashMap<>();
+    
+    // System Prompt - QUAN TRỌNG NHẤT
+    private static final String SYSTEM_PROMPT_BASE = """
+        Bạn là trợ lý AI chuyên nghiệp của website Nova Beauty - một cửa hàng mỹ phẩm và chăm sóc sắc đẹp uy tín.
+        
+        VAI TRÒ: Hỗ trợ khách hàng nhiệt tình, chuyên nghiệp, thân thiện. Tư vấn sản phẩm, giải đáp thắc mắc.
+        
+        QUY TẮC VÀNG (TUYỆT ĐỐI PHẢI TUÂN THỦ):
+        1. CHỈ tư vấn sản phẩm CÓ TRONG CONTEXT được cung cấp (từ database).
+        2. TUYỆT ĐỐI KHÔNG tự nghĩ ra, tạo ra, hoặc thay đổi bất kỳ tên sản phẩm nào.
+        3. TUYỆT ĐỐI KHÔNG gợi ý sản phẩm KHÔNG CÓ trong context/database.
+        4. Nếu không có thông tin trong context → Nói "Xin lỗi, hiện tại chưa có sản phẩm phù hợp. Bạn có thể liên hệ CSKH để được tư vấn thêm ạ."
+        
+        TƯ VẤN SẢN PHẨM (CHỈ DÙNG THÔNG TIN TỪ CONTEXT):
+        A. Khi khách hỏi CHUNG (ví dụ: "có son gì", "có kem gì"):
+           - Nếu có danh mục con: liệt kê danh mục con để khách chọn
+           - Format: "Chào bạn! Nova Beauty có các loại [danh mục] sau:\n1. [Tên danh mục con 1]\n2. [Tên danh mục con 2]\n\nBạn muốn xem chi tiết danh mục nào ạ?"
+        
+        B. Khi khách hỏi CỤ THỂ (ví dụ: "son dior", "kem chống nắng la roche"):
+           - CHỈ giới thiệu ngắn gọn loại sản phẩm
+           - KHÔNG liệt kê tên sản phẩm cụ thể trong text (hệ thống sẽ tự hiển thị card)
+           - Nếu >20 sản phẩm: đề xuất lọc theo thương hiệu, giá, loại da
+           - Format: "Chào bạn! Nova Beauty có các sản phẩm [loại] như bạn đang tìm kiếm. Dưới đây là các sản phẩm bạn có thể tham khảo ạ:"
+        
+        C. Khi khách CHỌN sản phẩm:
+           - Đưa link [LINK:/product/{id}] với ID CÓ TRONG CONTEXT
+           - Format: "Bạn có thể xem chi tiết sản phẩm [tên] tại: [LINK:/product/{id}]"
+        
+        D. Khi khách HỎI VỀ THƯƠNG HIỆU (ví dụ: "có son dior"):
+           - Nếu <10 sản phẩm: liệt kê tên và link từng sản phẩm
+           - Nếu >=10 sản phẩm: đưa link trang thương hiệu [LINK:/products?brand={brand}]
+        
+        THÔNG TIN KHUYẾN MÃI/VOUCHER:
+        - KHÔNG liệt kê danh sách khuyến mãi
+        - Hướng dẫn vào trang Khuyến mãi: [LINK:/promo]
+        
+        GIỚI HẠN:
+        - KHÔNG thể tra cứu đơn hàng cụ thể (cần đăng nhập)
+        - KHÔNG thể xử lý khiếu nại/đổi trả (cần liên hệ CSKH)
+        - KHÔNG có thông tin tài khoản (cần đăng nhập)
+        - KHÔNG thể thanh toán trực tiếp (cần đặt hàng trên website)
+        
+        NGUYÊN TẮC TRẢ LỜI:
+        1. Ngắn gọn, rõ ràng, dễ hiểu
+        2. Ngôn ngữ thân thiện, chuyên nghiệp
+        3. CHỈ tư vấn sản phẩm CÓ TRONG CONTEXT
+        4. Khi không có thông tin: thành thật nói không có
+        
+        QUY TẮC FORMATTING:
+        1. TUYỆT ĐỐI KHÔNG dùng markdown: **, ***, *, #, __, ~~
+        2. Chỉ dùng text thuần túy
+        3. Liệt kê: dùng số thứ tự (1., 2., 3.) hoặc dấu gạch (-)
+        4. Trích dẫn: dùng dấu ngoặc kép ""
+        """;
+    
+    public ChatResponse ask(ChatRequest request) {
+        try {
+            // 1. Validate request
+            if (request == null || request.getMessage() == null || request.getMessage().isBlank()) {
+                throw new AppException(ErrorCode.INVALID_REQUEST);
+            }
+            
+            // 2. Tạo hoặc lấy sessionId
+            String sessionId = request.getSessionId();
+            if (sessionId == null || sessionId.isBlank()) {
+                sessionId = UUID.randomUUID().toString();
+            }
+            
+            // 3. Lấy conversation history
+            List<GeminiContent> history = conversationHistory.getOrDefault(sessionId, new ArrayList<>());
+            
+            // 4. Build request cho Gemini
+            GeminiRequest geminiRequest = buildGeminiRequest(request.getMessage(), history);
+            
+            // 5. Gọi Gemini API với retry
+            GeminiResponse response = callGeminiWithRetry(geminiRequest, 3);
+            
+            // 6. Extract reply
+            String reply = response.getCandidates().get(0).getContent().getParts().get(0).getText();
+            
+            // 7. Remove markdown formatting
+            reply = reply.replace("***", "").replace("**", "").replace("*", "");
+            
+            // 8. Lưu vào history
+            history.add(new GeminiContent("user", request.getMessage()));
+            history.add(new GeminiContent("model", reply));
+            conversationHistory.put(sessionId, history);
+            
+            // 9. Giới hạn history (giữ 10 cặp Q&A gần nhất)
+            if (history.size() > 20) {
+                history.subList(0, history.size() - 20).clear();
+            }
+            
+            return ChatResponse.builder()
+                    .reply(reply)
+                    .sessionId(sessionId)
+                    .build();
+                    
+        } catch (Exception e) {
+            log.error("Error in chatbot service", e);
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
+    }
+    
+    private GeminiRequest buildGeminiRequest(String userMessage, List<GeminiContent> history) {
+        List<GeminiContent> contents = new ArrayList<>();
+        
+        // Refresh products context nếu cần
+        refreshProductsContextIfNeeded();
+        
+        // Tạo system prompt
+        String systemPrompt = SYSTEM_PROMPT_BASE;
+        
+        // Chỉ thêm products context nếu câu hỏi liên quan đến sản phẩm
+        if (!isGreetingMessage(userMessage) && isProductRelatedQuestion(userMessage)) {
+            String productsContext = getProductsContextForMessage(userMessage);
+            if (!productsContext.isEmpty()) {
+                systemPrompt += "\n\n" + productsContext;
+            }
+        }
+        
+        // Build contents
+        if (history.isEmpty()) {
+            // Conversation mới: thêm system prompt
+            contents.add(new GeminiContent("user", systemPrompt + "\n\nCâu hỏi của khách hàng: " + userMessage));
+        } else {
+            // Conversation có history: thêm history + message mới
+            contents.addAll(history);
+            
+            String messageWithContext = userMessage;
+            if (!isGreetingMessage(userMessage) && isProductRelatedQuestion(userMessage)) {
+                String productsContext = getProductsContextForMessage(userMessage);
+                if (!productsContext.isEmpty()) {
+                    messageWithContext = "Thông tin sản phẩm hiện có:\n" + productsContext 
+                        + "\n\nCâu hỏi của khách hàng: " + userMessage;
+                }
+            }
+            contents.add(new GeminiContent("user", messageWithContext));
+        }
+        
+        GeminiRequest request = new GeminiRequest();
+        request.setContents(contents);
+        return request;
+    }
+    
+    private GeminiResponse callGeminiWithRetry(GeminiRequest request, int maxRetries) {
+        int retryCount = 0;
+        long baseDelay = 2000; // 2 seconds
+        
+        while (retryCount < maxRetries) {
+            try {
+                return webClient.post()
+                        .uri("/models/" + model + ":generateContent?key=" + apiKey)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(request)
+                        .retrieve()
+                        .bodyToMono(GeminiResponse.class)
+                        .block();
+                        
+            } catch (WebClientResponseException e) {
+                int statusCode = e.getStatusCode().value();
+                String errorBody = e.getResponseBodyAsString();
+                
+                // 400 BadRequest: không retry
+                if (statusCode == 400) {
+                    log.error("Gemini API BadRequest (400): {}", errorBody);
+                    throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+                }
+                
+                // 404 NotFound: không retry
+                if (statusCode == 404) {
+                    log.error("Gemini API NotFound (404). Model '{}' not found", model);
+                    throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+                }
+                
+                // 429 TooManyRequests: retry với backoff
+                if (statusCode == 429) {
+                    // Nếu limit = 0, không retry
+                    if (errorBody.contains("\"limit\": 0")) {
+                        log.error("Gemini API quota exceeded (limit = 0)");
+                        throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+                    }
+                    
+                    if (retryCount < maxRetries) {
+                        long delay = baseDelay * (long) Math.pow(2, retryCount);
+                        log.warn("Gemini API rate limited. Retrying in {}ms (attempt {}/{})", 
+                            delay, retryCount + 1, maxRetries);
+                        Thread.sleep(delay);
+                        retryCount++;
+                        continue;
+                    }
+                }
+                
+                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+            } catch (Exception e) {
+                log.error("Unexpected error calling Gemini API", e);
+                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+            }
+        }
+        
+        throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+    }
+    
+    private void refreshProductsContextIfNeeded() {
+        long now = System.currentTimeMillis();
+        if (now - lastProductsCacheUpdate > PRODUCTS_CACHE_TTL || cachedProductsContext.isEmpty()) {
+            refreshProductsContext();
+        }
+    }
+    
+    private void refreshProductsContext() {
+        try {
+            // Lấy sản phẩm từ database
+            List<ProductResponse> products = productService.getActiveProducts();
+            
+            // Giới hạn 100 sản phẩm để tránh prompt quá dài
+            int maxProducts = Math.min(100, products.size());
+            
+            // Format thành text context
+            StringBuilder context = new StringBuilder();
+            context.append("DANH SÁCH SẢN PHẨM CỦA NOVA BEAUTY:\n\n");
+            
+            for (int i = 0; i < maxProducts; i++) {
+                ProductResponse product = products.get(i);
+                context.append(String.format("%d. ID: %s | Tên: %s", 
+                    i + 1, product.getId(), product.getName()));
+                
+                if (product.getBrand() != null) {
+                    context.append(" | Thương hiệu: ").append(product.getBrand());
+                }
+                
+                if (product.getPrice() != null) {
+                    context.append(String.format(" | Giá: %,.0f VNĐ", product.getPrice()));
+                }
+                
+                if (product.getSkinType() != null) {
+                    context.append(" | Loại da: ").append(product.getSkinType());
+                }
+                
+                context.append("\n");
+            }
+            
+            cachedProductsContext = context.toString();
+            lastProductsCacheUpdate = System.currentTimeMillis();
+            
+            log.info("Products context refreshed: {} products", maxProducts);
+            
+        } catch (Exception e) {
+            log.error("Error refreshing products context", e);
+        }
+    }
+    
+    private boolean isGreetingMessage(String message) {
+        String lowerMessage = message.toLowerCase().trim();
+        String[] greetingKeywords = {
+            "hi", "hello", "xin chào", "chào", "chào bạn",
+            "hey", "hế lô", "alo"
+        };
+        for (String keyword : greetingKeywords) {
+            if (lowerMessage.equals(keyword) || lowerMessage.startsWith(keyword + " ")) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private boolean isProductRelatedQuestion(String message) {
+        String lowerMessage = message.toLowerCase();
+        String[] productKeywords = {
+            "sản phẩm", "mỹ phẩm", "kem", "son", "nước hoa",
+            "trang điểm", "chăm sóc", "tư vấn", "giá", "mua", "bán",
+            "skincare", "makeup", "perfume"
+        };
+        for (String keyword : productKeywords) {
+            if (lowerMessage.contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // ... Thêm các methods khác như getProductsContextForMessage(), 
+    // getSubCategoriesContext(), getBrandProductsContext(), etc.
+}
+```
+
+---
+
+### PHẦN 2: FRONTEND (REACTJS)
+
+#### 2.1. Chatbot Service (API Client)
+
+```javascript
+import axios from 'axios';
+
+const API_BASE_URL = 'http://localhost:8080'; // Hoặc URL backend của bạn
+
+const chatbotService = {
+    /**
+     * Gửi message đến chatbot AI
+     * @param {string} message - Nội dung tin nhắn
+     * @param {string} sessionId - Session ID (optional)
+     * @returns {Promise<{reply: string, sessionId: string}>}
+     */
+    async ask(message, sessionId = null) {
+        try {
+            const payload = { message };
+            if (sessionId) {
+                payload.sessionId = sessionId;
+            }
+            
+            const response = await axios.post(`${API_BASE_URL}/api/chatbot/ask`, payload);
+            
+            return response.data.result;
+        } catch (error) {
+            console.error('[Chatbot Service] ask error:', error);
+            throw error;
+        }
+    }
+};
+
+export default chatbotService;
+```
+
+#### 2.2. Chatbot Component (UI)
+
+```jsx
+import React, { useState, useEffect, useRef } from 'react';
+import chatbotService from '~/services/chatbot';
+import './Chatbot.scss';
+
+const Chatbot = () => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [messages, setMessages] = useState([]);
+    const [inputMessage, setInputMessage] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [sessionId, setSessionId] = useState(null);
+    const messagesEndRef = useRef(null);
+
+    // Auto scroll to bottom
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    // Add greeting message when open
+    useEffect(() => {
+        if (isOpen && messages.length === 0) {
+            setMessages([
+                {
+                    type: 'bot',
+                    content: 'Xin chào! Tôi là trợ lý AI của Nova Beauty. Tôi có thể giúp gì cho bạn hôm nay?',
+                    timestamp: new Date()
+                }
+            ]);
+        }
+    }, [isOpen]);
+
+    const handleSendMessage = async () => {
+        if (!inputMessage.trim()) return;
+
+        // Add user message
+        const userMessage = {
+            type: 'user',
+            content: inputMessage,
+            timestamp: new Date()
+        };
+        setMessages(prev => [...prev, userMessage]);
+        setInputMessage('');
+        setIsLoading(true);
+
+        try {
+            // Call API
+            const response = await chatbotService.ask(inputMessage, sessionId);
+            
+            // Update sessionId
+            if (response.sessionId) {
+                setSessionId(response.sessionId);
+            }
+
+            // Add bot message
+            const botMessage = {
+                type: 'bot',
+                content: response.reply,
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, botMessage]);
+            
+        } catch (error) {
+            console.error('Error sending message:', error);
+            const errorMessage = {
+                type: 'bot',
+                content: 'Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau.',
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    };
+
+    return (
+        <>
+            {/* Chat button */}
+            <button 
+                className={`chatbot-button ${isOpen ? 'active' : ''}`}
+                onClick={() => setIsOpen(!isOpen)}
+            >
+                <i className="fas fa-comments"></i>
+            </button>
+
+            {/* Chat window */}
+            {isOpen && (
+                <div className="chatbot-window">
+                    {/* Header */}
+                    <div className="chatbot-header">
+                        <h3>Trợ lý AI Nova Beauty</h3>
+                        <button onClick={() => setIsOpen(false)}>
+                            <i className="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    {/* Messages */}
+                    <div className="chatbot-messages">
+                        {messages.map((msg, index) => (
+                            <div 
+                                key={index} 
+                                className={`message ${msg.type}`}
+                            >
+                                <div className="message-content">
+                                    {msg.content}
+                                </div>
+                                <div className="message-time">
+                                    {msg.timestamp.toLocaleTimeString('vi-VN', { 
+                                        hour: '2-digit', 
+                                        minute: '2-digit' 
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                        {isLoading && (
+                            <div className="message bot">
+                                <div className="message-content loading">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </div>
+                        )}
+                        <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Input */}
+                    <div className="chatbot-input">
+                        <textarea
+                            value={inputMessage}
+                            onChange={(e) => setInputMessage(e.target.value)}
+                            onKeyPress={handleKeyPress}
+                            placeholder="Nhập tin nhắn..."
+                            rows={1}
+                            disabled={isLoading}
+                        />
+                        <button 
+                            onClick={handleSendMessage}
+                            disabled={isLoading || !inputMessage.trim()}
+                        >
+                            <i className="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+};
+
+export default Chatbot;
+```
+
+#### 2.3. Chatbot Styles (SCSS)
+
+```scss
+.chatbot-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: all 0.3s ease;
+    z-index: 1000;
+
+    &:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    &.active {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+}
+
+.chatbot-window {
+    position: fixed;
+    bottom: 100px;
+    right: 30px;
+    width: 380px;
+    height: 600px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    overflow: hidden;
+
+    .chatbot-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+    }
+
+    .chatbot-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        background: #f5f5f5;
+
+        .message {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+
+            &.user {
+                align-items: flex-end;
+
+                .message-content {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    max-width: 70%;
+                    padding: 12px 16px;
+                    border-radius: 18px 18px 4px 18px;
+                }
+            }
+
+            &.bot {
+                align-items: flex-start;
+
+                .message-content {
+                    background: white;
+                    color: #333;
+                    max-width: 70%;
+                    padding: 12px 16px;
+                    border-radius: 18px 18px 18px 4px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+                    &.loading {
+                        display: flex;
+                        gap: 4px;
+                        padding: 16px;
+
+                        span {
+                            width: 8px;
+                            height: 8px;
+                            border-radius: 50%;
+                            background: #667eea;
+                            animation: bounce 1.4s infinite ease-in-out;
+
+                            &:nth-child(1) {
+                                animation-delay: -0.32s;
+                            }
+                            &:nth-child(2) {
+                                animation-delay: -0.16s;
+                            }
+                        }
+                    }
+                }
+            }
+
+            .message-time {
+                font-size: 11px;
+                color: #999;
+                margin-top: 4px;
+            }
+        }
+    }
+
+    .chatbot-input {
+        padding: 16px;
+        background: white;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        gap: 12px;
+
+        textarea {
+            flex: 1;
+            border: 1px solid #e0e0e0;
+            border-radius: 24px;
+            padding: 12px 16px;
+            font-size: 14px;
+            resize: none;
+            font-family: inherit;
+
+            &:focus {
+                outline: none;
+                border-color: #667eea;
+            }
+        }
+
+        button {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+
+            &:hover:not(:disabled) {
+                transform: scale(1.1);
+            }
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+        }
+    }
+}
+
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0);
+    }
+    40% {
+        transform: scale(1);
+    }
+}
+```
+
+---
+
+### PHẦN 3: CẤU HÌNH VÀ DEPLOYMENT
+
+#### 3.1. Environment Variables
+
+**Backend (application.yaml):**
+
+```yaml
+gemini:
+  apiKey: ${GEMINI_API_KEY:your-api-key-here}
+  model: gemini-1.5-flash # Hoặc gemini-2.0-flash, gemini-pro
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/nova_beauty
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:password}
+```
+
+**Frontend (.env):**
+
+```
+REACT_APP_API_BASE_URL=http://localhost:8080
+```
+
+#### 3.2. Lấy Gemini API Key
+
+1. Truy cập [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Đăng nhập bằng tài khoản Google
+3. Click "Create API Key"
+4. Copy API key và lưu vào environment variable
+
+#### 3.3. Testing
+
+**Test API bằng Postman/cURL:**
+
+```bash
+curl -X POST http://localhost:8080/api/chatbot/ask \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Bạn có sản phẩm nào cho da dầu không?",
+    "sessionId": null
+  }'
+```
+
+**Expected Response:**
+
+```json
+{
+  "code": 1000,
+  "result": {
+    "reply": "Chào bạn! Nova Beauty có các sản phẩm chăm sóc da cho da dầu. Dưới đây là các sản phẩm bạn có thể tham khảo ạ:",
+    "sessionId": "123e4567-e89b-12d3-a456-426614174000"
+  }
+}
+```
+
+---
+
+## 🎯 TÍNH NĂNG NÂNG CAO
+
+### 1. Smart Context Loading
+
+**Vấn đề:** Prompt quá dài nếu load tất cả sản phẩm
+
+**Giải pháp:**
+
+- Chỉ load context khi câu hỏi liên quan đến sản phẩm
+- Filter sản phẩm theo keyword
+- Ưu tiên danh mục con khi hỏi chung
+- Giới hạn 50-100 sản phẩm trong context
+
+**Implementation:**
+
+```java
+private String getProductsContextForMessage(String userMessage) {
+    // Extract keywords
+    String[] productKeywords = extractProductKeywords(userMessage);
+    
+    if (productKeywords.length == 0) {
+        return "";
+    }
+    
+    // Kiểm tra câu hỏi chung hay cụ thể
+    boolean isSpecific = isSpecificProductQuestion(userMessage);
+    
+    if (!isSpecific) {
+        // Câu hỏi chung: trả về danh mục con
+        String subCategoriesContext = getSubCategoriesContext(productKeywords[0]);
+        if (!subCategoriesContext.isEmpty()) {
+            return subCategoriesContext;
+        }
+    }
+    
+    // Kiểm tra câu hỏi về brand
+    String brandName = extractBrandFromMessage(userMessage);
+    if (brandName != null) {
+        String brandProductsContext = getBrandProductsContext(brandName);
+        if (!brandProductsContext.isEmpty()) {
+            return brandProductsContext;
+        }
+    }
+    
+    // Trả về sản phẩm filtered
+    return getFilteredProductsContext(productKeywords);
+}
+```
+
+### 2. Subcategories Context
+
+**Mục đích:** Khi user hỏi chung (ví dụ: "có son gì"), trả về danh mục con để user chọn
+
+**Implementation:**
+
+```java
+private String getSubCategoriesContext(String keyword) {
+    try {
+        // Tìm category theo keyword
+        List<CategoryResponse> categories = categoryService.getAllCategories();
+        CategoryResponse mainCategory = null;
+        
+        // Tìm category phù hợp
+        for (CategoryResponse cat : categories) {
+            if (cat.getName().toLowerCase().contains(keyword.toLowerCase())) {
+                mainCategory = cat;
+                break;
+            }
+        }
+        
+        if (mainCategory == null) {
+            return "";
+        }
+        
+        // Lấy subcategories
+        List<CategoryResponse> subCategories = categoryService.getSubCategories(mainCategory.getId());
+        
+        if (subCategories.isEmpty()) {
+            return "";
+        }
+        
+        // Format context
+        StringBuilder context = new StringBuilder();
+        context.append("=== DANH MỤC CON CỦA ").append(mainCategory.getName().toUpperCase()).append(" ===\n");
+        context.append("TUYỆT ĐỐI CHỈ LIỆT KÊ ĐÚNG Y HỆT CÁC DANH MỤC CON SAU:\n\n");
+        
+        for (int i = 0; i < subCategories.size(); i++) {
+            CategoryResponse subCat = subCategories.get(i);
+            context.append(String.format("%d. %s", i + 1, subCat.getName()));
+            if (subCat.getProductCount() != null && subCat.getProductCount() > 0) {
+                context.append(String.format(" (%d sản phẩm)", subCat.getProductCount()));
+            }
+            context.append("\n");
+        }
+        
+        return context.toString();
+        
+    } catch (Exception e) {
+        log.error("Error getting subcategories", e);
+        return "";
+    }
+}
+```
+
+### 3. Brand Products Context
+
+**Mục đích:** Khi user hỏi về thương hiệu (ví dụ: "có son dior"), trả về sản phẩm của brand đó
+
+**Implementation:**
+
+```java
+private String getBrandProductsContext(String brandName) {
+    try {
+        // Search products by brand
+        List<ProductResponse> brandProducts = productService.searchProducts(brandName)
+            .stream()
+            .filter(p -> p.getBrand() != null && p.getBrand().equalsIgnoreCase(brandName))
+            .collect(Collectors.toList());
+        
+        if (brandProducts.isEmpty()) {
+            return "";
+        }
+        
+        // Format context
+        StringBuilder context = new StringBuilder();
+        context.append("=== SẢN PHẨM THEO THƯƠNG HIỆU: ").append(brandName.toUpperCase()).append(" ===\n");
+        context.append("TÊN THƯƠNG HIỆU: ").append(brandName).append("\n");
+        context.append("SỐ LƯỢNG SẢN PHẨM: ").append(brandProducts.size()).append("\n\n");
+        
+        // Giới hạn 50 sản phẩm
+        int maxProducts = Math.min(50, brandProducts.size());
+        for (int i = 0; i < maxProducts; i++) {
+            ProductResponse product = brandProducts.get(i);
+            context.append(String.format("%d. ID: %s | Tên: %s", 
+                i + 1, product.getId(), product.getName()));
+            if (product.getPrice() != null) {
+                context.append(String.format(" | Giá: %,.0f VNĐ", product.getPrice()));
+            }
+            context.append("\n");
+        }
+        
+        context.append("\nQUY TẮC KHI TRẢ LỜI:\n");
+        context.append("- Nếu có <10 sản phẩm: liệt kê tất cả tên và link [LINK:/product/{id}]\n");
+        context.append("- Nếu có >=10 sản phẩm: đưa link [LINK:/products?brand=" + brandName + "]\n");
+        
+        return context.toString();
+        
+    } catch (Exception e) {
+        log.error("Error getting brand products", e);
+        return "";
+    }
+}
+```
+
+### 4. Retry Logic With Exponential Backoff
+
+**Mục đích:** Xử lý quota exceeded và network errors
+
+**Implementation đã được trình bày ở phần ChatbotService.callGeminiWithRetry()**
+
+### 5. Scheduled Cache Refresh
+
+**Mục đích:** Tự động refresh cache mỗi 30 phút
+
+**Implementation:**
+
+```java
+@Scheduled(fixedRate = PRODUCTS_CACHE_TTL)
+public void scheduledRefreshProductsContext() {
+    log.info("Scheduled task: Refreshing products context");
+    refreshProductsContext();
+}
+```
+
+**Configuration:**
+
+```java
+@Configuration
+@EnableScheduling
+public class SchedulingConfig {
+    // Spring Boot sẽ tự động chạy @Scheduled tasks
+}
+```
+
+---
+
+## 🔒 BẢO MẬT VÀ TỐI ƯU
+
+### 1. Bảo Mật API Key
+
+```yaml
+# KHÔNG commit API key vào Git
+gemini:
+  apiKey: ${GEMINI_API_KEY}  # Lấy từ environment variable
+```
+
+```bash
+# Set environment variable
+export GEMINI_API_KEY="your-actual-api-key"
+```
+
+### 2. Rate Limiting
+
+```java
+@RateLimiter(name = "chatbot", fallbackMethod = "rateLimitFallback")
+public ChatResponse ask(ChatRequest request) {
+    // ...
+}
+
+public ChatResponse rateLimitFallback(ChatRequest request, Throwable t) {
+    return ChatResponse.builder()
+        .reply("Xin lỗi, hệ thống đang quá tải. Vui lòng thử lại sau.")
+        .build();
+}
+```
+
+### 3. Input Validation
+
+```java
+@Valid
+public class ChatRequest {
+    @NotBlank(message = "Message cannot be blank")
+    @Size(max = 1000, message = "Message too long")
+    private String message;
+    
+    private String sessionId;
+}
+```
+
+### 4. Caching với Redis (Production)
+
+```java
+@Configuration
+public class RedisConfig {
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(factory);
+        return template;
+    }
+}
+
+// Usage
+@Autowired
+private RedisTemplate<String, Object> redisTemplate;
+
+private void saveConversationHistory(String sessionId, List<GeminiContent> history) {
+    redisTemplate.opsForValue().set("chat:" + sessionId, history, 30, TimeUnit.MINUTES);
+}
+```
+
+---
+
+## 📊 MONITORING VÀ LOGGING
+
+### 1. Logging Strategy
+
+```java
+// Request logging
+log.info("Chatbot request received: sessionId={}, message={}", 
+    sessionId, request.getMessage().substring(0, Math.min(50, request.getMessage().length())));
+
+// Response logging
+log.info("Chatbot response sent: sessionId={}, reply_length={}", 
+    sessionId, reply.length());
+
+// Error logging
+log.error("Error calling Gemini API: status={}, message={}, body={}", 
+    statusCode, e.getMessage(), errorBody, e);
+```
+
+### 2. Metrics
+
+```java
+@Autowired
+private MeterRegistry meterRegistry;
+
+private void recordChatbotMetrics(boolean success) {
+    Counter.builder("chatbot.requests")
+        .tag("status", success ? "success" : "error")
+        .register(meterRegistry)
+        .increment();
+}
+```
+
+---
+
+## 🧪 TESTING
+
+### 1. Unit Tests
+
+```java
+@Test
+public void testAsk_Success() {
+    // Arrange
+    ChatRequest request = ChatRequest.builder()
+        .message("Bạn có sản phẩm nào cho da dầu không?")
+        .build();
+    
+    // Act
+    ChatResponse response = chatbotService.ask(request);
+    
+    // Assert
+    assertNotNull(response);
+    assertNotNull(response.getReply());
+    assertNotNull(response.getSessionId());
+}
+```
+
+### 2. Integration Tests
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+public class ChatbotControllerTest {
+    
+    @Autowired
+    private MockMvc mockMvc;
+    
+    @Test
+    public void testAskEndpoint() throws Exception {
+        mockMvc.perform(post("/api/chatbot/ask")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"message\":\"Xin chào\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(1000))
+                .andExpect(jsonPath("$.result.reply").exists())
+                .andExpect(jsonPath("$.result.sessionId").exists());
+    }
+}
+```
+
+---
+
+## 📚 TÀI LIỆU THAM KHẢO
+
+### Google Gemini API
+- **Documentation**: https://ai.google.dev/docs
+- **API Reference**: https://ai.google.dev/api/rest/v1/models/generateContent
+- **Get API Key**: https://makersuite.google.com/app/apikey
+- **Usage Limits**: https://ai.dev/usage?tab=rate-limit
+
+### Alternative AI Services
+- **OpenAI GPT**: https://platform.openai.com/docs/api-reference
+- **Anthropic Claude**: https://docs.anthropic.com/claude/reference
+- **Cohere**: https://docs.cohere.com/
+
+---
+
+## ✅ CHECKLIST IMPLEMENTATION
+
+### Backend
+- [ ] Tạo database và tables (products, categories)
+- [ ] Implement ProductService.getActiveProducts()
+- [ ] Implement CategoryService với subcategories
+- [ ] Implement ChatbotService với cache mechanism
+- [ ] Implement retry logic với exponential backoff
+- [ ] Tạo ChatbotController với endpoint /api/chatbot/ask
+- [ ] Setup Gemini API key trong application.yaml
+- [ ] Test API với Postman/cURL
+- [ ] Add logging và error handling
+- [ ] (Optional) Setup Redis cho conversation history
+
+### Frontend
+- [ ] Tạo chatbot service (API client)
+- [ ] Implement Chatbot component (UI)
+- [ ] Add styling (SCSS/CSS)
+- [ ] Handle loading state
+- [ ] Handle errors gracefully
+- [ ] Auto-scroll to bottom
+- [ ] Save sessionId trong localStorage
+- [ ] Test UI với các use cases
+
+### Deployment
+- [ ] Set environment variables (GEMINI_API_KEY, DB credentials)
+- [ ] Build backend (mvn clean package)
+- [ ] Build frontend (npm run build)
+- [ ] Deploy backend (Heroku, AWS, etc.)
+- [ ] Deploy frontend (Vercel, Netlify, etc.)
+- [ ] Configure CORS
+- [ ] Setup SSL/HTTPS
+- [ ] Monitor logs và metrics
+
+### Testing
+- [ ] Test greeting messages
+- [ ] Test product queries (chung và cụ thể)
+- [ ] Test brand queries
+- [ ] Test category queries
+- [ ] Test conversation history
+- [ ] Test error handling (invalid input, API errors)
+- [ ] Test performance (response time)
+- [ ] Test với nhiều users đồng thời
+
+---
+
+## 🚀 NEXT STEPS & IMPROVEMENTS
+
+### Short Term
+1. Add product images trong response
+2. Implement "Quick Replies" buttons
+3. Add typing indicator animation
+4. Save conversation history vào database
+
+### Medium Term
+1. Multi-language support (English, Vietnamese)
+2. Voice input/output
+3. Product recommendations based on chat history
+4. Integration với shopping cart
+
+### Long Term
+1. Custom AI model training
+2. Sentiment analysis
+3. Automated customer support tickets
+4. Analytics dashboard
+5. A/B testing different prompts
+
+---
+
+## 💡 MẸO VÀ LƯU Ý
+
+### 1. System Prompt là Quan Trọng Nhất
+
+System prompt quyết định 80% chất lượng chatbot. Cần:
+- Rõ ràng, chi tiết
+- Đưa ra rules cụ thể
+- Có ví dụ format
+- Nhấn mạnh "CHỈ dùng thông tin từ context"
+
+### 2. Context Loading Strategy
+
+- KHÔNG load tất cả sản phẩm vào mọi request
+- Chỉ load context khi cần
+- Filter sản phẩm theo keyword
+- Giới hạn số lượng sản phẩm (50-100)
+
+### 3. Conversation History
+
+- Giới hạn history (10-20 cặp Q&A)
+- Clear history khi user refresh
+- Lưu sessionId trong localStorage (frontend)
+- Dùng Redis cho production
+
+### 4. Error Handling
+
+- Validate input trước khi gọi API
+- Retry cho 429 (quota exceeded)
+- KHÔNG retry cho 400, 404
+- Có fallback message cho users
+
+### 5. Performance
+
+- Cache sản phẩm trong 30 phút
+- Scheduled task để refresh cache
+- Optimize database queries (JOIN FETCH)
+- Dùng connection pooling
+
+### 6. Testing
+
+- Test với real users
+- Monitor response time
+- Track error rates
+- A/B test different prompts
+
+---
+
+**LƯU Ý QUAN TRỌNG:**
+
+1. **API Key**: TUYỆT ĐỐI KHÔNG commit API key vào Git
+2. **Rate Limiting**: Gemini API có giới hạn requests per minute
+3. **Cost**: Monitor usage để tránh chi phí cao
+4. **Privacy**: KHÔNG lưu thông tin nhạy cảm của users
+5. **Fallback**: Luôn có plan B khi AI API down
+
+---
+
+**KẾT LUẬN:**
+
+Đây là một hệ thống Chatbot AI hoàn chỉnh, production-ready với:
+- ✅ Smart context loading
+- ✅ Conversation history
+- ✅ Error handling & retry logic
+- ✅ Caching mechanism
+- ✅ Frontend UI đẹp
+- ✅ Scalable architecture
+
+Bạn có thể customize và mở rộng dựa trên nhu cầu cụ thể của dự án!

@@ -69,8 +69,8 @@
     outline: none;
 
     &:focus {
-        border-color: #1a3c5a;
-        box-shadow: 0 0 0 3px rgba(26, 60, 90, 0.15);
+        border-color: #7C3AED;
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
     }
 }
 
@@ -91,13 +91,14 @@
 }
 
 .searchButton {
-    background-color: #1a3c5a;
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #fff;
     border: none;
     padding: 0 20px;
     border-radius: 10px;
     font-weight: 600;
     cursor: pointer;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
 }
 
 .statusFilter {
@@ -133,7 +134,7 @@
 
     button {
         margin-top: 12px;
-        background: #1a3c5a;
+        background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
         color: #fff;
         border: none;
         border-radius: 8px;
@@ -163,7 +164,7 @@
     }
 
     th {
-        background: #1a3c5a;
+        background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
         color: #fff;
         font-weight: 600;
     }
@@ -185,15 +186,18 @@
         background: #fff4e2;
         color: #c77800;
     }
+
     &.processing,
     &.shipping {
         background: #dfe8f4;
         color: #1a3c5a;
     }
+
     &.delivered {
         background: #e6f7ed;
         color: #1b5e20;
     }
+
     &.cancelled {
         background: #fde8e8;
         color: #c62828;
@@ -201,7 +205,7 @@
 }
 
 .detailButton {
-    background: #1a3c5a;
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -247,9 +251,9 @@
     }
 
     &:not(:disabled):hover {
-        background: #1a3c5a;
+        background: #7C3AED;
         color: #fff;
-        border-color: #1a3c5a;
+        border-color: #7C3AED;
     }
 }
 
@@ -270,13 +274,14 @@
         background: #fff4e2;
         color: #c77800;
     }
+
     &.refunded {
         background: #e6f7ed;
         color: #1b5e20;
     }
+
     &.return-rejected {
         background: #fde8e8;
         color: #c62828;
     }
 }
-

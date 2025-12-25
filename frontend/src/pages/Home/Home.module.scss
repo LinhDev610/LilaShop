@@ -1,78 +1,64 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap');
+// Minimalist Design System
+// Color Palette
+$primary: var(--color-text-primary); // #1a1a1a
+$secondary: var(--color-text-description); // #4a4a4a
+$accent: var(--color-brand); // #873435
+$bg-white: #FFFFFF;
+$bg-light: #FAFAFA;
+$bg-lighter: #F5F5F5;
 
-// Modern Color Palette with Vibrant Gradients
-$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-$secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-$accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-$warm-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-$dark-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-$neon-gradient: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+// Typography
+$font-family: var(--font-family-body);
+$font-family-heading: var(--font-family-title);
+$font-family-luxury: var(--font-family-luxury);
+$font-weight-heading: var(--font-weight-h2);
+$font-weight-body: var(--font-weight-body);
+$line-height-body: var(--line-height-body);
+$letter-spacing-heading: -0.01em;
 
-$bg-primary: #0a0e27;
-$bg-secondary: #1a1f3a;
-$bg-card: #ffffff;
-$bg-light: #f8f9fa;
-$text-primary: #1a1f3a;
-$text-secondary: #6c757d;
-$text-light: #ffffff;
-$accent-pink: #ff6b9d;
-$accent-purple: #9d4edd;
-$accent-blue: #4cc9f0;
-$border-light: rgba(255, 255, 255, 0.1);
-$shadow-soft: 0 10px 40px rgba(0, 0, 0, 0.08);
-$shadow-medium: 0 15px 50px rgba(0, 0, 0, 0.12);
-$shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.18);
-$shadow-glow: 0 0 30px rgba(102, 126, 234, 0.3);
+// Spacing
+$section-padding: 2px;
+$container-max-width: 1200px;
+$card-gap: 24px;
 
-// Border Radius
-$radius-xs: 12px;
-$radius-sm: 20px;
-$radius-md: 28px;
-$radius-lg: 40px;
-$radius-xl: 60px;
+// Shadows - Minimal
+$shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.05);
+$shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+// Legacy aliases for compatibility
+$primary-color: $accent; // #873435
+$primary-light: #a14b4b;
+$accent-gold: #C9A959;
+$accent-light: #F7E7CE;
+$bg-cream: #FDF8F5;
+$text-primary: $primary; // #2D2D2D
+$text-secondary: $secondary; // #6B6B6B
+$text-light: #FFFFFF;
+$border-warm: rgba(183, 110, 121, 0.15);
+$sale-red: #873435;
+$deep-brown: $primary;
+$soft-brown: $secondary;
+$rose-gold: $accent;
+$dusty-rose: #a14b4b;
+$soft-gold: #C9A959;
+$champagne: #F7E7CE;
+$cream: #FDF8F5;
+$pure-white: #FFFFFF;
+
+// Border Radius (theo design system mới)
+$radius-xs: 8px; // small elements
+$radius-sm: 12px; // buttons
+$radius-md: 16px; // cards
+$radius-lg: 24px;
 $radius-full: 9999px;
 
-// Main Layout
+// Main Layout - Minimalist
 .home-wrapper {
-    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 50%, #f0f4ff 100%);
+    font-family: $font-family;
+    background: $bg-white;
     position: relative;
-    overflow-x: hidden;
-
-    &::before {
-        content: '';
-        position: fixed;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background:
-            radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.08) 0%, transparent 50%),
-            radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.08) 0%, transparent 50%);
-        z-index: 0;
-        pointer-events: none;
-        animation: float 20s ease-in-out infinite;
-        will-change: transform;
-    }
-}
-
-@keyframes float {
-
-    0%,
-    100% {
-        transform: translate(0, 0) rotate(0deg);
-    }
-
-    33% {
-        transform: translate(30px, -30px) rotate(120deg);
-    }
-
-    66% {
-        transform: translate(-20px, 20px) rotate(240deg);
-    }
 }
 
 .home-content {
@@ -84,103 +70,76 @@ $radius-full: 9999px;
     width: 100%;
     position: relative;
     z-index: 1;
-    overflow-x: hidden;
 }
 
-// Hero Section - Full Width
+// Section Base Styles
+.section {
+    width: 100%;
+    padding: $section-padding 0;
+    background: $bg-white;
+
+    @media (max-width: 768px) {
+        padding: 5px 0;
+    }
+}
+
+// Hero Section - Clean
 .hero-section {
-    width: 100vw;
+    width: 100%;
     padding: 0;
     margin: 0;
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
     position: relative;
     overflow: hidden;
-    max-width: 100vw;
+    max-width: 100%;
+    background: $bg-white;
 }
 
 .hero-container {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0;
+    width: 90% !important;
+    max-width: 1400px !important;
+    margin: 20px auto !important;
     padding: 0;
     overflow: hidden;
-}
+    border-radius: $radius-md;
+    box-shadow: $shadow-soft;
 
-// Voucher Carousel Section - Horizontal Scroll
-.voucher-carousel-section {
-    width: 100%;
-    padding: 14px 0;
-    background: linear-gradient(180deg, #f8f9fa 0%, #fff 100%);
-    position: relative;
-}
-
-.voucher-carousel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 24px 10px;
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
-.voucher-carousel-title {
-    margin: 0;
-    font-size: 0.95rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #1a1a1a;
-
-    .title-icon {
-        font-size: 1rem;
+    @media (max-width: 768px) {
+        width: 100% !important;
+        margin: 0 !important;
+        border-radius: 0;
     }
+}
+
+// Voucher Section - Minimalist
+.voucher-section {
+    background: $bg-white;
+    padding: $section-padding 0;
 }
 
 .voucher-carousel-wrapper {
     position: relative;
     overflow: hidden;
+    max-width: $container-max-width;
+    margin: 0 auto;
+    padding: 0 10px;
 
-    // Fade effect on left
-    &::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 40px;
-        background: linear-gradient(90deg, #fff 0%, transparent 100%);
-        z-index: 2;
-        pointer-events: none;
-    }
-
-    // Fade effect on right
-    &::after {
-        content: '';
-        position: absolute;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        width: 40px;
-        background: linear-gradient(270deg, #fff 0%, transparent 100%);
-        z-index: 2;
-        pointer-events: none;
+    @media (max-width: 768px) {
+        padding: 0 4px;
     }
 }
 
 .voucher-carousel-track {
     display: flex;
-    gap: 14px;
-    padding: 8px 24px 12px;
+    gap: 8px;
+    padding: 0;
     overflow-x: auto;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; // Firefox
-    -ms-overflow-style: none; // IE/Edge
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 
     &::-webkit-scrollbar {
-        display: none; // Chrome/Safari
+        display: none;
     }
 }
 
@@ -191,7 +150,7 @@ $radius-full: 9999px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 0;
 }
 
 .voucher-strip-header {
@@ -204,14 +163,11 @@ $radius-full: 9999px;
 .voucher-strip-title {
     margin: 0;
     font-size: 0.9rem;
-    font-weight: 700;
+    font-weight: 500;
     display: flex;
     align-items: center;
     gap: 6px;
-    background: linear-gradient(135deg, #667eea 0%, #9d4edd 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: $primary-color;
 
     .title-icon {
         font-size: 0.95rem;
@@ -260,16 +216,16 @@ $radius-full: 9999px;
 .vouchers-promotions-container {
     max-width: 1600px;
     margin: 0 auto;
-    padding: 20px 40px 60px;
+    padding: 0 8px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 48px;
+    gap: 16px;
     position: relative;
     z-index: 1;
 
     @media (max-width: 1200px) {
-        padding: 16px 32px 50px;
-        gap: 36px;
+        padding: 0 4px;
+        gap: 12px;
     }
 }
 
@@ -296,17 +252,18 @@ $radius-full: 9999px;
 .voucher-column .section-title,
 .promotion-column .section-title {
     margin: 0;
-    font-size: 1.25rem;
-    font-weight: 800;
-    letter-spacing: -0.3px;
-    color: $text-primary;
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-h2);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: $deep-brown;
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 0;
     background: none;
     -webkit-background-clip: unset;
-    -webkit-text-fill-color: $text-primary;
+    -webkit-text-fill-color: $deep-brown;
     background-clip: unset;
 
     .title-icon {
@@ -321,40 +278,34 @@ $radius-full: 9999px;
 
 // Specific styles for voucher column title
 .voucher-column .section-title {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: $rose-gold;
 }
 
 // Specific styles for promotion column title
 .promotion-column .section-title {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: $rose-gold;
 }
 
 .view-all-link {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: $accent-purple;
+    font-size: var(--font-size-cta);
+    font-weight: var(--font-weight-cta);
+    color: $primary-color;
     text-decoration: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     padding: 8px 16px;
     border-radius: 20px;
-    background: linear-gradient(135deg, rgba(157, 78, 221, 0.08) 0%, rgba(102, 126, 234, 0.08) 100%);
-    border: 1px solid rgba(157, 78, 221, 0.15);
+    background: rgba(183, 110, 121, 0.08);
+    border: 1px solid rgba(183, 110, 121, 0.2);
     display: inline-flex;
     align-items: center;
     gap: 4px;
 
     &:hover {
         color: $text-light;
-        background: linear-gradient(135deg, $accent-purple 0%, #667eea 100%);
+        background: $primary-color;
         border-color: transparent;
         transform: translateX(4px);
-        box-shadow: 0 4px 12px rgba(157, 78, 221, 0.3);
+        box-shadow: 0 4px 12px rgba(183, 110, 121, 0.3);
     }
 }
 
@@ -370,10 +321,10 @@ $radius-full: 9999px;
 }
 
 .voucher-card {
-    background: $primary-gradient;
+    background: linear-gradient(135deg, $primary-color 0%, $primary-light 100%);
     border-radius: $radius-sm;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(61, 47, 47, 0.06);
     cursor: pointer;
     position: relative;
     will-change: transform;
@@ -518,8 +469,8 @@ $radius-full: 9999px;
 }
 
 .discount-value {
-    font-size: 1.6rem;
-    font-weight: 800;
+    font-size: var(--font-size-price);
+    font-weight: var(--font-weight-price);
     color: $text-light;
     line-height: 1;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
@@ -579,7 +530,7 @@ $radius-full: 9999px;
 }
 
 .promotion-card {
-    background: $bg-card;
+    background: $bg-white;
     border-radius: $radius-sm;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -674,8 +625,8 @@ $radius-full: 9999px;
 
     .code-value-main {
         font-weight: 700;
-        color: $accent-purple;
-        background: rgba(157, 78, 221, 0.1);
+        color: $primary-color;
+        background: rgba(183, 110, 121, 0.1);
         padding: 2px 6px;
         border-radius: $radius-xs;
     }
@@ -791,7 +742,7 @@ $radius-full: 9999px;
     background-size: 200% 100%;
     animation: loading 1.5s ease-in-out infinite;
     border-radius: $radius-md;
-    margin: 20px 0;
+    margin: 4px 0;
 }
 
 .skeleton-product-list {
@@ -800,7 +751,7 @@ $radius-full: 9999px;
     background-size: 200% 100%;
     animation: loading 1.5s ease-in-out infinite;
     border-radius: $radius-sm;
-    margin: 20px 0;
+    margin: 4px 0;
 }
 
 @keyframes loading {
@@ -813,36 +764,24 @@ $radius-full: 9999px;
     }
 }
 
-// Status Messages with Glass Morphism
+// Status Messages
 .status-message {
     padding: 20px 28px;
-    border-radius: $radius-md;
-    font-weight: 600;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(20px);
+    border-radius: 12px;
+    font-weight: 500;
+    background: $bg-white;
     color: $text-primary;
-    border: 2px solid rgba(102, 126, 234, 0.2);
+    border: 1px solid $border-warm;
     box-shadow: $shadow-soft;
     text-align: center;
-    margin: 32px 40px;
+    margin: 8px 0;
     position: relative;
     overflow: hidden;
 
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
-        animation: shimmer 2s infinite;
-    }
-
     &.error {
-        background: linear-gradient(135deg, rgba(254, 226, 226, 0.95) 0%, rgba(254, 202, 202, 0.95) 100%);
-        border-color: rgba(248, 113, 113, 0.4);
-        color: #991b1c;
+        background: rgba(199, 91, 91, 0.1);
+        border-color: rgba(199, 91, 91, 0.3);
+        color: $sale-red;
     }
 }
 
@@ -858,27 +797,18 @@ $radius-full: 9999px;
 
 // Product Sections - Modern Glass Cards
 .product-section {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
+    background: $pure-white;
     border-radius: 0;
     border: none;
     overflow: hidden;
     width: 100%;
     margin: 0;
     position: relative;
-    padding: 64px 0;
-    border-top: 3px solid transparent;
-    border-image: $primary-gradient 1;
+    padding: $section-padding 0;
     contain: layout style paint;
 
-    &:nth-child(even) {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 249, 250, 0.6) 100%);
-        border-image: $secondary-gradient 1;
-    }
-
-    &:nth-child(3n) {
-        background: linear-gradient(180deg, rgba(248, 249, 250, 0.6) 0%, rgba(255, 255, 255, 0.8) 100%);
-        border-image: $accent-gradient 1;
+    @media (max-width: 768px) {
+        padding: 4px 0;
     }
 
     &::after {
@@ -888,7 +818,7 @@ $radius-full: 9999px;
         left: 0;
         right: 0;
         height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3), transparent);
+        background: linear-gradient(90deg, transparent, rgba(183, 110, 121, 0.15), transparent);
     }
 }
 
@@ -914,16 +844,16 @@ $radius-full: 9999px;
 .promotions-section .section-title {
     margin: 0;
     font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: -0.3px;
-    color: $text-primary;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: $deep-brown;
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 0;
     background: none;
     -webkit-background-clip: unset;
-    -webkit-text-fill-color: $text-primary;
+    -webkit-text-fill-color: $deep-brown;
     background-clip: unset;
 
     .title-icon {
@@ -1031,10 +961,10 @@ $radius-full: 9999px;
 
     .code-value-main {
         font-size: 0.8rem;
-        font-weight: 700;
+        font-weight: 500;
         background: rgba(255, 255, 255, 0.25);
         padding: 3px 8px;
-        border-radius: $radius-xs;
+        border-radius: 12px;
         backdrop-filter: blur(4px);
     }
 
@@ -1149,8 +1079,8 @@ $radius-full: 9999px;
 
     .code-value-main-promotion {
         font-weight: 700;
-        color: $accent-purple;
-        background: rgba(157, 78, 221, 0.1);
+        color: $primary-color;
+        background: rgba(183, 110, 121, 0.1);
         padding: 2px 6px;
         border-radius: $radius-xs;
     }
@@ -1185,54 +1115,30 @@ $radius-full: 9999px;
 
 .section-header {
     background: transparent;
-    padding: 0 40px 40px;
+    padding: 0 8px 8px;
     border-bottom: none;
     position: relative;
+    max-width: $container-max-width;
+    margin: 0 auto;
+
+    @media (max-width: 768px) {
+        padding: 0 4px 4px;
+    }
 }
 
 .section-title {
     margin: 0;
-    font-size: 2.5rem;
-    font-weight: 800;
-    letter-spacing: -1px;
-    text-transform: none;
-    color: $text-primary;
+    font-size: 2rem;
+    font-weight: $font-weight-heading;
+    letter-spacing: $letter-spacing-heading;
+    color: $primary;
     position: relative;
     display: inline-block;
-    padding-bottom: 16px;
-    background: $primary-gradient;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    will-change: transform;
-
-    &::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 80px;
-        height: 5px;
-        background: $primary-gradient;
-        border-radius: $radius-full;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-
-    &::before {
-        content: '';
-        position: absolute;
-        bottom: -12px;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.2) 50%, transparent 100%);
-    }
 }
 
-// Featured Section - Animated Hero
+// Featured Section - Clean
 .featured-section {
     position: relative;
-    border-radius: 0;
     overflow: hidden;
     box-shadow: none;
     background-size: cover;
@@ -1241,70 +1147,59 @@ $radius-full: 9999px;
     padding: 100px 40px;
     margin: 0;
     width: 100%;
-    min-height: 600px;
+    min-height: 500px;
     display: flex;
     align-items: center;
     justify-content: center;
-    will-change: transform;
-    contain: layout style paint;
 
-    &::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.88) 0%, rgba(118, 75, 162, 0.88) 100%);
-        backdrop-filter: blur(3px);
+    @media (max-width: 768px) {
+        padding: 80px 24px;
+        min-height: 400px;
     }
 }
 
 .featured-overlay {
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+    background: rgba(45, 45, 45, 0.3);
     pointer-events: none;
-    will-change: background;
 }
 
 .featured-content {
     position: relative;
     z-index: 1;
     width: 100%;
-    max-width: 1400px;
+    max-width: $container-max-width;
     margin: 0 auto;
 }
 
-// Services Section - Interactive Cards
+// Services Section - Simplified
 .services {
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(15px);
+    background: $bg-white;
     border: none;
-    border-radius: 0;
     box-shadow: none;
     overflow: hidden;
     margin: 0;
     width: 100%;
-    padding: 80px 0;
+    padding: $section-padding 0;
     position: relative;
-    contain: layout style paint;
 
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.4) 50%, transparent 100%);
+    @media (max-width: 768px) {
+        padding: 30px 0;
     }
 }
 
 .services-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(5, 1fr);
     gap: 0;
-    max-width: 1400px;
+    max-width: $container-max-width;
     margin: 0 auto;
-    padding: 0 40px;
+    padding: 0 8px;
+
+    @media (max-width: 768px) {
+        padding: 0 24px;
+    }
 }
 
 .service-item {
@@ -1312,119 +1207,73 @@ $radius-full: 9999px;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 20px;
-    padding: 40px 28px;
+    gap: 12px;
+    padding: 12px 10px;
     border-right: 1px solid rgba(0, 0, 0, 0.06);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.3s ease;
     position: relative;
     background: transparent;
     cursor: pointer;
-    will-change: transform;
-
-    &::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: $primary-gradient;
-        opacity: 0;
-        transition: opacity 0.4s ease;
-        border-radius: $radius-md;
-        z-index: 0;
-    }
-
-    &::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 0;
-        height: 3px;
-        background: $primary-gradient;
-        border-radius: $radius-full;
-        transition: width 0.4s ease;
-    }
 
     &:last-child {
         border-right: none;
     }
 
     &:hover {
-        &::before {
-            opacity: 0.08;
-        }
-
-        &::after {
-            width: 60%;
-        }
-
-        .service-icon {
-            filter: drop-shadow(0 8px 20px rgba(102, 126, 234, 0.4));
-        }
+        transform: translateY(-2px);
     }
 }
 
 .service-icon {
-    width: 72px;
-    height: 72px;
+    width: 64px;
+    height: 64px;
     object-fit: contain;
     flex-shrink: 0;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
-    position: relative;
-    z-index: 1;
-    will-change: transform;
+    transition: opacity 0.3s ease;
+    opacity: 0.8;
+
+    .service-item:hover & {
+        opacity: 1;
+    }
 }
 
 .service-text {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    position: relative;
-    z-index: 1;
 }
 
 .service-title {
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: $text-primary;
-    letter-spacing: -0.3px;
-    transition: color 0.3s ease;
+    font-weight: $font-weight-heading;
+    font-size: 1rem;
+    color: $primary;
+    letter-spacing: $letter-spacing-heading;
 }
 
 .service-desc {
-    font-size: 0.9rem;
-    color: $text-secondary;
-    line-height: 1.6;
-    font-weight: 400;
+    font-size: 0.8rem;
+    color: $secondary;
+    line-height: $line-height-body;
+    font-weight: $font-weight-body;
 }
 
-// Bottom Bar - Animated Gradient
-.bottom-bar {
-    height: 80px;
-    background: $primary-gradient;
-    border-radius: 0;
-    margin: 0;
-    width: 100%;
+// Status Messages - Clean
+.status-message {
+    padding: 20px 28px;
+    border-radius: 4px;
+    font-weight: $font-weight-body;
+    background: $bg-white;
+    color: $primary;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    text-align: center;
+    margin: 32px auto;
+    max-width: $container-max-width;
     position: relative;
-    overflow: hidden;
-    will-change: height;
 
-    &::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
-    }
-
-    &::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
+    &.error {
+        background: rgba(199, 91, 91, 0.05);
+        border-color: rgba(199, 91, 91, 0.2);
+        color: #C75B5B;
     }
 }
 
@@ -1453,7 +1302,7 @@ $radius-full: 9999px;
         left: 0;
         right: 0;
         height: 4px;
-        background: $primary-gradient;
+        background: $primary-color;
         opacity: 0;
         transition: opacity 0.3s ease;
     }
@@ -1540,25 +1389,25 @@ $radius-full: 9999px;
 
 .discount-value-large {
     font-size: 2rem;
-    font-weight: 900;
+    font-weight: 500;
     color: $text-light;
     line-height: 1;
     text-shadow:
-        0 2px 4px rgba(0, 0, 0, 0.2),
-        0 4px 12px rgba(0, 0, 0, 0.15);
-    letter-spacing: -0.5px;
+        0 1px 3px rgba(0, 0, 0, 0.15),
+        0 2px 8px rgba(0, 0, 0, 0.1);
+    letter-spacing: -0.3px;
 }
 
 .discount-label-small {
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 500;
     color: rgba(255, 255, 255, 0.95);
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
     padding: 3px 10px;
     background: rgba(255, 255, 255, 0.15);
-    border-radius: 20px;
+    border-radius: 12px;
     backdrop-filter: blur(4px);
 }
 
@@ -1607,8 +1456,8 @@ $radius-full: 9999px;
 
 .code-text {
     font-size: 0.85rem;
-    font-weight: 800;
-    color: $accent-purple;
+    font-weight: 500;
+    color: $rose-gold;
     font-family: 'JetBrains Mono', 'Courier New', monospace;
     letter-spacing: 0.8px;
     text-transform: uppercase;
@@ -1616,8 +1465,8 @@ $radius-full: 9999px;
 
 .voucher-title-inline {
     font-size: 0.95rem;
-    font-weight: 700;
-    color: $text-primary;
+    font-weight: 500;
+    color: $deep-brown;
     line-height: 1.4;
     flex: 1;
     min-width: 0;
@@ -1658,19 +1507,19 @@ $radius-full: 9999px;
     padding: 4px 0;
 
     &.expiry-date {
-        color: $accent-purple;
-        font-weight: 600;
+        color: $rose-gold;
+        font-weight: 500;
     }
 
     &.highlight {
         color: $text-primary;
-        background: linear-gradient(90deg, rgba(102, 126, 234, 0.06) 0%, transparent 100%);
+        background: rgba(183, 110, 121, 0.08);
         padding: 6px 10px;
         border-radius: 8px;
         margin: 0 -10px;
 
         strong {
-            color: $accent-purple;
+            color: $primary-color;
             font-weight: 700;
         }
     }
@@ -1693,8 +1542,8 @@ $radius-full: 9999px;
     }
 
     strong {
-        font-weight: 700;
-        color: $text-primary;
+        font-weight: 600;
+        color: $deep-brown;
     }
 }
 
@@ -1774,7 +1623,7 @@ $radius-full: 9999px;
         left: 0;
         right: 0;
         height: 4px;
-        background: $secondary-gradient;
+        background: $primary-color;
         opacity: 0;
         transition: opacity 0.3s ease;
     }
@@ -1824,17 +1673,8 @@ $radius-full: 9999px;
 .promotion-gradient-bg {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #ff6b9d 100%);
+    background: linear-gradient(135deg, $accent-light 0%, $primary-light 100%);
     position: relative;
-
-    &::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background:
-            radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.3) 0%, transparent 40%),
-            radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.2) 0%, transparent 40%);
-    }
 
     &::after {
         content: '';
@@ -1892,8 +1732,8 @@ $radius-full: 9999px;
 
 .promotion-title-inline {
     font-size: 0.95rem;
-    font-weight: 700;
-    color: $text-primary;
+    font-weight: 500;
+    color: $deep-brown;
     line-height: 1.4;
     flex: 1;
     min-width: 0;
@@ -2060,11 +1900,6 @@ $radius-full: 9999px;
 
     .section-title {
         font-size: 1.75rem;
-
-        &::after {
-            width: 60px;
-            height: 4px;
-        }
     }
 
     .services {
@@ -2257,7 +2092,7 @@ $radius-full: 9999px;
     }
 
     .product-section {
-        padding: 40px 0;
+        padding: $section-padding 0;
     }
 
     .section-header {

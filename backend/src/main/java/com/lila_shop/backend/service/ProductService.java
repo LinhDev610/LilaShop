@@ -202,13 +202,8 @@ public class ProductService {
                 .findById(productId)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
 
-        // Kiểm tra quyền: Admin hoặc chủ sở hữu sản phẩm
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-
-        if (!isAdmin && !product.getSubmittedBy().getId().equals(user.getId())) {
-            throw new AppException(ErrorCode.UNAUTHORIZED);
-        }
 
         // Validate các trường mỹ phẩm nếu có trong request
         if (request.getBrand() != null || request.getExpiryDate() != null) {
@@ -371,10 +366,6 @@ public class ProductService {
 
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-
-        if (!isAdmin && !product.getSubmittedBy().getId().equals(user.getId())) {
-            throw new AppException(ErrorCode.UNAUTHORIZED);
-        }
 
         int quantityToAdd = request.getQuantity();
         if (quantityToAdd <= 0) {
@@ -717,9 +708,6 @@ public class ProductService {
 
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-        if (!isAdmin && !product.getSubmittedBy().getId().equals(user.getId())) {
-            throw new AppException(ErrorCode.UNAUTHORIZED);
-        }
 
         var mediaOpt = productMediaRepository.findByProductIdAndMediaUrl(productId, mediaUrl);
         if (mediaOpt.isEmpty()) {
@@ -1081,6 +1069,10 @@ public class ProductService {
             }
             if (product.getDefaultMedia() != null) {
                 deletePhysicalFileByUrl(product.getDefaultMedia().getMediaUrl());
+            }
+
+            if (product.getCategory() != null) {
+                fileStorageService.deleteProductFolder(product.getCategory().getId(), product.getId());
             }
         } catch (Exception e) {
             log.warn("Failed to delete media files for product {}: {}", product.getId(), e.getMessage());

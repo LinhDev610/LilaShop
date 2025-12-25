@@ -83,7 +83,10 @@ function ProductDetailPage() {
                 // Fetch variants nếu có
                 if (productData.id) {
                     try {
-                        const variantsData = await getProductVariants(productData.id, token);
+                        const variantsData = await getProductVariants(
+                            productData.id,
+                            token,
+                        );
                         if (variantsData && Array.isArray(variantsData)) {
                             setVariants(variantsData);
                         }
@@ -98,7 +101,7 @@ function ProductDetailPage() {
                     promotionId: productData.promotionId,
                     promotionName: productData.promotionName,
                     promotionStartDate: productData.promotionStartDate,
-                    promotionExpiryDate: productData.promotionExpiryDate
+                    promotionExpiryDate: productData.promotionExpiryDate,
                 });
             } catch (e) {
                 if (!isMounted || abortController.signal.aborted) return;
@@ -231,7 +234,6 @@ function ProductDetailPage() {
         }
     };
 
-
     const handleBack = () => {
         navigate('/admin/products');
     };
@@ -289,6 +291,7 @@ function ProductDetailPage() {
     }
 
     const productImage = getProductImage();
+    console.log('check - ' + productImage);
     const statusClass = getStatusClass(product.status);
     const inventoryQuantity = product.stockQuantity ?? null;
 
@@ -325,9 +328,12 @@ function ProductDetailPage() {
         return Math.round((discountAmount / product.unitPrice) * 100);
     })();
 
-    const discountPercentDisplay = discountPercent !== null ? `${discountPercent}%` : '0%';
+    const discountPercentDisplay =
+        discountPercent !== null ? `${discountPercent}%` : '0%';
     const hasUnitPrice =
-        product.unitPrice !== undefined && product.unitPrice !== null && product.unitPrice > 0;
+        product.unitPrice !== undefined &&
+        product.unitPrice !== null &&
+        product.unitPrice > 0;
     const hasDiscountValue =
         product.discountValue !== undefined && product.discountValue !== null;
     const isShowDiscountRow = hasUnitPrice || hasDiscountValue || discountAmount > 0;
@@ -442,45 +448,52 @@ function ProductDetailPage() {
                             )}
                             {(product.promotionId || product.promotionName) && (
                                 <div className={cx('info-row')}>
-                                    <span className={cx('info-label')}>Chương trình khuyến mãi:</span>
+                                    <span className={cx('info-label')}>
+                                        Chương trình khuyến mãi:
+                                    </span>
                                     <div className={cx('info-value')}>
-                                        <div>{product.promotionName || `Promotion ID: ${product.promotionId}`}</div>
-                                        {product.promotionStartDate && product.promotionExpiryDate && (
-                                            <div className={cx('promotion-dates')}>
-                                                Thời gian áp dụng: {new Date(product.promotionStartDate).toLocaleDateString('vi-VN')} - {new Date(product.promotionExpiryDate).toLocaleDateString('vi-VN')}
-                                            </div>
-                                        )}
+                                        <div>
+                                            {product.promotionName ||
+                                                `Promotion ID: ${product.promotionId}`}
+                                        </div>
+                                        {product.promotionStartDate &&
+                                            product.promotionExpiryDate && (
+                                                <div className={cx('promotion-dates')}>
+                                                    Thời gian áp dụng:{' '}
+                                                    {new Date(
+                                                        product.promotionStartDate,
+                                                    ).toLocaleDateString('vi-VN')}{' '}
+                                                    -{' '}
+                                                    {new Date(
+                                                        product.promotionExpiryDate,
+                                                    ).toLocaleDateString('vi-VN')}
+                                                </div>
+                                            )}
                                     </div>
                                 </div>
                             )}
-                            <div className={cx('info-row')}>
-                                <span className={cx('info-label')}>Tác giả:</span>
-                                <span className={cx('info-value')}>
-                                    {product.author || '-'}
-                                </span>
-                            </div>
-                            <div className={cx('info-row')}>
-                                <span className={cx('info-label')}>Nhà xuất bản:</span>
-                                <span className={cx('info-value')}>
-                                    {product.publisher || '-'}
-                                </span>
-                            </div>
+
                             {product.size && (
                                 <div className={cx('info-row')}>
-                                    <span className={cx('info-label')}>Kích thước sản phẩm:</span>
+                                    <span className={cx('info-label')}>
+                                        Kích thước sản phẩm:
+                                    </span>
                                     <span className={cx('info-value')}>
                                         {product.size}
                                     </span>
                                 </div>
                             )}
-                            {product.unitPrice !== undefined && product.unitPrice !== null && (
-                                <div className={cx('info-row')}>
-                                    <span className={cx('info-label')}>Giá niêm yết:</span>
-                                    <span className={cx('info-value')}>
-                                        {formatPrice(product.unitPrice)}
-                                    </span>
-                                </div>
-                            )}
+                            {product.unitPrice !== undefined &&
+                                product.unitPrice !== null && (
+                                    <div className={cx('info-row')}>
+                                        <span className={cx('info-label')}>
+                                            Giá niêm yết:
+                                        </span>
+                                        <span className={cx('info-value')}>
+                                            {formatPrice(product.unitPrice)}
+                                        </span>
+                                    </div>
+                                )}
                             <div className={cx('info-row')}>
                                 <span className={cx('info-label')}>Giá bán:</span>
                                 <span className={cx('info-value')}>
@@ -497,26 +510,15 @@ function ProductDetailPage() {
                             )}
                             {isShowDiscountRow && (
                                 <div className={cx('info-row')}>
-                                    <span className={cx('info-label')}>
-                                        Giảm giá:
-                                    </span>
+                                    <span className={cx('info-label')}>Giảm giá:</span>
                                     <span className={cx('info-value')}>
-                                        {`${formatPrice(discountAmount)} - ${discountPercentDisplay}`}
+                                        {`${formatPrice(
+                                            discountAmount,
+                                        )} - ${discountPercentDisplay}`}
                                     </span>
                                 </div>
                             )}
-                            {product.publicationDate && (
-                                <div className={cx('info-row')}>
-                                    <span className={cx('info-label')}>
-                                        Ngày xuất bản:
-                                    </span>
-                                    <span className={cx('info-value')}>
-                                        {new Date(
-                                            product.publicationDate,
-                                        ).toLocaleDateString('vi-VN')}
-                                    </span>
-                                </div>
-                            )}
+
                             {(product.length || product.width || product.height) && (
                                 <div className={cx('info-row')}>
                                     <span className={cx('info-label')}>
@@ -542,7 +544,8 @@ function ProductDetailPage() {
                                     Số lượng tồn kho:
                                 </span>
                                 <span className={cx('info-value')}>
-                                    {inventoryQuantity !== null && inventoryQuantity !== undefined
+                                    {inventoryQuantity !== null &&
+                                    inventoryQuantity !== undefined
                                         ? inventoryQuantity
                                         : 'Chưa cập nhật'}
                                 </span>
@@ -622,21 +625,21 @@ function ProductDetailPage() {
                                 (product.reviewCount !== undefined &&
                                     product.reviewCount !== null &&
                                     product.reviewCount > 0)) && (
-                                    <div className={cx('info-row')}>
-                                        <span className={cx('info-label')}>Đánh giá:</span>
-                                        <span className={cx('info-value')}>
-                                            {product.averageRating !== undefined &&
-                                                product.averageRating !== null
-                                                ? `${product.averageRating.toFixed(1)}/5.0`
-                                                : '-'}
-                                            {product.reviewCount !== undefined &&
-                                                product.reviewCount !== null &&
-                                                product.reviewCount > 0
-                                                ? ` (${product.reviewCount} đánh giá)`
-                                                : ''}
-                                        </span>
-                                    </div>
-                                )}
+                                <div className={cx('info-row')}>
+                                    <span className={cx('info-label')}>Đánh giá:</span>
+                                    <span className={cx('info-value')}>
+                                        {product.averageRating !== undefined &&
+                                        product.averageRating !== null
+                                            ? `${product.averageRating.toFixed(1)}/5.0`
+                                            : '-'}
+                                        {product.reviewCount !== undefined &&
+                                        product.reviewCount !== null &&
+                                        product.reviewCount > 0
+                                            ? ` (${product.reviewCount} đánh giá)`
+                                            : ''}
+                                    </span>
+                                </div>
+                            )}
                             <div className={cx('info-row', 'description-row')}>
                                 <span className={cx('info-label')}>Mô tả:</span>
                                 <span className={cx('info-value', 'description')}>
@@ -647,50 +650,111 @@ function ProductDetailPage() {
                             {/* Hiển thị variants nếu có */}
                             {variants.length > 0 && (
                                 <div className={cx('variants-section')}>
-                                    <div className={cx('section-title')}>Các lựa chọn sản phẩm:</div>
+                                    <div className={cx('section-title')}>
+                                        Các lựa chọn sản phẩm:
+                                    </div>
                                     <div className={cx('variants-list')}>
                                         {variants.map((variant) => (
-                                            <div key={variant.id} className={cx('variant-item', { 'is-default': variant.isDefault })}>
+                                            <div
+                                                key={variant.id}
+                                                className={cx('variant-item', {
+                                                    'is-default': variant.isDefault,
+                                                })}
+                                            >
                                                 <div className={cx('variant-header')}>
                                                     <span className={cx('variant-name')}>
-                                                        {variant.name || variant.shadeName || 'Lựa chọn'}
+                                                        {variant.name ||
+                                                            variant.shadeName ||
+                                                            'Lựa chọn'}
                                                         {variant.isDefault && (
-                                                            <span className={cx('default-badge')}> (Mặc định)</span>
+                                                            <span
+                                                                className={cx(
+                                                                    'default-badge',
+                                                                )}
+                                                            >
+                                                                {' '}
+                                                                (Mặc định)
+                                                            </span>
                                                         )}
                                                     </span>
                                                 </div>
                                                 <div className={cx('variant-details')}>
                                                     {variant.shadeName && (
-                                                        <div className={cx('variant-info')}>
-                                                            <span>Tên màu: {variant.shadeName}</span>
+                                                        <div
+                                                            className={cx('variant-info')}
+                                                        >
+                                                            <span>
+                                                                Tên màu:{' '}
+                                                                {variant.shadeName}
+                                                            </span>
                                                             {variant.shadeHex && (
                                                                 <span
-                                                                    className={cx('color-preview')}
-                                                                    style={{ backgroundColor: variant.shadeHex }}
+                                                                    className={cx(
+                                                                        'color-preview',
+                                                                    )}
+                                                                    style={{
+                                                                        backgroundColor:
+                                                                            variant.shadeHex,
+                                                                    }}
                                                                 />
                                                             )}
                                                         </div>
                                                     )}
                                                     <div className={cx('variant-price')}>
-                                                        <span>Giá: {formatPrice(variant.price || 0)}</span>
-                                                        {variant.unitPrice && variant.unitPrice !== variant.price && (
-                                                            <span className={cx('original-price')}>
-                                                                (Giá niêm yết: {formatPrice(variant.unitPrice)})
-                                                            </span>
-                                                        )}
+                                                        <span>
+                                                            Giá:{' '}
+                                                            {formatPrice(
+                                                                variant.price || 0,
+                                                            )}
+                                                        </span>
+                                                        {variant.unitPrice &&
+                                                            variant.unitPrice !==
+                                                                variant.price && (
+                                                                <span
+                                                                    className={cx(
+                                                                        'original-price',
+                                                                    )}
+                                                                >
+                                                                    (Giá niêm yết:{' '}
+                                                                    {formatPrice(
+                                                                        variant.unitPrice,
+                                                                    )}
+                                                                    )
+                                                                </span>
+                                                            )}
                                                     </div>
                                                     {variant.tax && (
-                                                        <div className={cx('variant-tax')}>
-                                                            <span>Thuế: {Math.round(variant.tax * 100)}%</span>
+                                                        <div
+                                                            className={cx('variant-tax')}
+                                                        >
+                                                            <span>
+                                                                Thuế:{' '}
+                                                                {Math.round(
+                                                                    variant.tax * 100,
+                                                                )}
+                                                                %
+                                                            </span>
                                                         </div>
                                                     )}
                                                     {variant.purchasePrice && (
-                                                        <div className={cx('variant-purchase')}>
-                                                            <span>Giá nhập: {formatPrice(variant.purchasePrice)}</span>
+                                                        <div
+                                                            className={cx(
+                                                                'variant-purchase',
+                                                            )}
+                                                        >
+                                                            <span>
+                                                                Giá nhập:{' '}
+                                                                {formatPrice(
+                                                                    variant.purchasePrice,
+                                                                )}
+                                                            </span>
                                                         </div>
                                                     )}
                                                     <div className={cx('variant-stock')}>
-                                                        <span>Tồn kho: {variant.stockQuantity || 0}</span>
+                                                        <span>
+                                                            Tồn kho:{' '}
+                                                            {variant.stockQuantity || 0}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -723,7 +787,9 @@ function ProductDetailPage() {
                             {isAdmin && product.status === 'Đã duyệt' && (
                                 <button
                                     className={cx('btn', 'btn-edit')}
-                                    onClick={() => navigate(`/admin/products/${id}/update`)}
+                                    onClick={() =>
+                                        navigate(`/admin/products/${id}/update`)
+                                    }
                                     disabled={processing}
                                 >
                                     Chỉnh sửa sản phẩm

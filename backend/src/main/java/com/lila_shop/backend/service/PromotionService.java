@@ -64,10 +64,11 @@ public class PromotionService {
         // Tạo promotion entity
         Promotion promotion = promotionMapper.toPromotion(request);
 
-        // Set workflow fields
+        // Set các trường workflow
         promotion.setUsageCount(0);
-        promotion.setIsActive(false); // Chưa active cho đến khi được approve
-        promotion.setStatus(PromotionStatus.PENDING_APPROVAL);
+        promotion.setStatus(PromotionStatus.APPROVED);
+        promotion.setApprovedBy(staff);
+        promotion.setApprovedAt(LocalDateTime.now());
         promotion.setSubmittedBy(staff);
         promotion.setSubmittedAt(LocalDateTime.now());
 

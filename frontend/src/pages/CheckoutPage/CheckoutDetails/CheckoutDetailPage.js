@@ -31,6 +31,13 @@ import {
     GHN_DEFAULT_DIMENSION,
     GHN_DEFAULT_WEIGHT,
 } from '../../../services/constants';
+import {
+    validateVoucher,
+    filterApplicableVouchers,
+    formatPrice,
+    validateVoucherCodeFormat,
+    calculateVoucherDiscount,
+} from '../../../utils/voucherValidation';
 
 const cx = classNames.bind(styles);
 
@@ -47,15 +54,6 @@ export default function CheckoutDetailPage() {
     const directQuantity = location.state?.quantity || 1;
     const directVariantId = location.state?.variantId || null;
 
-    // Debug log
-    if (directCheckout) {
-        console.log('CheckoutDetailPage: Direct checkout detected', {
-            directCheckout,
-            directProductId,
-            directQuantity,
-            locationState: location.state,
-        });
-    }
 
     const [userInfo, setUserInfo] = useState(null);
     const [cart, setCart] = useState(null);
@@ -111,7 +109,6 @@ export default function CheckoutDetailPage() {
 
                 if (directCheckout && directProductId) {
                     // Direct checkout: load product trực tiếp, không cần cart
-                    console.log('CheckoutDetailPage: Direct checkout, loading product:', directProductId);
                     const [me, productResp, addressesData] = await Promise.all([
                         getMyInfo(token),
                         (async () => {
@@ -127,7 +124,6 @@ export default function CheckoutDetailPage() {
                                 }
                                 const data = await resp.json();
                                 const product = data?.result || data;
-                                console.log('CheckoutDetailPage: Product loaded:', product?.id, product?.name);
                                 return product;
                             } catch (err) {
                                 console.error('Error fetching product:', err);
@@ -140,17 +136,11 @@ export default function CheckoutDetailPage() {
                     ]);
 
                     if (!productResp || !productResp.id) {
-                        console.error('CheckoutDetailPage: Product response is invalid:', productResp);
                         showError('Không thể tải thông tin sản phẩm');
                         navigate('/');
                         return;
                     }
 
-                    console.log('CheckoutDetailPage: Setting directProduct:', {
-                        id: productResp.id,
-                        name: productResp.name,
-                        price: productResp.price,
-                    });
                     setUserInfo(me || null);
                     setDirectProduct(productResp);
                     addresses = addressesData || [];
@@ -237,6 +227,7 @@ export default function CheckoutDetailPage() {
                     imageUrl: normalizedImage,
                     currentPrice,
                     originalUnitPrice,
+                    categoryId: directProduct?.categoryId || directProduct?.category?.id || null,
                 },
             });
             return;
@@ -290,6 +281,7 @@ export default function CheckoutDetailPage() {
                         imageUrl: normalizedImage,
                         currentPrice,
                         originalUnitPrice,
+                        categoryId: product?.categoryId || product?.category?.id || null,
                     };
                     setProductMeta((prev) => ({ ...prev, ...metaMap }));
                 })
@@ -298,6 +290,7 @@ export default function CheckoutDetailPage() {
                         imageUrl: defaultProductImage,
                         currentPrice: item.unitPrice || 0,
                         originalUnitPrice: item.unitPrice || 0,
+                        categoryId: null,
                     };
                     setProductMeta((prev) => ({ ...prev, ...metaMap }));
                 });
@@ -323,15 +316,6 @@ export default function CheckoutDetailPage() {
 
     // Derived items: direct checkout từ product hoặc từ cart
     const checkoutItems = useMemo(() => {
-        console.log('CheckoutDetailPage: checkoutItems useMemo called', {
-            directCheckout,
-            directProductId,
-            directProduct: directProduct ? { id: directProduct.id, name: directProduct.name } : null,
-            directQuantity,
-            cartItems: cart?.items?.length || 0,
-            selectedItemIds: selectedItemIds?.length || 0,
-        });
-
         if (directCheckout && directProductId) {
             // Direct checkout: tạo item từ product
             if (directProduct) {
@@ -360,15 +344,9 @@ export default function CheckoutDetailPage() {
                         weightGr: selectedVariant?.weightGr || null,
                     },
                 ];
-                console.log('CheckoutDetailPage: checkoutItems (direct):', items);
                 return items;
             }
             // Nếu directProduct chưa load xong, trả về mảng rỗng tạm thời
-            console.log('CheckoutDetailPage: checkoutItems (direct, product not loaded yet)', {
-                directProductId,
-                directProduct: directProduct,
-                loading,
-            });
             return [];
         }
         // Checkout từ giỏ hàng (flow cũ)
@@ -377,7 +355,7 @@ export default function CheckoutDetailPage() {
         const selectedSet = new Set(selectedItemIds);
         const filtered = items.filter((item) => selectedSet.has(item.id));
         return filtered.length > 0 ? filtered : items;
-    }, [directCheckout, directProductId, directProduct, directQuantity, directVariantId, cart, selectedItemIds, loading]);
+    }, [directCheckout, directProductId, directProduct, directQuantity, directVariantId, cart, selectedItemIds]);
 
     // Tính phí vận chuyển từ GHN API
     useEffect(() => {
@@ -723,85 +701,113 @@ export default function CheckoutDetailPage() {
 
     // Tạm tính: CHỈ tính trên các item được chọn (checkoutItems),
     // dùng finalPrice backend để khớp công thức trong OrderService.createOrderFromCurrentCart.
-    const itemsSubtotal = checkoutItems.reduce((sum, item) => {
-        const quantity = item.quantity || 1;
-        const lineTotal =
-            typeof item.finalPrice === 'number'
-                ? item.finalPrice
-                : (item.unitPrice || 0) * quantity;
-        return sum + lineTotal;
-    }, 0);
+    const itemsSubtotal = useMemo(() => {
+        return checkoutItems.reduce((sum, item) => {
+            const quantity = item.quantity || 1;
+            const lineTotal =
+                typeof item.finalPrice === 'number'
+                    ? item.finalPrice
+                    : (item.unitPrice || 0) * quantity;
+            return sum + lineTotal;
+        }, 0);
+    }, [checkoutItems]);
 
     const voucherDiscount = cart?.voucherDiscount || 0;
 
     // Tổng cộng hiển thị: giống backend = selectedSubtotal + shippingFee - voucherDiscount
     const total = Math.max(0, itemsSubtotal + shippingFee - voucherDiscount);
 
+    // Memoize product and category IDs to prevent unnecessary re-renders
+    const voucherFilterParams = useMemo(() => {
+        if (!checkoutItems.length) {
+            return { productIds: [], categoryIds: [] };
+        }
+
+        const productIds = checkoutItems.map((item) => item.productId);
+        const categoryIds = checkoutItems
+            .map((item) => productMeta[item.productId]?.categoryId)
+            .filter(Boolean);
+
+        // Special case for direct checkout if meta not yet populated but directProduct is available
+        if (directCheckout && directProduct && categoryIds.length === 0) {
+            const directCatId = directProduct.categoryId || directProduct.category?.id;
+            if (directCatId) categoryIds.push(directCatId);
+        }
+
+        return { productIds, categoryIds };
+    }, [checkoutItems, productMeta, directCheckout, directProduct]);
+
     // Filter applicable vouchers based on order value
     // NOTE: This useEffect must be AFTER checkoutItems and itemsSubtotal are defined
     useEffect(() => {
         if (!availableVouchers.length || !checkoutItems.length || selectedVoucherCode) {
-            setApplicableVouchers([]);
+            setApplicableVouchers((prev) => {
+                // Only update if actually changing
+                if (prev.length === 0) return prev;
+                return [];
+            });
             return;
         }
 
-        const now = new Date();
+        const filtered = filterApplicableVouchers(availableVouchers, itemsSubtotal, voucherFilterParams);
+        const allApplicable = filtered;
 
-        const filtered = availableVouchers.filter(voucher => {
-            // Check expiry
-            if (voucher.expiryDate && new Date(voucher.expiryDate) < now) {
-                return false;
-            }
-
-            // Check minimum order value
-            if (voucher.minOrderValue && itemsSubtotal < voucher.minOrderValue) {
-                return false;
-            }
-
-            // Check maximum order value (if exists)
-            if (voucher.maxOrderValue && itemsSubtotal > voucher.maxOrderValue) {
-                return false;
-            }
-
-            return true;
+        setApplicableVouchers((prev) => {
+            if (prev.length !== allApplicable.length) return allApplicable;
+            const prevCodes = prev.map((v) => v.code).sort().join(',');
+            const newCodes = allApplicable.map((v) => v.code).sort().join(',');
+            if (prevCodes !== newCodes) return allApplicable;
+            return prev;
         });
-
-        // Sort by estimated discount (highest first)
-        filtered.sort((a, b) => {
-            const discountA = a.discountValueType === 'PERCENTAGE'
-                ? Math.min(
-                    (itemsSubtotal * a.discountValue / 100),
-                    a.maxDiscountValue || Infinity
-                )
-                : a.discountValue;
-            const discountB = b.discountValueType === 'PERCENTAGE'
-                ? Math.min(
-                    (itemsSubtotal * b.discountValue / 100),
-                    b.maxDiscountValue || Infinity
-                )
-                : b.discountValue;
-            return discountB - discountA;
-        });
-
-        setApplicableVouchers(filtered.slice(0, 3)); // Top 3 vouchers
-    }, [availableVouchers, checkoutItems, itemsSubtotal, selectedVoucherCode]);
-
-    const formatPrice = (value) =>
-        new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND',
-        }).format(value || 0);
+    }, [availableVouchers, checkoutItems, itemsSubtotal, selectedVoucherCode, voucherFilterParams]);
 
     const handleApplyVoucher = async () => {
-        const code = (voucherCodeInput || '').trim().toUpperCase();
-        if (!code) {
-            showError('Vui lòng nhập mã giảm giá');
+        // Kiểm tra định dạng mã giảm giá
+        const codeFormatCheck = validateVoucherCodeFormat(voucherCodeInput);
+        if (!codeFormatCheck.isValid) {
+            showError(codeFormatCheck.error);
             return;
         }
+        const code = codeFormatCheck.normalizedCode;
 
         if (!checkoutItems.length) {
             showError('Vui lòng chọn sản phẩm ở trang giỏ hàng trước khi áp dụng mã');
             navigate('/cart');
+            return;
+        }
+
+        if (itemsSubtotal <= 0) {
+            showError('Giá trị đơn hàng phải lớn hơn 0 để áp dụng mã giảm giá');
+            return;
+        }
+
+        // Tìm voucher trong danh sách có thể áp dụng
+        const voucherToApply = availableVouchers.find((v) => v.code === code);
+        if (!voucherToApply) {
+            showError(`Mã giảm giá "${code}" không tồn tại hoặc không khả dụng`);
+            return;
+        }
+
+        // Kiểm tra tính hợp lệ của voucher
+        const productIds = checkoutItems.map((item) => item.productId);
+        const categoryIds = checkoutItems
+            .map((item) => productMeta[item.productId]?.categoryId)
+            .filter(Boolean);
+
+        if (directCheckout && directProduct) {
+            const directCatId = directProduct.categoryId || directProduct.category?.id;
+            if (directCatId && !categoryIds.includes(directCatId)) {
+                categoryIds.push(directCatId);
+            }
+        }
+
+        const { isValid, error } = validateVoucher(voucherToApply, itemsSubtotal, {
+            productIds,
+            categoryIds,
+        });
+
+        if (!isValid) {
+            showError(error);
             return;
         }
 
@@ -850,7 +856,8 @@ export default function CheckoutDetailPage() {
             }
 
             // Regular cart-based checkout
-            const { ok, status, data } = await applyVoucherToCart(code, token);
+            // Fix: pass orderValue here too so backend knows the selected items subtotal
+            const { ok, status, data } = await applyVoucherToCart(code, token, { orderValue: itemsSubtotal });
 
             if (!ok) {
                 if (status === 401) {
@@ -994,31 +1001,35 @@ export default function CheckoutDetailPage() {
             console.warn('Cannot persist preview order info', storageErr);
         }
 
-        navigate('/checkout/confirm', {
-            state: {
-                paymentMethod,
-                // Direct checkout flag
-                directCheckout: directCheckout,
-                productId: directProductId,
-                quantity: directQuantity,
-                variantId: directVariantId,
-                // Giữ lại danh sách cartItemId đã chọn để backend biết item nào cần thanh toán (nếu không phải direct checkout)
-                cartItemIds: directCheckout ? [] : selectedItemIds,
-                address: {
-                    ...(selectedAddress || {}),
-                    recipientName,
-                    recipientPhone,
-                    addressText,
-                    shippingProvider: 'GHN',
-                },
-                summary: {
-                    items: summaryItems,
-                    subtotal: itemsSubtotal,
-                    shippingFee,
-                    voucherDiscount,
-                    total,
-                },
+        // Chuẩn bị state để truyền sang trang xác nhận
+        const navigationState = {
+            paymentMethod,
+            // Direct checkout flag
+            directCheckout: directCheckout,
+            productId: directProductId,
+            quantity: directQuantity,
+            variantId: directVariantId,
+            // Giữ lại danh sách cartItemId đã chọn để backend biết item nào cần thanh toán (nếu không phải direct checkout)
+            cartItemIds: directCheckout ? [] : selectedItemIds,
+            address: {
+                ...(selectedAddress || {}),
+                recipientName,
+                recipientPhone,
+                addressText,
+                shippingProvider: 'GHN',
             },
+            summary: {
+                items: summaryItems,
+                subtotal: itemsSubtotal,
+                shippingFee,
+                voucherDiscount,
+                total,
+            },
+        };
+
+        // Navigate trực tiếp đến trang xác nhận thanh toán (giống như CartPage)
+        navigate('/checkout/confirm', {
+            state: navigationState,
         });
     };
 
@@ -1352,64 +1363,58 @@ export default function CheckoutDetailPage() {
                                     )}
                                     {/* Voucher Suggestions */}
                                     {applicableVouchers.length > 0 && !selectedVoucherCode && (
-                                        <div className={cx('voucher-suggestions')}>
-                                            <h4 className={cx('suggestions-title')}>
-                                                💎 Mã giảm giá khả dụng
+                                        <div className={cx('applicable-vouchers')}>
+                                            <h4 className={cx('applicable-vouchers-title')}>
+                                                Voucher phù hợp với đơn hàng
                                             </h4>
-                                            <div className={cx('suggestions-list')}>
+                                            <div className={cx('voucher-list')}>
                                                 {applicableVouchers.map((voucher) => {
-                                                    const discountValue =
+                                                    const isSelected = selectedVoucherCode === voucher.code;
+                                                    const discountText =
                                                         voucher.discountValueType === 'PERCENTAGE'
-                                                            ? `${voucher.discountValue}%`
-                                                            : formatPrice(voucher.discountValue);
-
-                                                    const estimatedDiscount =
-                                                        voucher.discountValueType === 'PERCENTAGE'
-                                                            ? Math.min(
-                                                                (itemsSubtotal *
-                                                                    voucher.discountValue) /
-                                                                100,
-                                                                voucher.maxDiscountValue ||
-                                                                Infinity
-                                                            )
-                                                            : voucher.discountValue;
+                                                            ? `Giảm ${voucher.discountValue}%`
+                                                            : `Giảm ${formatPrice(voucher.discountValue || 0)}`;
 
                                                     return (
                                                         <div
-                                                            key={voucher.code}
-                                                            className={cx('suggestion-card')}
-                                                            onClick={() => {
-                                                                setVoucherCodeInput(voucher.code);
-                                                                // Trigger apply after setting code
-                                                                setTimeout(() => {
-                                                                    const applyBtn = document.querySelector(
-                                                                        `.${cx('voucher-apply-btn')}:not(.${cx('clear-btn')})`
-                                                                    );
-                                                                    if (applyBtn) applyBtn.click();
-                                                                }, 100);
-                                                            }}
+                                                            key={voucher.id || voucher.code}
+                                                            className={cx('voucher-item', {
+                                                                selected: isSelected,
+                                                            })}
                                                         >
-                                                            <div className={cx('suggestion-badge')}>
-                                                                {discountValue}
-                                                            </div>
-                                                            <div className={cx('suggestion-info')}>
-                                                                <div className={cx('suggestion-code')}>
-                                                                    {voucher.code}
+                                                            <div className={cx('voucher-text')}>
+                                                                <div className={cx('voucher-code-row')}>
+                                                                    <span className={cx('voucher-code')}>
+                                                                        {voucher.code}
+                                                                    </span>
+                                                                    <span className={cx('voucher-name')}>
+                                                                        {voucher.name || discountText}
+                                                                    </span>
                                                                 </div>
-                                                                {voucher.name && (
-                                                                    <div className={cx('suggestion-name')}>
-                                                                        {voucher.name}
-                                                                    </div>
+                                                                {voucher.description && (
+                                                                    <p className={cx('voucher-desc')}>
+                                                                        {voucher.description}
+                                                                    </p>
                                                                 )}
-                                                                <div className={cx('suggestion-estimate')}>
-                                                                    Giảm ~{formatPrice(estimatedDiscount)}
-                                                                </div>
+                                                                {voucher.minOrderValue && (
+                                                                    <p className={cx('voucher-desc')}>
+                                                                        Áp dụng cho đơn từ {formatPrice(voucher.minOrderValue)}
+                                                                    </p>
+                                                                )}
                                                             </div>
                                                             <button
-                                                                className={cx('suggestion-apply-btn')}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
+                                                                className={cx('select-voucher-btn', {
+                                                                    applied: isSelected,
+                                                                })}
+                                                                onClick={() => {
+                                                                    setVoucherCodeInput(voucher.code);                                                                    setTimeout(() => {
+                                                                        const applyBtn = document.querySelector(
+                                                                            `.${cx('voucher-apply-btn')}`
+                                                                        );
+                                                                        if (applyBtn) applyBtn.click();
+                                                                    }, 100);
                                                                 }}
+                                                                disabled={isSelected}
                                                             >
                                                                 Áp dụng
                                                             </button>

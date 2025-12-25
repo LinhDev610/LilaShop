@@ -1,247 +1,273 @@
+// VouchersPromotionsPage.module.scss - Standardized with Content Management style
+@import '../../../../assets/styles/GlobalStyles/GlobalStyles.scss';
+
 .wrap {
-    padding: 12px 8px 24px;
-    background: #f2ebdd;
+    padding: 28px 32px;
+    background: linear-gradient(135deg, #FDFBFF 0%, #F8F4FF 100%);
     min-height: calc(100vh - 60px);
+
+    @media (max-width: 768px) {
+        padding: 20px 16px;
+    }
 }
 
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 28px;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
 }
 
 .title {
-    font-size: 24px;
-    font-weight: 800;
-    color: #1b2b34;
+    font-size: 26px;
+    font-weight: 700;
+    color: #1a1d29;
+    margin: 0;
+    letter-spacing: -0.5px;
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(90deg, #7C3AED, #DB2777);
+        border-radius: 2px;
+    }
 }
 
 .dashboard-btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    height: 40px;
-    padding: 0 16px;
-    border-radius: 10px;
+    gap: 8px;
+    height: 42px;
+    padding: 0 20px;
+    border-radius: 12px;
     border: none;
-    background: #13324a; /* Dark blue */
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #fff;
     cursor: pointer;
     font-size: 14px;
-    font-weight: 500;
-    margin-right: 10px;
-}
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.35);
+    transition: all 0.3s ease;
 
-.dashboard-btn:hover {
-    opacity: 0.9;
-}
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(124, 58, 237, 0.45);
+    }
 
-.icon-left {
-    display: inline-flex;
+    &:active {
+        transform: translateY(0);
+    }
 }
 
 .search-filter-container {
-    margin-bottom: 12px;
+    background: #fff;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    margin-bottom: 24px;
 }
 
 .search-row {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
     flex-wrap: wrap;
 }
 
 .search-input {
     flex: 1;
     min-width: 300px;
-    padding: 13px 12px;
+    padding: 12px 16px;
     border-radius: 10px;
-    border: 1px solid #d1d5db;
+    border: 1px solid #e5e7eb;
     font-size: 14px;
-}
+    transition: all 0.3s ease;
 
-.search-input:focus {
-    outline: none;
-    border-color: #1A3C5A;
-    box-shadow: 0 0 0 3px rgba(26, 60, 90, 0.1);
-}
-
-.date-wrapper {
-    position: relative;
+    &:focus {
+        outline: none;
+        border-color: #7C3AED;
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
 }
 
 .date-input {
-    width: 160px;
-    padding: 13px 12px;
+    width: 180px;
+    padding: 12px 16px;
     border-radius: 10px;
-    border: 1px solid #d1d5db;
+    border: 1px solid #e5e7eb;
     font-size: 14px;
-    cursor: pointer;
-}
-
-.date-input:focus {
-    outline: none;
-    border-color: #1A3C5A;
-    box-shadow: 0 0 0 3px rgba(26, 60, 90, 0.1);
 }
 
 .search-btn {
-    padding: 13px 50px;
-    background: #173a55;
+    padding: 12px 32px;
+    background: #1a1d29;
     color: #fff;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    white-space: nowrap;
-}
+    transition: all 0.2s ease;
 
-.search-btn:hover {
-    opacity: 0.9;
+    &:hover {
+        background: #2a2d39;
+    }
 }
 
 .filter-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     flex-wrap: wrap;
 }
 
 .sort-section {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .sort-label {
     font-size: 14px;
-    font-weight: 500;
-    color: #333;
-    white-space: nowrap;
+    font-weight: 600;
+    color: #5a6178;
 }
 
 .sort-dropdown {
-    padding: 12px 16px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
+    padding: 10px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
     font-size: 14px;
     background: #fff;
     cursor: pointer;
-    min-width: 180px;
-}
+    min-width: 200px;
 
-.sort-dropdown:focus {
-    outline: none;
-    border-color: #1A3C5A;
-    box-shadow: 0 0 0 3px rgba(26, 60, 90, 0.1);
+    &:focus {
+        outline: none;
+        border-color: #7C3AED;
+    }
 }
 
 .action-buttons {
     display: flex;
     gap: 12px;
-    flex-wrap: wrap;
 }
 
 .btn.primary {
-    background: #173a55;
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #fff;
     border: none;
-    border-radius: 8px;
-    padding: 13px 27px;
+    border-radius: 10px;
+    padding: 12px 24px;
     font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    white-space: nowrap;
-}
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
 
-.btn.primary:hover {
-    opacity: 0.9;
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 15px rgba(124, 58, 237, 0.3);
+    }
 }
 
 .card {
     background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    padding: 0;
-    border: none;
+    border-radius: 16px;
     overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .card-header {
-    padding: 12px 16px;
-    font-weight: 800;
+    padding: 16px 24px;
+    font-weight: 700;
     font-size: 16px;
-    color: #1b2b34;
-    background: #ffffff;
-    border-bottom: 1px solid #eef2f4;
+    color: #1a1d29;
+    background: linear-gradient(135deg, #FDFBFF 0%, #F8F4FF 100%);
+    border-bottom: 1px solid #e8ecf1;
 }
 
+/* Table Standardization */
 .table {
     width: 100%;
     border-collapse: collapse;
+
+    th {
+        padding: 16px 24px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: #6b7280;
+        border-bottom: 2px solid #eef2f6;
+        white-space: nowrap;
+    }
+
+    td {
+        padding: 16px 24px;
+        font-size: 14px;
+        color: #1f2937;
+        vertical-align: middle;
+        border-bottom: 1px solid #f0f2f5;
+    }
+
+    tbody tr {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f0f2f5;
+
+        &:nth-child(even) {
+            background: #fafbfd;
+        }
+
+        &:hover {
+            background: linear-gradient(90deg, rgba(124, 58, 237, 0.04), rgba(219, 39, 119, 0.04));
+            transform: scale(1.001);
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+    }
 }
 
-.table thead th {
-    text-align: center;
-    padding: 12px 16px;
-    font-size: 14px;
-    font-weight: 700;
-    color: #ffffff;
-    background: #1A3C5A;
-}
-
-.table tbody tr {
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.table tbody tr:nth-child(even) {
-    background: #fafafa;
-}
-
-.table tbody tr:hover {
-    background: #f5f5f5;
-}
-
-.table tbody td {
-    padding: 12px 16px;
-    border-top: 1px solid #e5e7eb;
-    color: #000;
-    font-size: 14px;
-    text-align: center;
-}
-
-.code-cell {
-    font-weight: 600;
-    color: #1b2b34;
-    font-family: monospace;
-}
-
+.code-cell,
 .name-cell {
-    font-weight: 500;
-}
-
-.btn.view-btn {
-    background: #173a55;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-
     &:hover {
-        background: #0f2a3f;
+        background: #e5e7eb;
     }
 }
 
 .empty {
     text-align: center;
-    padding: 24px 0;
-    color: #6b7b85;
+    padding: 60px 0;
+    color: #9ca3af;
+    font-style: italic;
 }
 
+.view-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid rgba(124, 58, 237, 0.1);
+    background: rgba(124, 58, 237, 0.1);
+    color: #7C3AED;
 
+    &:hover {
+        background: rgba(124, 58, 237, 0.2);
+        transform: translateY(-1px);
+    }
+}

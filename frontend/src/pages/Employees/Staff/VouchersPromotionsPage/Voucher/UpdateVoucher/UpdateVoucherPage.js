@@ -189,6 +189,7 @@ export default function UpdateVoucherPage() {
                     ...prev,
                     discountValueType: value,
                     maxDiscountValue: value === 'PERCENTAGE' ? prev.maxDiscountValue : '',
+                    discountValue: '', // Reset discount value when type changes
                 };
             }
             if (field === 'applyScope') {

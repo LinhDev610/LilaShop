@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ProfileStaffPage.scss';
 import { useNavigate } from 'react-router-dom';
@@ -7,7 +7,7 @@ import iconInvisible from '../../../../assets/icons/icon-invisible.png';
 import Notification from '../../../../components/Common/Notification/Notification';
 import useLocalStorage from '../../../../hooks/useLocalStorage';
 import { getStoredToken } from '../../../../services/utils';
-import { getMyInfo, updateUser, changePassword } from '../../../../services';
+import { getMyInfo, updateUser, changePassword, validatePassword } from '../../../../services';
 import { useNotification } from '../../../../components/Common/Notification';
 
 const cx = classNames.bind(styles);
@@ -114,8 +114,9 @@ function ProfileStaffPage() {
     };
 
     const handleChangePassword = async () => {
-        if (!newPassword || newPassword !== confirmPassword) {
-            notify('error', 'Mật khẩu mới không khớp');
+        const validation = validatePassword(newPassword, confirmPassword);
+        if (!validation.isValid) {
+            notify('error', validation.error);
             return;
         }
         try {
@@ -332,5 +333,3 @@ function ProfileStaffPage() {
 }
 
 export default ProfileStaffPage;
-
-

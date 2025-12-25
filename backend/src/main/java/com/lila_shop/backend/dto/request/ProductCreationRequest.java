@@ -76,6 +76,7 @@ public class ProductCreationRequest {
     Double purchasePrice;
 
     @DecimalMin(value = "0.0", message = "Thuế phải lớn hơn hoặc bằng 0")
+    @DecimalMax(value = "1.0", message = "Thuế tối đa là 1.0 (100%)")
     Double tax;
 
     @DecimalMin(value = "0.0", message = "Giá trị giảm giá phải lớn hơn hoặc bằng 0")

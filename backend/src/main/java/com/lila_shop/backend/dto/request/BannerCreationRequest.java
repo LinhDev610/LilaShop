@@ -20,13 +20,15 @@ public class BannerCreationRequest {
     @Size(max = 255, message = "Tiêu đề không được vượt quá 255 ký tự")
     String title;
 
-    @Size(max = 1000, message = "Mô tả không được vượt quá 1000 ký tự")
     String description;
 
     @NotBlank(message = "URL hình ảnh không được để trống")
     String imageUrl;
 
     String linkUrl;
+
+    @Size(max = 50, message = "Content type không được vượt quá 50 ký tự")
+    String contentType; // 'banner', 'seasonal', 'trending'
 
     @Builder.Default
     Boolean status = true;

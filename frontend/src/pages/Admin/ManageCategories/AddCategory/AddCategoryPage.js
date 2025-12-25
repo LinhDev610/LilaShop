@@ -6,6 +6,7 @@ import { useAuth } from '../../../../contexts/AuthContext';
 import { useNotification } from '../../../../components/Common/Notification';
 import { getStoredToken } from '../../../../services/utils';
 import { getRootCategories, refreshToken, createCategory } from '../../../../services';
+import { ErrorCode, isAuthError, isValidationError } from '../../../../utils/errorCodes';
 
 const cx = classNames.bind(styles);
 
@@ -113,15 +114,17 @@ function AddCategoryPage() {
                     parentId: (formData.parentId && formData.parentId.trim()) || null
                 };
 
-                let { ok, data: result } = await createCategory(requestData, token);
+                let { ok, status, data: result } = await createCategory(requestData, token);
+                const errorCode = result?.code;
 
-                // Nếu hết hạn -> thử refresh và gọi lại 1 lần
-                if (!ok) {
+                // Chỉ refresh token khi là lỗi authentication (401 hoặc error code tương ứng)
+                if (!ok && (status === 401 || (errorCode && isAuthError(errorCode)))) {
                     const newToken = await refreshTokenIfNeeded();
                     if (newToken) {
                         token = newToken;
                         const retryResult = await createCategory(requestData, token);
                         ok = retryResult.ok;
+                        status = retryResult.status;
                         result = retryResult.data;
                     } else {
                         // Không có refreshToken (user không tick Ghi nhớ) -> buộc đăng nhập lại
@@ -132,6 +135,7 @@ function AddCategoryPage() {
                         navigate('/', { replace: true });
                         // Mở modal đăng nhập nếu có sẵn context
                         try { openLoginModal?.(); } catch (_) { }
+                        setIsLoading(false);
                         return;
                     }
                 }
@@ -140,8 +144,33 @@ function AddCategoryPage() {
                     success('Tạo danh mục thành công!');
                     navigate('/admin/categories');
                 } else {
+                    // Hiển thị thông báo lỗi từ server (ví dụ: "Mã danh mục đã tồn tại" hoặc "Tên danh mục đã tồn tại")
                     const serverMsg = result?.message || result?.error || '';
-                    error(serverMsg || 'Không thể tạo danh mục. Vui lòng thử lại.');
+                    const errorMessage = serverMsg || 'Không thể tạo danh mục. Vui lòng thử lại.';
+                    error(errorMessage);
+
+                    // Xử lý lỗi validation dựa trên error code
+                    if (errorCode === ErrorCode.CATEGORY_ALREADY_EXISTS || (status === 400 && isValidationError(errorCode))) {
+                        const newErrors = {};
+                        const lowerMsg = serverMsg.toLowerCase();
+
+
+                        if ((lowerMsg.includes('mã danh mục') && !lowerMsg.includes('tên danh mục')) ||
+                            (lowerMsg.includes('mã') && !lowerMsg.includes('tên'))) {
+                            newErrors.id = 'Mã danh mục đã tồn tại';
+                        } else if ((lowerMsg.includes('tên danh mục') && !lowerMsg.includes('mã danh mục')) ||
+                            (lowerMsg.includes('tên') && !lowerMsg.includes('mã'))) {
+                            newErrors.name = 'Tên danh mục đã tồn tại';
+                        } else {
+                            newErrors.name = 'Tên danh mục đã tồn tại';
+                        }
+
+                        if (Object.keys(newErrors).length > 0) {
+                            setErrors(prev => ({ ...prev, ...newErrors }));
+                        }
+                    } else if (status === 500) {
+                        error('Lỗi hệ thống. Vui lòng thử lại sau.');
+                    }
                 }
             } catch (error) {
                 console.error('Error creating category:', error);

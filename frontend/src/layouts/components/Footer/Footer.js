@@ -24,7 +24,7 @@ function Footer() {
                 const data = await getRootCategories().catch(() => []);
                 if (!ignore) {
                     const normalized = Array.isArray(data)
-                        ? data.filter((item) => item && item.name && item.id)
+                        ? data.filter((item) => item && item.name && item.id && item.status === true)
                         : [];
                     // Giới hạn số lượng categories hiển thị (tối đa 10)
                     setCategories(normalized.slice(0, 10));

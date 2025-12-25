@@ -2,8 +2,8 @@
     padding: 24px;
     max-width: 1200px;
     margin: 0 auto;
-    background-color: #f5f5f5;
-    min-height: 100vh;
+    background: linear-gradient(135deg, #FDFBFF 0%, #F8F4FF 100%);
+    min-height: calc(100vh - 60px);
 }
 
 .header {
@@ -19,7 +19,7 @@
     .title {
         font-size: 28px;
         font-weight: 600;
-        color: #333;
+        color: #1a1d29;
         margin: 0;
         display: flex;
         align-items: center;
@@ -53,11 +53,13 @@
 }
 
 .btn-primary {
-    background-color: #007bff;
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: white;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
 
     &:hover:not(:disabled) {
-        background-color: #0056b3;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 15px rgba(124, 58, 237, 0.35);
     }
 }
 
@@ -71,22 +73,23 @@
 }
 
 .btn-secondary {
-    background-color: #e5e7eb;
-    color: #1a3c5a;
+    background-color: rgba(124, 58, 237, 0.1);
+    color: #7C3AED;
+    border: 1px solid rgba(124, 58, 237, 0.1);
 
     &:hover:not(:disabled) {
-        background-color: #d1d5db;
+        background-color: rgba(124, 58, 237, 0.2);
     }
 }
 
 .btn-link {
-    background-color: #2563eb;
+    background-color: #7C3AED;
     color: #fff;
     padding: 8px 16px;
     font-size: 13px;
 
     &:hover:not(:disabled) {
-        background-color: #1d4ed8;
+        background-color: #6D28D9;
     }
 }
 
@@ -152,8 +155,10 @@
     border-left: 4px solid transparent;
 
     &.unread {
-        border-left-color: #007bff;
-        background-color: #f8f9fa;
+        border-left-color: #7C3AED;
+        background-color: #FDFBFF;
+        border: 1px solid rgba(124, 58, 237, 0.1);
+        border-left-width: 4px;
     }
 
     &.read {
@@ -185,13 +190,13 @@
 }
 
 .notification-inline-link {
-    color: #2563eb;
+    color: #7C3AED;
     font-weight: 500;
     text-decoration: underline;
     margin-left: 6px;
 
     &:hover {
-        color: #1d4ed8;
+        color: #DB2777;
     }
 }
 
@@ -270,7 +275,7 @@
     height: 22px;
     padding: 0 6px;
     border-radius: 999px;
-    background-color: #ef4444;
+    background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
     color: #fff;
     font-size: 12px;
     font-weight: 700;
@@ -278,4 +283,3 @@
     align-items: center;
     justify-content: center;
 }
-

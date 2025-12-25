@@ -131,6 +131,7 @@ function UpdateProduct() {
 
                 // Fill form with product data
                 setProductId(product.id || id || '');
+         
                 setName(product.name || '');
                 setDescription(product.description || '');
                 setBrand(product.brand || '');

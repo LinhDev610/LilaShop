@@ -5,7 +5,8 @@ import styles from './UpdateCategoryPage.module.scss';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { useNotification } from '../../../../components/Common/Notification';
 import { getStoredToken } from '../../../../services/utils';
-import { getCategoryById, getRootCategories, refreshToken, updateCategory, createCategory } from '../../../../services';
+import { getCategoryById, getRootCategories, refreshToken, updateCategory, createCategory, getSubCategories } from '../../../../services';
+import { ErrorCode, isAuthError, isValidationError } from '../../../../utils/errorCodes';
 
 const cx = classNames.bind(styles);
 
@@ -29,6 +30,7 @@ function UpdateCategoryPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [rootCategories, setRootCategories] = useState([]);
     const [loadingCategories, setLoadingCategories] = useState(false);
+    const [hasChildren, setHasChildren] = useState(false);
 
     // ========== Helper Functions ==========
     const readToken = (key = 'token') => getStoredToken(key);
@@ -41,7 +43,11 @@ function UpdateCategoryPage() {
             const fetchCategory = async () => {
                 try {
                     const token = readToken();
-                    const cat = await getCategoryById(id, token) || {};
+                    const [cat, subCats] = await Promise.all([
+                        getCategoryById(id, token) || {},
+                        getSubCategories(id, token) || []
+                    ]);
+
                     setFormData({
                         id: cat.id || '',
                         name: cat.name || '',
@@ -49,6 +55,11 @@ function UpdateCategoryPage() {
                         parentId: cat.parentId || cat.parent?.id || '',
                         status: cat.status === undefined ? true : Boolean(cat.status),
                     });
+
+                    // Check if category has children
+                    if (Array.isArray(subCats) && subCats.length > 0) {
+                        setHasChildren(true);
+                    }
                 } catch (err) {
                     console.error('Error fetching category:', err);
                     error('Không thể tải thông tin danh mục');
@@ -135,20 +146,30 @@ function UpdateCategoryPage() {
                 }
 
                 // Prepare request data
-                const requestData = {
-                    id: formData.id.trim(),
-                    name: formData.name.trim(),
-                    description: formData.description.trim() || null,
-                    status: formData.status,
-                    parentId: (formData.parentId && formData.parentId.trim()) || null
-                };
+                const requestData = isEditMode
+                    ? {
+                        // Khi update, không gửi id vì backend không cho phép update id
+                        name: formData.name.trim(),
+                        description: formData.description.trim() || null,
+                        status: formData.status,
+                        parentId: (formData.parentId && formData.parentId.trim()) || null,
+                    }
+                    : {
+                        // Khi create, cần gửi id
+                        id: formData.id.trim(),
+                        name: formData.name.trim(),
+                        description: formData.description.trim() || null,
+                        status: formData.status,
+                        parentId: (formData.parentId && formData.parentId.trim()) || null,
+                    };
 
-                let { ok, data: result } = isEditMode
+                let { ok, status, data: result } = isEditMode
                     ? await updateCategory(id, requestData, token)
                     : await createCategory(requestData, token);
+                const errorCode = result?.code;
 
-                // Nếu hết hạn -> thử refresh và gọi lại 1 lần
-                if (!ok) {
+                // Chỉ refresh token khi là lỗi authentication (401 hoặc error code tương ứng)
+                if (!ok && (status === 401 || (errorCode && isAuthError(errorCode)))) {
                     const newToken = await refreshTokenIfNeeded();
                     if (newToken) {
                         token = newToken;
@@ -156,6 +177,7 @@ function UpdateCategoryPage() {
                             ? await updateCategory(id, requestData, token)
                             : await createCategory(requestData, token);
                         ok = retryResult.ok;
+                        status = retryResult.status;
                         result = retryResult.data;
                     } else {
                         // Không có refreshToken -> buộc đăng nhập lại
@@ -175,7 +197,31 @@ function UpdateCategoryPage() {
                     navigate('/admin/categories');
                 } else {
                     const serverMsg = result?.message || result?.error || '';
-                    error(serverMsg || `Không thể ${isEditMode ? 'cập nhật' : 'tạo'} danh mục. Vui lòng thử lại.`);
+                    const errorMessage = serverMsg || `Không thể ${isEditMode ? 'cập nhật' : 'tạo'} danh mục. Vui lòng thử lại.`;
+                    error(errorMessage);
+
+                    if (errorCode === ErrorCode.CATEGORY_ALREADY_EXISTS || (status === 400 && isValidationError(errorCode))) {
+                        const newErrors = {};
+                        const lowerMsg = serverMsg.toLowerCase();
+
+                        if (isEditMode) {
+                            newErrors.name = 'Tên danh mục đã tồn tại';
+                        } else {
+                            if (lowerMsg.includes('tên danh mục') || lowerMsg.includes('tên')) {
+                                newErrors.name = 'Tên danh mục đã tồn tại';
+                            } else if (lowerMsg.includes('mã danh mục') || lowerMsg.includes('mã')) {
+                                newErrors.id = 'Mã danh mục đã tồn tại';
+                            } else {
+                                newErrors.name = 'Tên danh mục đã tồn tại';
+                            }
+                        }
+
+                        if (Object.keys(newErrors).length > 0) {
+                            setErrors(prev => ({ ...prev, ...newErrors }));
+                        }
+                    } else if (status === 500) {
+                        error('Lỗi hệ thống. Vui lòng thử lại sau.');
+                    }
                 }
             } catch (error) {
                 console.error('Error creating category:', error);
@@ -230,7 +276,15 @@ function UpdateCategoryPage() {
                                 placeholder="VD: DM0001"
                                 value={formData.id}
                                 onChange={(e) => handleInputChange('id', e.target.value)}
+                                readOnly={isEditMode}
+                                disabled={isEditMode}
+                                title={isEditMode ? 'Mã danh mục không thể thay đổi khi cập nhật' : ''}
                             />
+                            {isEditMode && (
+                                <span className={cx('field-hint')} style={{ fontSize: '0.85em', color: '#666', marginTop: '4px', display: 'block' }}>
+                                    Mã danh mục không thể thay đổi
+                                </span>
+                            )}
                             {errors.id && <span className={cx('error-message')}>{errors.id}</span>}
                         </div>
 
@@ -267,15 +321,23 @@ function UpdateCategoryPage() {
                                     className={cx('form-select', { error: errors.parentId })}
                                     value={formData.parentId}
                                     onChange={(e) => handleInputChange('parentId', e.target.value)}
-                                    disabled={loadingCategories}
+                                    disabled={loadingCategories || (isEditMode && hasChildren)}
+                                    title={isEditMode && hasChildren ? 'Danh mục này đang có danh mục con, không thể chuyển thành danh mục con' : ''}
                                 >
                                     <option value="">-- Không có (Danh mục gốc) --</option>
-                                    {rootCategories.map((category) => (
-                                        <option key={category.id} value={category.id}>
-                                            {category.name}
-                                        </option>
-                                    ))}
+                                    {rootCategories
+                                        .filter(category => category.id !== formData.id) // Prevent self-selection
+                                        .map((category) => (
+                                            <option key={category.id} value={category.id}>
+                                                {category.name}
+                                            </option>
+                                        ))}
                                 </select>
+                                {isEditMode && hasChildren && (
+                                    <span style={{ fontSize: '0.85em', color: '#dc2626', marginTop: '4px', display: 'block' }}>
+                                        Lưu ý: Danh mục này đang có danh mục con bên trong, không thể chọn làm danh mục con của danh mục khác.
+                                    </span>
+                                )}
                                 {errors.parentId && <span className={cx('error-message')}>{errors.parentId}</span>}
                             </div>
 

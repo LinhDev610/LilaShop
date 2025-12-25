@@ -5,15 +5,6 @@ import styles from './Banner1.module.scss';
 
 const cx = classNames.bind(styles);
 
-/*
-  Banner1 - Two-column layout
-  - If heroImages is provided (array), render a carousel with arrows and auto-play (5s)
-  - Else fallback to a single heroImage
-  Props:
-  - heroImage?: string
-  - heroImages?: string[]
-  - promos?: Array<{ image: string, alt?: string, href?: string }>
-*/
 export default function Banner1({ heroImage, heroImages = [], promos = [], fullWidth = false }) {
     const [current, setCurrent] = useState(0);
     const slides = useMemo(() => (heroImages && heroImages.length > 0 ? heroImages : heroImage ? [heroImage] : []), [heroImages, heroImage]);

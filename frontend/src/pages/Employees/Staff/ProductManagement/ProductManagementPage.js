@@ -43,7 +43,7 @@ export default function ProductManagementPage() {
 
     // Fetch data using custom hooks (API endpoint (backend)
     const { products: allProducts, loading, error } = useProducts({
-        endpoint: '/products/my-products',
+        endpoint: '/products',
         token,
     });
     const { activeCategoryIdSet, activeCategoryNameSet, loaded: activeLoaded } = useActiveCategories(token);
@@ -185,7 +185,7 @@ export default function ProductManagementPage() {
     // ========== Main Render ==========
 
     return (
-        <div>
+        <div className={cx('wrap')}>
             {/* Header */}
             <div className={cx('header')}>
                 <h1 className={cx('title')}>Quản lý sản phẩm</h1>
@@ -205,133 +205,131 @@ export default function ProductManagementPage() {
                 </button>
             </div>
 
-            <div className={cx('wrap')}>
-                {/* Search Controls */}
-                <SearchAndSort
-                    searchPlaceholder="Tìm kiếm theo mã, tên sản phẩm,..."
-                    searchValue={keyword}
-                    onSearchChange={(e) => setKeyword(e.target.value)}
-                    onSearchClick={() => { }}
-                    dateFilter={dateFilter}
-                    onDateChange={(value) => setDateFilter(value)}
-                    dateLabel="Ngày"
-                />
+            {/* Search Controls */}
+            <SearchAndSort
+                searchPlaceholder="Tìm kiếm theo mã, tên sản phẩm,..."
+                searchValue={keyword}
+                onSearchChange={(e) => setKeyword(e.target.value)}
+                onSearchClick={() => { }}
+                dateFilter={dateFilter}
+                onDateChange={(value) => setDateFilter(value)}
+                dateLabel="Ngày"
+            />
 
-                {/* Action Buttons */}
-                <div className={cx('bottom-actions')}>
+            {/* Action Buttons */}
+            <div className={cx('bottom-actions')}>
+                <button
+                    className={cx('btn', 'primary')}
+                    onClick={() => navigate('/staff/products/new')}
+                >
+                    Thêm sản phẩm
+                </button>
+            </div>
+
+            {/* Status Tabs */}
+            <div className={cx('controls')}>
+                <div className={cx('tabs')}>
                     <button
-                        className={cx('btn', 'primary')}
-                        onClick={() => navigate('/staff/products/new')}
+                        className={cx('tab', { active: tab === 'all' })}
+                        onClick={() => setTab('all')}
                     >
-                        Thêm sản phẩm
+                        Tất cả
+                    </button>
+                    <button
+                        className={cx('tab', { active: tab === 'pending' })}
+                        onClick={() => setTab('pending')}
+                    >
+                        Chờ duyệt
+                    </button>
+                    <button
+                        className={cx('tab', { active: tab === 'approved' })}
+                        onClick={() => setTab('approved')}
+                    >
+                        Đã duyệt
+                    </button>
+                    <button
+                        className={cx('tab', { active: tab === 'rejected' })}
+                        onClick={() => setTab('rejected')}
+                    >
+                        Từ chối
                     </button>
                 </div>
+            </div>
 
-                {/* Status Tabs */}
-                <div className={cx('controls')}>
-                    <div className={cx('tabs')}>
-                        <button
-                            className={cx('tab', { active: tab === 'all' })}
-                            onClick={() => setTab('all')}
-                        >
-                            Tất cả
-                        </button>
-                        <button
-                            className={cx('tab', { active: tab === 'pending' })}
-                            onClick={() => setTab('pending')}
-                        >
-                            Chờ duyệt
-                        </button>
-                        <button
-                            className={cx('tab', { active: tab === 'approved' })}
-                            onClick={() => setTab('approved')}
-                        >
-                            Đã duyệt
-                        </button>
-                        <button
-                            className={cx('tab', { active: tab === 'rejected' })}
-                            onClick={() => setTab('rejected')}
-                        >
-                            Từ chối
-                        </button>
-                    </div>
-                </div>
-
-                {/* Products Table */}
-                <div className={cx('card')}>
-                    <div className={cx('card-header')}>Danh sách sản phẩm</div>
-                    <table className={cx('table')}>
-                        <thead>
-                            <tr>
-                                <th>Ảnh</th>
-                                <th>Tên sản phẩm</th>
-                                <th>Danh mục</th>
-                                <th>Giá</th>
-                                <th>Trạng thái</th>
-                                <th>Hành động</th>
+            {/* Products Table */}
+            <div className={cx('card')}>
+                <div className={cx('card-header')}>Danh sách sản phẩm</div>
+                <table className={cx('table')}>
+                    <thead>
+                        <tr>
+                            <th>Ảnh</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Danh mục</th>
+                            <th>Giá</th>
+                            <th>Trạng thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filtered.map((p) => (
+                            <tr key={p.id}>
+                                <td className={cx('thumb-cell')}>
+                                    {p.imageUrl ? (
+                                        <img
+                                            src={p.imageUrl}
+                                            alt=""
+                                            title={p.imageUrl}
+                                            className={cx('thumb')}
+                                            onError={(e) => {
+                                                const img = e.currentTarget;
+                                                if (img.dataset.fallbackApplied === '1')
+                                                    return;
+                                                img.dataset.fallbackApplied = '1';
+                                                img.src = FALLBACK_THUMB;
+                                            }}
+                                        />
+                                    ) : null}
+                                </td>
+                                <td className={cx('product-cell')}>
+                                    <div className={cx('prod-name')}>{p.name}</div>
+                                </td>
+                                <td>{p.category}</td>
+                                <td>{p.price.toLocaleString('vi-VN')}₫</td>
+                                <td>
+                                    <StatusBadge status={p.status} />
+                                </td>
+                                <td>
+                                    <div className={cx('action-group')}>
+                                        <button
+                                            className={cx('btn', 'view-btn')}
+                                            onClick={() =>
+                                                navigate(`/staff/products/${p.id}`)
+                                            }
+                                        >
+                                            Xem chi tiết
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={cx('btn', 'restock-btn')}
+                                            onClick={() => handleOpenRestock(p)}
+                                        >
+                                            Bổ sung kho
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {filtered.map((p) => (
-                                <tr key={p.id}>
-                                    <td className={cx('thumb-cell')}>
-                                        {p.imageUrl ? (
-                                            <img
-                                                src={p.imageUrl}
-                                                alt=""
-                                                title={p.imageUrl}
-                                                className={cx('thumb')}
-                                                onError={(e) => {
-                                                    const img = e.currentTarget;
-                                                    if (img.dataset.fallbackApplied === '1')
-                                                        return;
-                                                    img.dataset.fallbackApplied = '1';
-                                                    img.src = FALLBACK_THUMB;
-                                                }}
-                                            />
-                                        ) : null}
-                                    </td>
-                                    <td className={cx('product-cell')}>
-                                        <div className={cx('prod-name')}>{p.name}</div>
-                                    </td>
-                                    <td>{p.category}</td>
-                                    <td>{p.price.toLocaleString('vi-VN')}₫</td>
-                                    <td>
-                                        <StatusBadge status={p.status} />
-                                    </td>
-                                    <td>
-                                        <div className={cx('action-group')}>
-                                            <button
-                                                className={cx('btn', 'view-btn')}
-                                                onClick={() =>
-                                                    navigate(`/staff/products/${p.id}`)
-                                                }
-                                            >
-                                                Xem chi tiết
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className={cx('btn', 'restock-btn')}
-                                                onClick={() => handleOpenRestock(p)}
-                                            >
-                                                Bổ sung kho
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            {filtered.length === 0 && (
-                                <tr>
-                                    <td colSpan={6} className={cx('empty')}>
-                                        {productsData.length === 0
-                                            ? 'Bạn chưa tạo sản phẩm nào.'
-                                            : 'Không có sản phẩm phù hợp.'}
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                        ))}
+                        {filtered.length === 0 && (
+                            <tr>
+                                <td colSpan={6} className={cx('empty')}>
+                                    {productsData.length === 0
+                                        ? 'Bạn chưa tạo sản phẩm nào.'
+                                        : 'Không có sản phẩm phù hợp.'}
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
             </div>
 
             {/* Restock Dialog */}

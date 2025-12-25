@@ -1,0 +1,106 @@
+.brandsSection {
+    padding: 60px 40px;
+    background: linear-gradient(135deg, rgba(135, 52, 53, 0.03) 0%, rgba(135, 52, 53, 0.08) 100%);
+    text-align: center;
+    max-width: 1400px;
+    width: 90%;
+    margin: 40px auto;
+    border-radius: 24px;
+    box-shadow: inset 0 0 40px rgba(135, 52, 53, 0.05);
+    border: 1px solid rgba(135, 52, 53, 0.1);
+
+    @media (max-width: 768px) {
+        width: 100%;
+        margin: 20px 0;
+        padding: 40px 20px;
+        border-radius: 0;
+    }
+}
+
+.sectionTitle {
+    color: #873435; // Brand color for better prominence
+    font-size: 26px; // Slightly larger
+    font-weight: 700; // Bolder
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+    position: relative;
+    display: inline-block;
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 3px;
+        background: #873435;
+        border-radius: 2px;
+    }
+
+    @media (max-width: 768px) {
+        font-size: 20px;
+        margin-bottom: 24px;
+    }
+}
+
+.brandsGrid {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 40px;
+
+    @media (max-width: 768px) {
+        gap: 24px;
+    }
+}
+
+.brandItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.3s ease;
+
+    &:hover {
+        transform: translateY(-4px);
+    }
+}
+
+.brandLogoPlaceholder {
+    width: 120px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #F5F5F5;
+    border-radius: 4px;
+    font-size: 24px;
+    font-weight: 600;
+    color: #6B6B6B;
+    text-transform: uppercase;
+}
+
+.brandLogo {
+    width: 140px; // Slightly larger logos
+    height: 70px;
+    object-fit: contain;
+    filter: grayscale(100%) contrast(1.2);
+    opacity: 0.5;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+        filter: grayscale(0%) contrast(1);
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+
+.brandName {
+    font-size: 14px;
+    color: #6B5B5B;
+    font-weight: 500;
+}

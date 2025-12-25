@@ -5,8 +5,8 @@ import {
     updateProductVariant,
 } from '../../../../../services/api';
 import { normalizeMediaUrl } from '../../../../../services/productUtils';
-import { uploadProductMedia } from '../../../../../services';
-import { STAFF_STOCK_ADD_LIMIT } from '../../../../../services/constants';
+import { uploadProductMedia } from '../../../../../services/CloudinaryService';
+import { STAFF_STOCK_ADD_LIMIT, CLOUDINARY_FOLDERS } from '../../../../../services/constants';
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import classNames from 'classnames/bind';
@@ -156,7 +156,7 @@ function UpdateProductPage() {
                         ? product.purchasePrice
                         : '',
                 );
-                setTaxPercent(product.tax ? String(Math.round(product.tax)) : '0');
+                setTaxPercent(product.tax ? String(Math.round(product.tax * 100)) : '0');
                 setDiscountValue(product.discountValue || 0.0);
                 setCategoryId(product.categoryId || '');
                 const inventoryQuantity = product.stockQuantity ?? null;
@@ -407,7 +407,7 @@ function UpdateProductPage() {
                 shadeHex: restockVariantTarget.shadeHex || null,
                 price: restockVariantTarget.price || 0,
                 unitPrice: restockVariantTarget.unitPrice || null,
-                tax: restockVariantTarget.taxPercent ? Number(restockVariantTarget.taxPercent) : null,
+                tax: restockVariantTarget.taxPercent ? Number(restockVariantTarget.taxPercent) / 100 : null,
                 purchasePrice: restockVariantTarget.purchasePrice || null,
                 stockQuantity: newStock,
                 isDefault: Boolean(restockVariantTarget.isDefault),
@@ -514,62 +514,55 @@ function UpdateProductPage() {
                 const filesToUpload = mediaFiles.filter((m) => m.file && !m.uploadedUrl);
                 if (filesToUpload.length > 0) {
                     const fileArray = filesToUpload.map((m) => m.file);
-                    let uploadResult = await uploadProductMedia(fileArray, token);
 
-                    // Retry with refreshed token if 401
-                    if (!uploadResult.ok && uploadResult.status === 401) {
-                        const newToken = await refreshTokenIfNeeded();
-                        if (newToken) {
-                            token = newToken;
-                            uploadResult = await uploadProductMedia(fileArray, token);
-                        }
-                    }
+                    // Upload parallel via CloudinaryService
+                    try {
+                        const folderPath = [
+                            CLOUDINARY_FOLDERS.PRODUCT,
+                            categoryId,
+                            productId
+                        ].filter(Boolean).join('/');
+                        const uploadedUrls = await uploadProductMedia(fileArray, folderPath);
 
-                    if (!uploadResult.ok || !uploadResult.urls || uploadResult.urls.length === 0) {
+                        // Map uploaded URLs back
+                        let urlIndex = 0;
+                        const updatedMediaFiles = mediaFiles.map((m) => {
+                            if (m.file && !m.uploadedUrl) {
+                                const uploadedUrl = uploadedUrls[urlIndex++];
+                                if (m.type === 'IMAGE') {
+                                    imageUrls.push(uploadedUrl);
+                                } else {
+                                    videoUrls.push(uploadedUrl);
+                                }
+                                return { ...m, uploadedUrl };
+                            }
+                            // Existing already uploaded
+                            if (m.uploadedUrl) {
+                                if (m.type === 'IMAGE') imageUrls.push(m.uploadedUrl);
+                                else videoUrls.push(m.uploadedUrl);
+                            }
+                            return m;
+                        });
+                        setMediaFiles(updatedMediaFiles);
+
+                    } catch (uploadError) {
                         setIsLoading(false);
                         setNotifyType('error');
-                        setNotifyMsg(uploadResult.message || 'Upload media thất bại. Vui lòng thử lại.');
+                        setNotifyMsg('Upload media thất bại. Vui lòng thử lại.');
                         setNotifyOpen(true);
                         return;
                     }
-
-                    // Map uploaded URLs and add to arrays immediately
-                    let urlIndex = 0;
-                    const updatedMediaFiles = mediaFiles.map((m) => {
-                        if (m.file && !m.uploadedUrl) {
-                            const uploadedUrl = uploadResult.urls[urlIndex++];
-                            if (m.type === 'IMAGE') {
-                                imageUrls.push(uploadedUrl);
-                            } else {
-                                videoUrls.push(uploadedUrl);
-                            }
-                            return { ...m, uploadedUrl };
-                        }
-                        // If already has uploadedUrl, add to arrays
-                        if (m.uploadedUrl) {
-                            if (m.type === 'IMAGE') {
-                                imageUrls.push(m.uploadedUrl);
-                            } else {
-                                videoUrls.push(m.uploadedUrl);
-                            }
-                        }
-                        return m;
-                    });
-                    setMediaFiles(updatedMediaFiles);
                 } else {
-                    // No new files to upload, but add existing uploaded URLs from mediaFiles
+                    // No new files
                     mediaFiles.forEach((m) => {
                         if (m.uploadedUrl) {
-                            if (m.type === 'IMAGE') {
-                                imageUrls.push(m.uploadedUrl);
-                            } else {
-                                videoUrls.push(m.uploadedUrl);
-                            }
+                            if (m.type === 'IMAGE') imageUrls.push(m.uploadedUrl);
+                            else videoUrls.push(m.uploadedUrl);
                         }
                     });
                 }
 
-                // Add existing media URLs from product (chỉ những URL chưa bị xóa)
+                // Add existing media URLs from product
                 existingMediaUrls
                     .filter((url) => !removedExistingMediaUrls.includes(url))
                     .forEach((url) => {
@@ -581,26 +574,22 @@ function UpdateProductPage() {
                         }
                     });
 
-                // Set default media URL - prioritize new default, then existing default, then first available
+                // Set default media URL
                 const defaultMedia = mediaFiles.find((m) => m.isDefault);
                 const remainingExistingUrls = existingMediaUrls.filter(
                     (url) => !removedExistingMediaUrls.includes(url)
                 );
                 if (defaultMedia && defaultMedia.uploadedUrl) {
-                    // New media file marked as default and already uploaded
                     finalDefaultMediaUrl = defaultMedia.uploadedUrl;
                 } else if (defaultMediaUrl && remainingExistingUrls.includes(defaultMediaUrl)) {
-                    // Giữ nguyên default media URL nếu nó vẫn còn trong danh sách và không bị xóa
                     finalDefaultMediaUrl = defaultMediaUrl;
                 } else if (imageUrls.length > 0) {
-                    // Lấy ảnh đầu tiên làm default
                     finalDefaultMediaUrl = imageUrls[0];
                 } else if (videoUrls.length > 0) {
-                    // Lấy video đầu tiên làm default
                     finalDefaultMediaUrl = videoUrls[0];
                 }
             } else {
-                // Keep existing media (chỉ những URL chưa bị xóa)
+                // Keep existing media
                 existingMediaUrls
                     .filter((url) => !removedExistingMediaUrls.includes(url))
                     .forEach((url) => {
@@ -611,7 +600,6 @@ function UpdateProductPage() {
                             videoUrls.push(url);
                         }
                     });
-                // Keep existing default if no new media
                 const remainingExistingUrls = existingMediaUrls.filter(
                     (url) => !removedExistingMediaUrls.includes(url)
                 );

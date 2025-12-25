@@ -174,6 +174,7 @@ function NavBar() {
     const isPromotion = pathname === routes.promotion;
     const isNewProduct = pathname === routes.newproduct;
     const isCustomerSupport = pathname === routes.customerSupport;
+    const isBlog = pathname === routes.blog || pathname.startsWith('/blog/');
 
     // Fetch categories
     useEffect(() => {
@@ -321,7 +322,7 @@ function NavBar() {
                     whileHover={{
                         scale: 1.02,
                         x: 8,
-                        backgroundColor: '#f3f4f6',
+                        backgroundColor: 'rgba(183, 110, 121, 0.10)',
                     }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleCategorySelect(category)}
@@ -407,7 +408,7 @@ function NavBar() {
                                 whileHover={{
                                     scale: 1.02,
                                     x: 6,
-                                    backgroundColor: '#f3f4f6',
+                                    backgroundColor: 'rgba(183, 110, 121, 0.10)',
                                 }}
                                 whileTap={{ scale: 0.98 }}
                                 onMouseEnter={() => {
@@ -468,7 +469,7 @@ function NavBar() {
                                     whileHover={{
                                         scale: 1.05,
                                         x: 8,
-                                        backgroundColor: '#f3f4f6',
+                                        backgroundColor: 'rgba(183, 110, 121, 0.10)',
                                     }}
                                     whileTap={{ scale: 0.95 }}
                                     onClick={() => handleCategorySelect(child)}
@@ -510,12 +511,12 @@ function NavBar() {
                         className={cx('nav-trigger', { active: isHome || isDropdownOpen })}
                         whileHover={{
                             scale: 1.05,
-                            backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                            backgroundColor: 'rgba(183, 110, 121, 0.10)',
                         }}
                         whileTap={{ scale: 0.98 }}
                         animate={{
                             backgroundColor: isHome || isDropdownOpen
-                                ? '#d6002f'
+                                ? '#B76E79'
                                 : 'rgba(0, 0, 0, 0)',
                         }}
                         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
@@ -594,6 +595,32 @@ function NavBar() {
                         </motion.span>
                         <AnimatePresence>
                             {isNewProduct && (
+                                <motion.div
+                                    className={cx('nav-link-underline')}
+                                    variants={underlineVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="hidden"
+                                />
+                            )}
+                        </AnimatePresence>
+                    </Link>
+                </motion.div>
+
+                <motion.div
+                    className={cx('nav-link-wrapper')}
+                    whileHover="hover"
+                    whileTap="tap"
+                >
+                    <Link
+                        to={routes.blog}
+                        className={cx('nav-link', { active: isBlog })}
+                    >
+                        <motion.span variants={navLinkVariants}>
+                            BLOG LÀM ĐẸP
+                        </motion.span>
+                        <AnimatePresence>
+                            {isBlog && (
                                 <motion.div
                                     className={cx('nav-link-underline')}
                                     variants={underlineVariants}

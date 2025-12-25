@@ -173,7 +173,7 @@ function clearTokensAndLogout() {
 }
 
 // Hàm helper để tạo request API
-async function apiRequest(endpoint, options = {}) {
+export async function apiRequest(endpoint, options = {}) {
     const { method = 'GET', body = null, token = null, isFormData = false, skipAuthCheck = false, isRetry = false } = options;
     const apiBaseUrl = getApiBaseUrl();
     let tokenToUse = token || getStoredToken('token');
@@ -432,6 +432,11 @@ export async function getAllOrders(token = null) {
     return extractResult(data, true);
 }
 
+export async function searchOrders(params, token = null) {
+    const { data } = await apiRequest(orders.search(params), { token });
+    return extractResult(data); // Returns OrderPageResponse object (containing orders array)
+}
+
 export async function cancelOrder(orderId, reason = '', token = null) {
     const { data, ok, status } = await apiRequest(orders.cancel(orderId), {
         method: 'POST',
@@ -489,17 +494,17 @@ export async function getCategoryById(categoryId, token = null) {
 }
 
 export async function createCategory(categoryData, token = null) {
-    const { data, ok } = await apiRequest(categories.root, { method: 'POST', body: categoryData, token });
-    return { ok, data: extractResult(data) };
+    const { data, ok, status } = await apiRequest(categories.root, { method: 'POST', body: categoryData, token });
+    return { ok, status, data: extractResult(data) };
 }
 
 export async function updateCategory(categoryId, categoryData, token = null) {
-    const { data, ok } = await apiRequest(categories.detail(categoryId), {
+    const { data, ok, status } = await apiRequest(categories.detail(categoryId), {
         method: 'PUT',
         body: categoryData,
         token,
     });
-    return { ok, data: extractResult(data) };
+    return { ok, status, data: extractResult(data) };
 }
 
 export async function deleteCategory(categoryId, token = null) {

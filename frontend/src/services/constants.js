@@ -32,8 +32,19 @@ import {
 } from 'react-icons/fi';
 
 // =========== API Configuration ===========
-// API Base URL fallback - được cấu hình trong backend/application.yaml: app.frontend.base-url
+// API Base URL fallback
 export const API_BASE_URL_FALLBACK = 'http://localhost:8080/lila_shop';
+export const CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1';
+
+// Cloudinary Folders
+export const CLOUDINARY_FOLDERS = {
+    PRODUCT: 'product_media',
+    VOUCHER: 'voucher_media',
+    PROMOTION: 'promotion_media',
+    PROFILE: 'profile_media',
+    BANNER: 'banners',
+    CONTENT: 'content_media',
+};
 
 // =========== API Routes ===========
 export const API_ROUTES = {
@@ -149,6 +160,16 @@ export const API_ROUTES = {
         verifyPayment: (orderId) => `/orders/${orderId}/verify-payment`,
         statistics: (start, end) => `/orders/statistics?start=${start}&end=${end}`,
         recent: (start, end, page = 0, size = 20) => `/orders/recent?start=${start}&end=${end}&page=${page}&size=${size}`,
+        search: (params) => {
+            const query = new URLSearchParams();
+            if (params.start) query.append('start', params.start);
+            if (params.end) query.append('end', params.end);
+            if (params.status) query.append('status', params.status);
+            if (params.search) query.append('search', params.search);
+            query.append('page', params.page || 0);
+            query.append('size', params.size || 20);
+            return `/orders/recent?${query.toString()}`;
+        },
     },
     chat: {
         send: '/chat/send',
@@ -157,6 +178,9 @@ export const API_ROUTES = {
         markAsRead: (partnerId) => `/chat/conversation/${partnerId}/read`,
         unreadCount: '/chat/unread-count',
         customerSupport: '/chat/customer-support',
+    },
+    chatbot: {
+        ask: '/api/chatbot/ask',
     },
 };
 
@@ -462,28 +486,28 @@ export const RATING_THRESHOLD = 4.9;
 export const SERVICE_ITEMS = [
     {
         icon: iconGiaoHang,
-        title: 'Giao hàng tận nơi',
-        desc: 'Dành cho tất cả đơn hàng',
+        title: 'Giao hàng nhanh',
+        desc: 'Nhận hàng sau 2-4 ngày làm việc',
     },
     {
         icon: iconDoiTra,
-        title: 'Đổi trả hàng 90 ngày',
-        desc: 'Nếu hàng hóa có vấn đề',
+        title: '90 ngày đổi trả',
+        desc: 'Đổi trả dễ dàng nếu chưa mở seal',
     },
     {
         icon: iconThanhToan,
         title: 'Thanh toán an toàn',
-        desc: '100% thanh toán an toàn',
+        desc: 'Bảo mật thông tin 100%',
     },
     {
         icon: iconHoTro,
-        title: 'Hỗ trợ 24/7',
-        desc: 'Hỗ trợ khách hàng 24/7',
+        title: 'Hỗ trợ tận tình',
+        desc: 'Chat ngay với chuyên viên tư vấn',
     },
     {
         icon: iconKhuyenMai,
-        title: 'Khuyến mãi hấp dẫn',
-        desc: 'Chương trình khuyến mãi hấp dẫn',
+        title: 'Ưu đãi mỗi ngày',
+        desc: 'Voucher giảm giá luôn sẵn sàng',
     },
 ];
 

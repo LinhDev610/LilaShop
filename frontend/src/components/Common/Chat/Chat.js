@@ -2,8 +2,10 @@ import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from
 import classNames from 'classnames/bind';
 import styles from './Chat.module.scss';
 import { getStoredToken } from '../../../services/utils';
-import { sendChatMessage, getChatConversation, markChatAsRead, getChatUnreadCount, getFirstCustomerSupport, getMyInfo } from '../../../services';
+import { sendChatMessage, getChatConversation, markChatAsRead, getChatUnreadCount, getFirstCustomerSupport, getMyInfo, chatbotService } from '../../../services';
 import { useNotification } from '../Notification';
+import { FaFacebook, FaComments, FaPhoneAlt, FaQrcode } from 'react-icons/fa';
+import { SiZalo } from 'react-icons/si';
 
 const cx = classNames.bind(styles);
 
@@ -17,6 +19,8 @@ export default function Chat() {
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
     const [currentPartnerId, setCurrentPartnerId] = useState(null);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [aiSessionId, setAiSessionId] = useState(null);
+    const [isAiLoading, setIsAiLoading] = useState(false);
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
     const inputRef = useRef(null);
@@ -490,11 +494,78 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
         window.open('tel:1900123456');
     };
 
+    const handleSelectZalo = () => {
+        setViewMode('zalo');
+    };
+
     const handleBackToMenu = () => {
         setViewMode('menu');
     };
 
+    const handleSelectAIChat = () => {
+        setViewMode('ai-chat');
+        setMessages([
+            {
+                id: 'ai-welcome',
+                message: 'Xin chào! Mình là trợ lý AI của Lila Shop. Mình có thể giúp gì cho bạn hôm nay? (Mình có thể tư vấn sản phẩm, routine skincare, so sánh sản phẩm...)',
+                senderId: 'gemini',
+                createdAt: new Date().toISOString(),
+                isAi: true
+            }
+        ]);
+        shouldAutoScrollRef.current = true;
+    };
+
+    const handleSendAIMessage = async () => {
+        if (!inputMessage.trim() || isAiLoading) return;
+
+        const userMsgText = inputMessage.trim();
+        const userMsg = {
+            id: `user-${Date.now()}`,
+            message: userMsgText,
+            senderId: user?.id || 'guest',
+            createdAt: new Date().toISOString()
+        };
+
+        setMessages(prev => [...prev, userMsg]);
+        setInputMessage('');
+        setIsAiLoading(true);
+        shouldAutoScrollRef.current = true;
+
+        try {
+            const result = await chatbotService.ask(userMsgText, aiSessionId);
+            if (result) {
+                const aiMsg = {
+                    id: `ai-${Date.now()}`,
+                    message: result.reply,
+                    senderId: 'gemini',
+                    createdAt: new Date().toISOString(),
+                    isAi: true
+                };
+                setMessages(prev => [...prev, aiMsg]);
+                setAiSessionId(result.sessionId);
+                shouldAutoScrollRef.current = true;
+            }
+        } catch (err) {
+            console.error('AI Chatbot error:', err);
+            const errorMsg = {
+                id: `ai-err-${Date.now()}`,
+                message: 'Xin lỗi, hiện tại mình không thể phản hồi. Bạn vui lòng thử lại sau nhé!',
+                senderId: 'gemini',
+                createdAt: new Date().toISOString(),
+                isAi: true
+            };
+            setMessages(prev => [...prev, errorMsg]);
+        } finally {
+            setIsAiLoading(false);
+        }
+    };
+
     const handleSendMessage = async () => {
+        if (viewMode === 'ai-chat') {
+            handleSendAIMessage();
+            return;
+        }
         if (!inputMessage.trim() || !currentPartnerId) {
             if (!currentPartnerId) {
                 showError('Vui lòng chọn nhân viên CSKH');
@@ -638,12 +709,16 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
                                 <h3>
                                     {viewMode === 'menu' && 'Hỗ trợ khách hàng'}
                                     {viewMode === 'chat' && 'Chat với CSKH'}
+                                    {viewMode === 'ai-chat' && 'Tư vấn AI (Gemini)'}
                                     {viewMode === 'policies' && 'Chính sách mua hàng'}
+                                    {viewMode === 'zalo' && 'Zalo OA'}
                                 </h3>
                                 <p>
                                     {viewMode === 'menu' && 'Chọn dịch vụ bạn cần hỗ trợ'}
                                     {viewMode === 'chat' && 'Nhân viên sẽ phản hồi trong thời gian sớm nhất'}
+                                    {viewMode === 'ai-chat' && 'Trợ lý thông minh hỗ trợ 24/7'}
                                     {viewMode === 'policies' && 'Thông tin về chính sách mua hàng'}
+                                    {viewMode === 'zalo' && 'Quét mã để kết nối Zalo'}
                                 </p>
                             </div>
                         </div>
@@ -661,49 +736,133 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
                     {viewMode === 'menu' && (
                         <div className={cx('menu-options')}>
                             <button
+                                className={cx('option-button', 'ai-option')}
+                                onClick={handleSelectAIChat}
+                            >
+                                <div className={cx('option-icon', 'ai-icon')}>
+                                    <span role="img" aria-label="bot">🤖</span>
+                                </div>
+                                <div className={cx('option-content')}>
+                                    <h4>Tư vấn AI (Gemini)</h4>
+                                    <p>Hỏi về sản phẩm, routine & mẹo làm đẹp</p>
+                                </div>
+                            </button>
+
+                            <button
                                 className={cx('option-button')}
                                 onClick={handleSelectChat}
                             >
-                                <div className={cx('option-icon')}>💬</div>
+                                <div className={cx('option-icon')}>
+                                    <FaComments />
+                                </div>
                                 <div className={cx('option-content')}>
                                     <h4>Chat với nhân viên</h4>
                                     <p>Nhận hỗ trợ trực tiếp từ nhân viên CSKH</p>
                                 </div>
                             </button>
 
-                            {/* <button 
+                            <button
                                 className={cx('option-button')}
-                                onClick={handleSelectPolicies}
+                                onClick={() => window.open('https://www.facebook.com/duclinhdey/', '_blank')}
                             >
-                                <div className={cx('option-icon')}>📋</div>
+                                <div className={cx('option-icon')}>
+                                    <FaFacebook />
+                                </div>
                                 <div className={cx('option-content')}>
-                                    <h4>Chính sách mua hàng</h4>
-                                    <p>Xem thông tin về chính sách đổi trả, vận chuyển, thanh toán</p>
+                                    <h4>Facebook Fanpage</h4>
+                                    <p>Theo dõi và liên hệ qua Facebook</p>
                                 </div>
                             </button>
 
-                            <button 
+                            <button
                                 className={cx('option-button')}
-                                onClick={handleSelectFAQ}
+                                onClick={handleSelectZalo}
                             >
-                                <div className={cx('option-icon')}>❓</div>
-                                <div className={cx('option-content')}>
-                                    <h4>Câu hỏi thường gặp</h4>
-                                    <p>Tìm câu trả lời cho các câu hỏi phổ biến</p>
+                                <div className={cx('option-icon')}>
+                                    <SiZalo />
                                 </div>
-                            </button> */}
+                                <div className={cx('option-content')}>
+                                    <h4>Liên hệ Zalo</h4>
+                                    <p>Quét mã QR để chat qua Zalo</p>
+                                </div>
+                            </button>
 
                             <button
                                 className={cx('option-button')}
                                 onClick={handleSelectHotline}
                             >
-                                <div className={cx('option-icon')}>📞</div>
+                                <div className={cx('option-icon')}>
+                                    <FaPhoneAlt />
+                                </div>
                                 <div className={cx('option-content')}>
                                     <h4>Gọi hotline</h4>
-                                    <p>Liên hệ trực tiếp qua điện thoại: 1900-123-456</p>
+                                    <p>Liên hệ trực tiếp: 1900-123-456</p>
                                 </div>
                             </button>
                         </div>
+                    )}
+
+                    {viewMode === 'ai-chat' && (
+                        <>
+                            <div className={cx('chat-messages')} ref={messagesContainerRef}>
+                                {messages.map((message) => {
+                                    const isAi = message.senderId === 'gemini';
+                                    const isOwn = !isAi && message.senderId !== 'system';
+
+                                    return (
+                                        <div
+                                            key={message.id}
+                                            className={cx('message', {
+                                                own: isOwn,
+                                                ai: isAi
+                                            })}
+                                        >
+                                            <div className={cx('message-content')}>
+                                                <p style={{ whiteSpace: 'pre-line' }}>{message.message}</p>
+                                                <span className={cx('message-time')}>
+                                                    {new Date(message.createdAt).toLocaleTimeString('vi-VN', {
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                    })}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                {isAiLoading && (
+                                    <div className={cx('message', 'ai')}>
+                                        <div className={cx('message-content')}>
+                                            <p className={cx('typing-indicator')}>Đang suy nghĩ...</p>
+                                        </div>
+                                    </div>
+                                )}
+                                <div ref={messagesEndRef} />
+                            </div>
+
+                            <div className={cx('chat-input')}>
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    placeholder="Hỏi AI về làm đẹp..."
+                                    value={inputMessage}
+                                    onChange={(e) => setInputMessage(e.target.value)}
+                                    onKeyPress={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleSendAIMessage();
+                                        }
+                                    }}
+                                    disabled={isAiLoading}
+                                />
+                                <button
+                                    onClick={handleSendAIMessage}
+                                    disabled={!inputMessage.trim() || isAiLoading}
+                                    className={cx('send-button')}
+                                >
+                                    {isAiLoading ? '...' : 'Gửi'}
+                                </button>
+                            </div>
+                        </>
                     )}
 
                     {viewMode === 'chat' && (
@@ -798,6 +957,26 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
                                 </>
                             )}
                         </>
+                    )}
+
+                    {viewMode === 'zalo' && (
+                        <div className={cx('qr-container')}>
+                            <div className={cx('qr-card')}>
+                                <img
+                                    src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg"
+                                    alt="Zalo QR Code"
+                                />
+                                <p className={cx('qr-note')}>
+                                    Mở ứng dụng Zalo trên điện thoại và quét mã QR này để kết nối với chúng tôi.
+                                </p>
+                            </div>
+                            <button
+                                className={cx('open-zalo-btn')}
+                                onClick={() => window.open('https://zalo.me/0846120004', '_blank')}
+                            >
+                                <SiZalo /> Mở Zalo Web
+                            </button>
+                        </div>
                     )}
                 </div>
             )}

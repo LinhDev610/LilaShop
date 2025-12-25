@@ -9,6 +9,7 @@ import com.lila_shop.backend.entity.Product;
 import com.lila_shop.backend.entity.User;
 import com.lila_shop.backend.entity.Voucher;
 import com.lila_shop.backend.enums.DiscountApplyScope;
+import com.lila_shop.backend.enums.DiscountValueType;
 import com.lila_shop.backend.enums.VoucherStatus;
 import com.lila_shop.backend.exception.AppException;
 import com.lila_shop.backend.exception.ErrorCode;
@@ -56,12 +57,22 @@ public class VoucherService {
             throw new AppException(ErrorCode.VOUCHER_CODE_ALREADY_EXISTS);
         }
 
+        // Validate discount value for PERCENTAGE type
+        if (request.getDiscountValueType() == DiscountValueType.PERCENTAGE) {
+            if (request.getDiscountValue() < 0 || request.getDiscountValue() > 100) {
+                throw new IllegalArgumentException("Giá trị giảm giá phần trăm phải từ 0 đến 100");
+            }
+        }
+
         Voucher voucher = voucherMapper.toVoucher(request);
         voucher.setSubmittedBy(staff);
         voucher.setSubmittedAt(LocalDateTime.now());
         voucher.setUsageCount(0);
-        voucher.setIsActive(false);
-        voucher.setStatus(VoucherStatus.PENDING_APPROVAL);
+
+        voucher.setStatus(VoucherStatus.APPROVED);
+        voucher.setIsActive(true);
+        voucher.setApprovedBy(staff);
+        voucher.setApprovedAt(LocalDateTime.now());
 
         applyScopeTargets(request.getApplyScope(), request.getCategoryIds(), request.getProductIds(), voucher);
 
@@ -177,6 +188,15 @@ public class VoucherService {
         if (request.getCode() != null && !request.getCode().equals(voucher.getCode())
                 && voucherRepository.existsByCode(request.getCode())) {
             throw new AppException(ErrorCode.VOUCHER_CODE_ALREADY_EXISTS);
+        }
+
+        // Validate discount value for PERCENTAGE type
+        if (request.getDiscountValueType() == DiscountValueType.PERCENTAGE) {
+            Double discountValue = request.getDiscountValue() != null ? request.getDiscountValue()
+                    : voucher.getDiscountValue();
+            if (discountValue < 0 || discountValue > 100) {
+                throw new IllegalArgumentException("Giá trị giảm giá phần trăm phải từ 0 đến 100");
+            }
         }
 
         voucherMapper.updateVoucher(voucher, request);

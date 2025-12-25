@@ -32,12 +32,12 @@ brevo:
   api:
     key: ${BREVO_API_KEY}
   sender:
-    email: ${BREVO_EMAIL} # Email ?� verify trong Brevo
+    email: ${BREVO_EMAIL} # Email ? verify trong Brevo
 
 #  Secret Key
 jwt:
   signerKey: "905d89cb6be111ee6cfc8f924b40cc77c2ad56754f2985a090a86510d817f585"
-  valid-duration: 3600  # in second
+  valid-duration: 7200  # 2 hour in seconds
   refreshable-duration: 360000 # in seconds
 
 # Default avatar configuration
@@ -46,6 +46,7 @@ app:
   frontend:
     base-url: "http://localhost:8080/lila_shop"
   init-categories: true
+  init-products: true
 
 # GHN configuration
 ghn:
@@ -74,3 +75,6 @@ cloudinary:
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET}
   secure: true
+gemini:
+  apiKey: ${GEMINI_API_KEY}
+  model: gemini-2.5-flash

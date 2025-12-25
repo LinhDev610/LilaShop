@@ -33,6 +33,9 @@ public class Banner {
     @Column(name = "link_url")
     String linkUrl;
 
+    @Column(name = "content_type", length = 50)
+    String contentType; // 'banner', 'seasonal', 'trending'
+
     @Column(name = "status", nullable = false)
     Boolean status;
 
@@ -64,9 +67,6 @@ public class Banner {
 
     // Products relationship
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "banner_products",
-            joinColumns = @JoinColumn(name = "banner_id"),
-            inverseJoinColumns = @JoinColumn(name = "product_id"))
+    @JoinTable(name = "banner_products", joinColumns = @JoinColumn(name = "banner_id"), inverseJoinColumns = @JoinColumn(name = "product_id"))
     List<Product> products;
 }

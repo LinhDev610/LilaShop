@@ -12,7 +12,7 @@ export const getProductImageUrl = (product) => {
         ''
     );
 };
-
+// theem chay cos looi gi dau b
 // Chuẩn hóa URL media thành URL đầy đủ
 export const normalizeMediaUrl = (url, apiBaseUrl) => {
     if (!url) return '';
