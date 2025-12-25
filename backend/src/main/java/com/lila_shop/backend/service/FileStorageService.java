@@ -209,4 +209,23 @@ public class FileStorageService {
             return null;
         }
     }
+
+    public void deleteProductFolder(String categoryId, String productId) {
+        if (categoryId == null || productId == null) {
+            return;
+        }
+
+        String folderPath = CloudinaryFolderConstants.PRODUCT_MEDIA_FOLDER + "/" + categoryId + "/" + productId;
+
+        try {
+            // 1. Delete all resources in the folder first
+            cloudinary.api().deleteResourcesByPrefix(folderPath, ObjectUtils.emptyMap());
+
+            // 2. Delete the folder itself
+            cloudinary.api().deleteFolder(folderPath, ObjectUtils.emptyMap());
+
+        } catch (Exception e) {
+            log.warn("Failed to delete Cloudinary folder {}: {}", folderPath, e.getMessage());
+        }
+    }
 }

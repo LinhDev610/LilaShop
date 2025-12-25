@@ -367,7 +367,6 @@ public class ProductService {
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
 
-
         int quantityToAdd = request.getQuantity();
         if (quantityToAdd <= 0) {
             throw new AppException(ErrorCode.BAD_REQUEST);
@@ -1070,6 +1069,10 @@ public class ProductService {
             }
             if (product.getDefaultMedia() != null) {
                 deletePhysicalFileByUrl(product.getDefaultMedia().getMediaUrl());
+            }
+
+            if (product.getCategory() != null) {
+                fileStorageService.deleteProductFolder(product.getCategory().getId(), product.getId());
             }
         } catch (Exception e) {
             log.warn("Failed to delete media files for product {}: {}", product.getId(), e.getMessage());
