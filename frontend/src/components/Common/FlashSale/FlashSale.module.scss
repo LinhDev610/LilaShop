@@ -185,21 +185,20 @@ $flash-sold-bar-color: #C75B5B;
 .card-image-wrapper {
     position: relative;
     width: 100%;
-    padding-top: 100%;
-    background: #ffffff;
+    aspect-ratio: 4 / 5;
+    background: #FAFAFA;
     overflow: hidden;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .card-image {
-    position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    padding: 20px;
-    /* Breathing room */
-    /* More padding */
+    object-fit: cover;
+    border-radius: 8px;
     transition: transform 0.4s ease;
 }
 

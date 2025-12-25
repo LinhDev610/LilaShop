@@ -2,7 +2,8 @@
 .hot-product {
     flex: 0 0 280px;
     width: 280px;
-    max-height: 420px;
+    min-height: 480px;
+    max-height: 520px;
     background: #FFFFFF;
     border-radius: 20px;
     border: 1px solid rgba(183, 110, 121, 0.08);
@@ -61,19 +62,22 @@
 }
 
 .image-wrapper {
-    padding: 18px 18px 0;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    padding: 12px;
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
     overflow: hidden;
+    background: #FAFAFA;
 }
 
 .product-image {
     width: 100%;
-    height: 280px;
+    height: 100%;
     object-fit: cover;
-    border-radius: 16px;
+    border-radius: 12px;
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
