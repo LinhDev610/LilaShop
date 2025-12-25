@@ -6,7 +6,7 @@ import {
 } from '../../../../../services/api';
 import { normalizeMediaUrl } from '../../../../../services/productUtils';
 import { uploadProductMedia } from '../../../../../services/CloudinaryService';
-import { STAFF_STOCK_ADD_LIMIT } from '../../../../../services/constants';
+import { STAFF_STOCK_ADD_LIMIT, CLOUDINARY_FOLDERS } from '../../../../../services/constants';
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import classNames from 'classnames/bind';
@@ -517,7 +517,12 @@ function UpdateProductPage() {
 
                     // Upload parallel via CloudinaryService
                     try {
-                        const uploadedUrls = await uploadProductMedia(fileArray);
+                        const folderPath = [
+                            CLOUDINARY_FOLDERS.PRODUCT,
+                            categoryId,
+                            productId
+                        ].filter(Boolean).join('/');
+                        const uploadedUrls = await uploadProductMedia(fileArray, folderPath);
 
                         // Map uploaded URLs back
                         let urlIndex = 0;

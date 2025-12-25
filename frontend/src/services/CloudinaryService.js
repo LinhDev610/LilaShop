@@ -89,8 +89,8 @@ export const uploadFilesParallel = async (files, folder = CLOUDINARY_FOLDERS.PRO
 };
 
 // Specific Upload Helpers
-export const uploadProductMedia = async (files) => {
-    return uploadFilesParallel(files, CLOUDINARY_FOLDERS.PRODUCT);
+export const uploadProductMedia = async (files, folder = CLOUDINARY_FOLDERS.PRODUCT) => {
+    return uploadFilesParallel(files, folder);
 };
 
 export const uploadBannerMedia = async (files) => {

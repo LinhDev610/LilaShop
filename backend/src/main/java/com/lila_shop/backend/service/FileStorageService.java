@@ -35,8 +35,18 @@ public class FileStorageService {
      * @param file File to upload
      * @return Cloudinary URL of the uploaded file
      */
-    public String storeProductMedia(MultipartFile file) {
-        return uploadToCloudinary(file, CloudinaryFolderConstants.PRODUCT_MEDIA_FOLDER);
+    public String storeProductMedia(MultipartFile file, String categoryId, String productId) {
+        StringBuilder folder = new StringBuilder(CloudinaryFolderConstants.PRODUCT_MEDIA_FOLDER);
+
+        if (categoryId != null && !categoryId.isBlank()) {
+            folder.append("/").append(categoryId);
+        }
+
+        if (productId != null && !productId.isBlank()) {
+            folder.append("/").append(productId);
+        }
+
+        return uploadToCloudinary(file, folder.toString());
     }
 
     public String storeVoucherMedia(MultipartFile file) {

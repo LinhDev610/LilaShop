@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,9 +36,12 @@ public class MediaController {
     }
 
     @PostMapping(value = "/upload-product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<List<String>> uploadProductMedia(@RequestPart("files") List<MultipartFile> files) {
+    public ApiResponse<List<String>> uploadProductMedia(
+            @RequestPart("files") List<MultipartFile> files,
+            @RequestParam(value = "categoryId", required = false) String categoryId,
+            @RequestParam(value = "productId", required = false) String productId) {
         List<String> urls = files.parallelStream()
-                .map(fileStorageService::storeProductMedia)
+                .map(file -> fileStorageService.storeProductMedia(file, categoryId, productId))
                 .collect(Collectors.toList());
         return ApiResponse.<List<String>>builder().result(urls).build();
     }

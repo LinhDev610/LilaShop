@@ -728,7 +728,12 @@ export default function AddProductPage() {
                 const batch = compressedFiles.slice(i, i + batchSize);
 
                 const batchPromises = batch.map(async (m) => {
-                    const url = await uploadToCloudinary(m.file, CLOUDINARY_FOLDERS.PRODUCT);
+                    const folderPath = [
+                        CLOUDINARY_FOLDERS.PRODUCT,
+                        categoryId,
+                        productId
+                    ].filter(Boolean).join('/');
+                    const url = await uploadToCloudinary(m.file, folderPath);
 
                     completedCount++;
                     setUploadProgress(Math.round((completedCount / totalFiles) * 100));
@@ -758,7 +763,7 @@ export default function AddProductPage() {
             console.error('Error uploading media:', error);
             throw error;
         }
-    }, [compressImage]);
+    }, [compressImage, categoryId, productId]);
 
     // Build product payload
     const buildProductPayload = useCallback(
