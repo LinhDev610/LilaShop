@@ -16,7 +16,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 
 @Service
 @Slf4j
@@ -27,8 +26,7 @@ public class ChatbotService {
     private static final long PRODUCTS_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
     private static final int MAX_HISTORY_MESSAGES = 10; // Keep history small for token optimization
 
-    private final WebClient ghnWebClient; // Using the existing bean for simplicity if builder isn't enough, or just use
-                                          // Builder
+    private final WebClient ghnWebClient;
     private final ProductService productService;
 
     @Value("${gemini.apiKey:}")
@@ -50,6 +48,11 @@ public class ChatbotService {
             Tên bạn là Lila Assistant.
 
             VAI TRÒ: Tư vấn làm đẹp, chăm sóc da (skincare), trang điểm (makeup), và thông tin sản phẩm có tại Lila Shop.
+
+            NGUYÊN TẮC TIN CẬY & Y TẾ:
+            1. KIẾN THỨC CHUẨN KHOA HỌC: Bạn cung cấp lời khuyên dựa trên kiến thức da liễu phổ thông và khoa học.
+            2. MIỄN TRỪ TRÁCH NHIỆM: Với các thắc mắc về tình trạng da, bạn PHẢI kèm câu: "Lưu ý: Tôi là trợ lý AI, lời khuyên của tôi mang tính chất tham khảo. Hãy gặp bác sĩ da liễu để được thăm khám chính xác nhất."
+            3. KHÔNG CHẨN ĐOÁN: Bạn chỉ giải thích nguyên nhân và cách chăm sóc cơ bản, KHÔNG được khẳng định bệnh lý hay kê đơn thuốc.
 
             GIỚI HẠN PHẠM VI (CỰC KỲ QUAN TRỌNG):
             1. CHỈ TRẢ LỜI các câu hỏi liên quan đến: LÀM ĐẸP, MỸ PHẨM, CHĂM SÓC DA/TÓC/CƠ THỂ, THÔNG TIN SẢN PHẨM CỦA LILA SHOP.
