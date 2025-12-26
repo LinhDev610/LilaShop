@@ -7,6 +7,7 @@ import com.lila_shop.backend.enums.VoucherStatus;
 import com.lila_shop.backend.exception.AppException;
 import com.lila_shop.backend.exception.ErrorCode;
 import com.lila_shop.backend.repository.*;
+import com.lila_shop.backend.util.CategoryUtil;
 import com.lila_shop.backend.util.SecurityUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -360,16 +361,13 @@ public class CartService {
                         return voucher.getProductApply().stream()
                                 .anyMatch(vp -> vp != null && vp.getId() != null && vp.getId().equals(product.getId()));
                     } else if (scope == DiscountApplyScope.CATEGORY) {
-                        // Nếu danh mục sản phẩm có nằm trong danh sách danh mục của voucher, return
-                        // true
                         Category productCategory = product.getCategory();
                         if (productCategory == null || voucher.getCategoryApply() == null
                                 || voucher.getCategoryApply().isEmpty()) {
                             return false;
                         }
-                        return voucher.getCategoryApply().stream()
-                                .anyMatch(vc -> vc != null && vc.getId() != null
-                                        && vc.getId().equals(productCategory.getId()));
+                        // Check recursive category scope
+                        return CategoryUtil.isCategoryInScope(productCategory, voucher.getCategoryApply());
                     }
                     return false;
                 })

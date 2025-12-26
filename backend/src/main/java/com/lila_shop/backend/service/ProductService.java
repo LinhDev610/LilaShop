@@ -350,6 +350,23 @@ public class ProductService {
 
         Product savedProduct = productRepository.save(product);
         log.info("Product updated: {} by user: {}", productId, user.getEmail());
+
+        // Refresh promotion pricing after update
+        if (savedProduct.getStatus() == ProductStatus.APPROVED) {
+            // Re-apply category promotion if no direct promotion is set
+            // If a direct promotion IS set, we should also re-calculate pricing for it
+            if (savedProduct.getPromotion() == null) {
+                promotionService.applyCategoryPromotionToProduct(savedProduct);
+            } else {
+                // Refresh direct promotion pricing
+                promotionService.applyPricingForProducts(savedProduct.getPromotion(), List.of(savedProduct));
+            }
+        }
+
+        // Final refresh to get updated prices
+        savedProduct = productRepository.findById(savedProduct.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+
         return productMapper.toResponse(savedProduct);
     }
 

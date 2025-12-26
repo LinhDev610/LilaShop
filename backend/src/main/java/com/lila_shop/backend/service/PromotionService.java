@@ -4,10 +4,7 @@ import com.lila_shop.backend.dto.request.ApprovePromotionRequest;
 import com.lila_shop.backend.dto.request.PromotionCreationRequest;
 import com.lila_shop.backend.dto.request.PromotionUpdateRequest;
 import com.lila_shop.backend.dto.response.PromotionResponse;
-import com.lila_shop.backend.entity.Category;
-import com.lila_shop.backend.entity.Product;
-import com.lila_shop.backend.entity.Promotion;
-import com.lila_shop.backend.entity.User;
+import com.lila_shop.backend.entity.*;
 import com.lila_shop.backend.enums.DiscountApplyScope;
 import com.lila_shop.backend.enums.ProductStatus;
 import com.lila_shop.backend.enums.PromotionStatus;
@@ -22,6 +19,8 @@ import com.lila_shop.backend.util.SecurityUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import com.lila_shop.backend.util.CategoryUtil;
+import org.springframework.data.jpa.domain.Specification;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -30,8 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.Optional;
-import java.util.ArrayList;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -74,8 +71,22 @@ public class PromotionService {
 
         applyScopeTargets(request.getApplyScope(), request.getCategoryIds(), request.getProductIds(), promotion);
 
+        // Kích hoạt ngay nếu startDate đã đến (hôm nay hoặc quá khứ)
+        LocalDate today = LocalDate.now();
+        if (promotion.getStartDate() != null && !promotion.getStartDate().isAfter(today)) {
+            promotion.setIsActive(true);
+            // Chúng ta sẽ apply sau khi save để đảm bảo có ID
+        } else {
+            promotion.setIsActive(false);
+        }
+
         Promotion savedPromotion = promotionRepository.save(promotion);
         log.info("Promotion created with ID: {} by staff: {}", savedPromotion.getId(), staff.getId());
+
+        // Apply promotion nếu đã active
+        if (Boolean.TRUE.equals(savedPromotion.getIsActive())) {
+            applyPromotionToTargets(savedPromotion);
+        }
 
         return promotionMapper.toResponse(savedPromotion);
     }
@@ -242,8 +253,6 @@ public class PromotionService {
         clearPromotionPricing(promotion);
 
         // 1. Xóa product khỏi promotion.productApply (bảng promotion_products)
-        // Lấy tất cả products trong productApply để xóa quan hệ
-        Set<Product> productsInPromotion = new HashSet<>(promotion.getProductApply());
         promotion.getProductApply().clear();
         promotionRepository.save(promotion);
 
@@ -352,29 +361,11 @@ public class PromotionService {
 
     private List<Product> resolveTargetProducts(Promotion promotion) {
         if (promotion.getApplyScope() == DiscountApplyScope.PRODUCT) {
-            Set<String> productIds = promotion.getProductApply().stream()
-                    .map(Product::getId)
-                    .collect(Collectors.toSet());
-            if (productIds.isEmpty()) {
-                return Collections.emptyList();
-            }
-            return productRepository.findAllById(productIds).stream()
-                    .filter(product -> product.getStatus() == ProductStatus.APPROVED)
-                    .collect(Collectors.toList());
+            return new ArrayList<>(promotion.getProductApply());
         } else if (promotion.getApplyScope() == DiscountApplyScope.CATEGORY) {
-            Set<String> categoryIds = promotion.getCategoryApply().stream()
-                    .map(Category::getId)
-                    .collect(Collectors.toSet());
-            if (categoryIds.isEmpty()) {
-                return Collections.emptyList();
-            }
-            Set<Product> products = new HashSet<>();
-            for (String categoryId : categoryIds) {
-                products.addAll(productRepository.findByCategoryId(categoryId));
-            }
-            return products.stream()
-                    .filter(product -> product.getStatus() == ProductStatus.APPROVED)
-                    .collect(Collectors.toList());
+            Set<String> categoryIds = CategoryUtil.getAllCategoryIds(promotion.getCategoryApply());
+            return productRepository
+                    .findAll(Specification.where((root, query, cb) -> root.get("category").get("id").in(categoryIds)));
         }
         return Collections.emptyList();
     }
@@ -392,7 +383,7 @@ public class PromotionService {
 
                 // Kiểm tra xem promotion hiện tại còn active không
                 boolean isExistingActive = existingPromo.getStatus() == PromotionStatus.APPROVED
-                        && (existingPromo.getIsActive())
+                        && Boolean.TRUE.equals(existingPromo.getIsActive())
                         && (existingPromo.getExpiryDate() == null || !existingPromo.getExpiryDate().isBefore(today))
                         && (existingPromo.getStartDate() == null || !existingPromo.getStartDate().isAfter(today));
 
@@ -421,10 +412,11 @@ public class PromotionService {
                                 .toList());
             }
 
-            // Tìm theo category
-            if (product.getCategory() != null && product.getCategory().getId() != null) {
+            // Tìm theo category (bao gồm cả các parent categories)
+            if (product.getCategory() != null) {
+                Set<String> categoryIds = CategoryUtil.getAncestorCategoryIds(product.getCategory());
                 otherActivePromotions.addAll(
-                        promotionRepository.findActiveByCategoryId(product.getCategory().getId(), today).stream()
+                        promotionRepository.findActiveByCategoryIds(categoryIds, today).stream()
                                 .filter(p -> !p.getId().equals(promotion.getId()))
                                 .toList());
             }
@@ -635,23 +627,42 @@ public class PromotionService {
         }
     }
 
-    private void applyPricingForProducts(Promotion promotion, List<Product> products) {
+    public void applyPricingForProducts(Promotion promotion, List<Product> products) {
         if (products.isEmpty())
             return;
 
         for (Product product : products) {
             double unitPrice = product.getUnitPrice() != null ? product.getUnitPrice() : 0.0;
-            double tax = product.getTax() != null ? product.getTax() : 0.0; // tax là phần trăm (0.1 = 10%)
+            double tax = product.getTax() != null ? product.getTax() : 0.0;
 
-            // Tính discountValue từ promotion
-            double discountAmount = calculateDiscountAmount(promotion, unitPrice);
-
-            // Tính price = unitPrice * (1 + tax) - discountValue
-            double finalPrice = Math.max(0, unitPrice * (1 + tax) - discountAmount);
+            // Tính discountValue cho product chính dựa trên giá đã bao gồm thuế
+            double priceWithTax = unitPrice * (1 + tax);
+            double discountAmount = calculateDiscountAmount(promotion, priceWithTax);
+            double finalPrice = Math.max(0, priceWithTax - discountAmount);
 
             product.setDiscountValue(discountAmount);
             product.setPrice(finalPrice);
             product.setPromotion(promotion);
+
+            // Cập nhật giá cho tất cả variants
+            List<ProductVariant> variants = product.getVariants();
+            if (variants != null && !variants.isEmpty()) {
+                for (ProductVariant variant : variants) {
+                    double vUnitPrice = variant.getUnitPrice() != null ? variant.getUnitPrice() : 0.0;
+                    double vTax = variant.getTax() != null ? variant.getTax() : 0.0;
+
+                    // Tính discount cho variant dựa trên giá đã bao gồm thuế của variant
+                    double vPriceWithTax = vUnitPrice * (1 + vTax);
+                    double vDiscountAmount = calculateDiscountAmount(promotion, vPriceWithTax);
+                    double vFinalPrice = Math.max(0, vPriceWithTax - vDiscountAmount);
+
+                    variant.setPrice(vFinalPrice);
+                    // ProductVariant entity doesn't have discountValue or promotion field in
+                    // current schema
+                    // If it did, it should be set here. Based on entity investigation:
+                    // ProductVariant has price, unitPrice, tax.
+                }
+            }
         }
 
         productRepository.saveAll(products);
@@ -675,11 +686,12 @@ public class PromotionService {
 
         LocalDate today = LocalDate.now();
 
-        // Tìm các promotion active theo category
-        List<Promotion> categoryPromotions = promotionRepository.findActiveByCategoryId(
-                product.getCategory().getId(), today);
+        // Tìm các promotion active theo category (bao gồm cả parent categories)
+        Set<String> categoryIds = CategoryUtil.getAncestorCategoryIds(product.getCategory());
+        List<Promotion> categoryPromotions = promotionRepository.findActiveByCategoryIds(categoryIds, today);
 
         if (categoryPromotions.isEmpty()) {
+            resetPricingForProduct(product);
             return;
         }
 
@@ -689,9 +701,10 @@ public class PromotionService {
                         && Boolean.TRUE.equals(p.getIsActive())
                         && (p.getStartDate() == null || !p.getStartDate().isAfter(today))
                         && (p.getExpiryDate() == null || !p.getExpiryDate().isBefore(today)))
-                .collect(Collectors.toList());
+                .toList();
 
         if (activePromotions.isEmpty()) {
+            resetPricingForProduct(product);
             return;
         }
 
@@ -712,7 +725,7 @@ public class PromotionService {
 
             // Kiểm tra xem promotion hiện tại còn active không
             boolean isExistingActive = existingPromo.getStatus() == PromotionStatus.APPROVED
-                    && existingPromo.getIsActive()
+                    && Boolean.TRUE.equals(existingPromo.getIsActive())
                     && (existingPromo.getExpiryDate() == null || !existingPromo.getExpiryDate().isBefore(today))
                     && (existingPromo.getStartDate() == null || !existingPromo.getStartDate().isAfter(today));
 
@@ -745,17 +758,58 @@ public class PromotionService {
             double unitPrice = refreshedProduct.getUnitPrice() != null ? refreshedProduct.getUnitPrice() : 0.0;
             double tax = refreshedProduct.getTax() != null ? refreshedProduct.getTax() : 0.0;
 
-            double discountAmount = calculateDiscountAmount(bestPromotion, unitPrice);
-            double finalPrice = Math.max(0, unitPrice * (1 + tax) - discountAmount);
+            double priceWithTax = unitPrice * (1 + tax);
+            double discountAmount = calculateDiscountAmount(bestPromotion, priceWithTax);
+            double finalPrice = Math.max(0, priceWithTax - discountAmount);
 
             refreshedProduct.setDiscountValue(discountAmount);
             refreshedProduct.setPrice(finalPrice);
             refreshedProduct.setPromotion(bestPromotion);
 
+            // Cập nhật giá cho variants
+            List<ProductVariant> variants = refreshedProduct.getVariants();
+            if (variants != null && !variants.isEmpty()) {
+                for (ProductVariant variant : variants) {
+                    double vUnitPrice = variant.getUnitPrice() != null ? variant.getUnitPrice() : 0.0;
+                    double vTax = variant.getTax() != null ? variant.getTax() : 0.0;
+                    double vPriceWithTax = vUnitPrice * (1 + vTax);
+                    double vDiscountAmount = calculateDiscountAmount(bestPromotion, vPriceWithTax);
+                    double vFinalPrice = Math.max(0, vPriceWithTax - vDiscountAmount);
+                    variant.setPrice(vFinalPrice);
+                }
+            }
+
             productRepository.save(refreshedProduct);
         } catch (Exception e) {
             log.warn("Failed to apply category promotion {} to product {}: {}",
                     bestPromotion.getId(), product.getId(), e.getMessage());
+        }
+    }
+
+    private void resetPricingForProduct(Product product) {
+        try {
+            Product refreshedProduct = productRepository.findById(product.getId())
+                    .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+
+            double unitPrice = refreshedProduct.getUnitPrice() != null ? refreshedProduct.getUnitPrice() : 0.0;
+            double tax = refreshedProduct.getTax() != null ? refreshedProduct.getTax() : 0.0;
+
+            refreshedProduct.setDiscountValue(0.0);
+            refreshedProduct.setPrice(unitPrice * (1 + tax));
+            refreshedProduct.setPromotion(null);
+
+            // Clear variant prices
+            List<ProductVariant> variants = refreshedProduct.getVariants();
+            if (variants != null && !variants.isEmpty()) {
+                for (ProductVariant variant : variants) {
+                    double vUnitPrice = variant.getUnitPrice() != null ? variant.getUnitPrice() : 0.0;
+                    double vTax = variant.getTax() != null ? variant.getTax() : 0.0;
+                    variant.setPrice(vUnitPrice * (1 + vTax));
+                }
+            }
+            productRepository.save(refreshedProduct);
+        } catch (Exception e) {
+            log.warn("Failed to reset pricing for product {}: {}", product.getId(), e.getMessage());
         }
     }
 
@@ -788,23 +842,46 @@ public class PromotionService {
 
         for (Product product : products) {
             double unitPrice = product.getUnitPrice() != null ? product.getUnitPrice() : 0.0;
-            double tax = product.getTax() != null ? product.getTax() : 0.0; // tax là phần trăm (0.1 = 10%)
+            double tax = product.getTax() != null ? product.getTax() : 0.0;
 
             // Kiểm tra xem có promotion kế tiếp nào còn hiệu lực không
             Promotion nextPromotion = findNextActivePromotionForProduct(product, today);
 
             if (nextPromotion != null) {
                 // Áp dụng promotion kế tiếp
-                double discountAmount = calculateDiscountAmount(nextPromotion, unitPrice);
-                double finalPrice = Math.max(0, unitPrice * (1 + tax) - discountAmount);
-
+                double priceWithTax = unitPrice * (1 + tax);
+                double discountAmount = calculateDiscountAmount(nextPromotion, priceWithTax);
+                double finalPrice = Math.max(0, priceWithTax - discountAmount);
                 product.setDiscountValue(discountAmount);
                 product.setPrice(finalPrice);
                 product.setPromotion(nextPromotion);
+
+                // Cập nhật giá cho variants
+                List<ProductVariant> variants = product.getVariants();
+                if (variants != null && !variants.isEmpty()) {
+                    for (ProductVariant variant : variants) {
+                        double vUnitPrice = variant.getUnitPrice() != null ? variant.getUnitPrice() : 0.0;
+                        double vTax = variant.getTax() != null ? variant.getTax() : 0.0;
+                        double vPriceWithTax = vUnitPrice * (1 + vTax);
+                        double vDiscountAmount = calculateDiscountAmount(nextPromotion, vPriceWithTax);
+                        double vFinalPrice = Math.max(0, vPriceWithTax - vDiscountAmount);
+                        variant.setPrice(vFinalPrice);
+                    }
+                }
             } else {
                 product.setDiscountValue(0.0);
                 product.setPrice(unitPrice * (1 + tax));
                 product.setPromotion(null);
+
+                // Clear variant prices
+                List<ProductVariant> variants = product.getVariants();
+                if (variants != null && !variants.isEmpty()) {
+                    for (ProductVariant variant : variants) {
+                        double vUnitPrice = variant.getUnitPrice() != null ? variant.getUnitPrice() : 0.0;
+                        double vTax = variant.getTax() != null ? variant.getTax() : 0.0;
+                        variant.setPrice(vUnitPrice * (1 + vTax));
+                    }
+                }
             }
         }
         productRepository.saveAll(products);
@@ -823,16 +900,17 @@ public class PromotionService {
             activePromotions.addAll(promotionRepository.findActiveByProductId(product.getId(), today));
         }
 
-        // Tìm theo category
-        if (product.getCategory() != null && product.getCategory().getId() != null) {
-            activePromotions.addAll(promotionRepository.findActiveByCategoryId(product.getCategory().getId(), today));
+        // Tìm theo category (bao gồm cả parent categories)
+        if (product.getCategory() != null) {
+            Set<String> categoryIds = CategoryUtil.getAncestorCategoryIds(product.getCategory());
+            activePromotions.addAll(promotionRepository.findActiveByCategoryIds(categoryIds, today));
         }
 
         // Loại bỏ trùng lặp và sắp xếp theo startDate
         return activePromotions.stream()
                 .distinct() // Loại bỏ trùng lặp
                 .filter(p -> p.getStatus() == PromotionStatus.APPROVED
-                        && (p.getIsActive())
+                        && Boolean.TRUE.equals(p.getIsActive())
                         && (p.getExpiryDate() == null || !p.getExpiryDate().isBefore(today))
                         && (p.getStartDate() == null || !p.getStartDate().isAfter(today)))
                 .min(Comparator.comparing(Promotion::getStartDate)) // Sắp xếp theo startDate
