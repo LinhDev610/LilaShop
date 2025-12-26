@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import classNames from 'classnames/bind';
+import { Link } from 'react-router-dom';
 import styles from './Chat.module.scss';
 import { getStoredToken } from '../../../services/utils';
 import { sendChatMessage, getChatConversation, markChatAsRead, getChatUnreadCount, getFirstCustomerSupport, getMyInfo, chatbotService } from '../../../services';
@@ -561,6 +562,74 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
         }
     };
 
+    const renderMessageWithLinks = (text) => {
+        if (!text) return null;
+
+        // Pattern 1: [LINK:/product/id]
+        // Pattern 2: http://localhost:3000/product/id
+        const customLinkRegex = /\[LINK:(.*?)\]/g;
+        const fullUrlRegex = /http:\/\/localhost:3000\/product\/[A-Za-z0-9_-]+/g;
+
+        const parts = [];
+        let lastIndex = 0;
+
+        // We will collect all matches (both types) and sort them by index
+        const allMatches = [];
+
+        // Find custom links
+        let match;
+        while ((match = customLinkRegex.exec(text)) !== null) {
+            allMatches.push({
+                index: match.index,
+                length: match[0].length,
+                path: match[1],
+                text: 'Chi tiết sản phẩm'
+            });
+        }
+
+        // Find full URLs
+        while ((match = fullUrlRegex.exec(text)) !== null) {
+            const url = match[0];
+            const path = url.replace('http://localhost:3000', '');
+            allMatches.push({
+                index: match.index,
+                length: url.length,
+                path: path,
+                text: 'Chi tiết sản phẩm'
+            });
+        }
+
+        // Sort matches by index
+        allMatches.sort((a, b) => a.index - b.index);
+
+        for (const m of allMatches) {
+            // Add text before the match
+            if (m.index > lastIndex) {
+                parts.push(text.substring(lastIndex, m.index));
+            }
+
+            // Add the link
+            parts.push(
+                <Link
+                    key={m.index}
+                    to={m.path}
+                    className={cx('message-link')}
+                >
+                    {m.text}
+                </Link>
+            );
+
+            lastIndex = m.index + m.length;
+        }
+
+        // Add remaining text
+        if (lastIndex < text.length) {
+            parts.push(text.substring(lastIndex));
+        }
+
+        return parts.length > 0 ? parts : text;
+    };
+
     const handleSendMessage = async () => {
         if (viewMode === 'ai-chat') {
             handleSendAIMessage();
@@ -743,7 +812,7 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
                                     <span role="img" aria-label="bot">🤖</span>
                                 </div>
                                 <div className={cx('option-content')}>
-                                    <h4>Tư vấn AI (Gemini)</h4>
+                                    <h4>Lila Assistant</h4>
                                     <p>Hỏi về sản phẩm, routine & mẹo làm đẹp</p>
                                 </div>
                             </button>
@@ -818,7 +887,7 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
                                             })}
                                         >
                                             <div className={cx('message-content')}>
-                                                <p style={{ whiteSpace: 'pre-line' }}>{message.message}</p>
+                                                <p style={{ whiteSpace: 'pre-line' }}>{renderMessageWithLinks(message.message)}</p>
                                                 <span className={cx('message-time')}>
                                                     {new Date(message.createdAt).toLocaleTimeString('vi-VN', {
                                                         hour: '2-digit',
@@ -909,7 +978,7 @@ Bạn cần hỗ trợ thêm về vấn đề nào? Hãy chat với nhân viên 
                                                         data-sender-id={message.senderId}
                                                     >
                                                         <div className={cx('message-content')}>
-                                                            <p style={{ whiteSpace: 'pre-line' }}>{message.message}</p>
+                                                            <p style={{ whiteSpace: 'pre-line' }}>{renderMessageWithLinks(message.message)}</p>
                                                             {!isSystemMessage && (
                                                                 <span className={cx('message-time')}>
                                                                     {new Date(message.createdAt).toLocaleTimeString('vi-VN', {

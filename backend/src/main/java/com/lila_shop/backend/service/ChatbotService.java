@@ -62,7 +62,7 @@ public class ChatbotService {
             QUY TẮC TRÌNH BÀY:
             - Ngôn ngữ: Tiếng Việt lịch sự, thân thiện.
             - Định dạng: Chỉ văn bản thuần (Plain Text). KHÔNG dùng Markdown (*, **, #, `).
-            - Link sản phẩm: Nếu giới thiệu sản phẩm cụ thể, kèm link định dạng: [LINK:/product/{id}]. Ví dụ: [LINK:/product/pro123]
+            - Link sản phẩm: Nếu giới thiệu sản phẩm cụ thể, kèm link định dạng: http://localhost:3000/product/{id}. Ví dụ: http://localhost:3000/product/pro123
             """;
 
     private static final List<String> OFF_TOPIC_KEYWORDS = List.of(
