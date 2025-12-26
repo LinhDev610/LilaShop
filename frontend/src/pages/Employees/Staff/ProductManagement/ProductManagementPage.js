@@ -75,7 +75,18 @@ export default function ProductManagementPage() {
             try {
                 const variants = await getProductVariants(product.id, token);
                 if (variants && Array.isArray(variants) && variants.length > 0) {
-                    setRestockVariants(variants);
+                    const processed = variants.map((v) => {
+                        let taxPercent = '0';
+                        if (v.tax !== undefined && v.tax !== null) {
+                            if (v.tax < 1) {
+                                taxPercent = String(Number((v.tax * 100).toFixed(2)).toString());
+                            } else {
+                                taxPercent = String(Math.round(v.tax));
+                            }
+                        }
+                        return { ...v, taxPercent };
+                    });
+                    setRestockVariants(processed);
                 }
             } catch (err) {
                 console.warn('Could not fetch variants:', err);
@@ -100,7 +111,7 @@ export default function ProductManagementPage() {
                     shadeHex: selectedVariant.shadeHex || null,
                     price: selectedVariant.price || 0,
                     unitPrice: selectedVariant.unitPrice || selectedVariant.price || 0,
-                    tax: selectedVariant.tax || selectedVariant.taxPercent || null,
+                    tax: selectedVariant.taxPercent ? Number(selectedVariant.taxPercent) / 100 : selectedVariant.tax || null,
                     purchasePrice: selectedVariant.purchasePrice || null,
                     stockQuantity: newStock,
                     isDefault: Boolean(selectedVariant.isDefault),

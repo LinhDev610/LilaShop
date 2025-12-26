@@ -131,7 +131,7 @@ function UpdateProduct() {
 
                 // Fill form with product data
                 setProductId(product.id || id || '');
-         
+
                 setName(product.name || '');
                 setDescription(product.description || '');
                 setBrand(product.brand || '');
@@ -160,7 +160,7 @@ function UpdateProduct() {
                         ? product.purchasePrice
                         : '',
                 );
-                setTaxPercent(product.tax ? String(Math.round(product.tax * 100)) : '0');
+                setTaxPercent(product.tax ? String(Number((product.tax * 100).toFixed(2)).toString()) : '0');
                 setDiscountValue(product.discountValue || 0.0);
                 setCategoryId(product.categoryId || '');
                 const inventoryQuantity = product.stockQuantity ?? null;
@@ -177,7 +177,7 @@ function UpdateProduct() {
                         let taxPercent = '0';
                         if (v.tax !== undefined && v.tax !== null) {
                             if (v.tax < 1) {
-                                taxPercent = String(Math.round(v.tax * 100));
+                                taxPercent = String(Number((v.tax * 100).toFixed(2)).toString());
                             } else {
                                 taxPercent = String(Math.round(v.tax));
                             }
@@ -310,10 +310,9 @@ function UpdateProduct() {
 
     // Tính thuế dưới dạng decimal (0.05 = 5%)
     const taxDecimal = useMemo(() => {
-        const n = Number.parseInt(
-            (taxPercent || '0').toString().replace(/[^0-9]/g, ''),
-            10,
-        );
+        // Loại bỏ các ký tự không phải số hoặc dấu chấm
+        const cleaned = (taxPercent || '0').toString().replace(/[^0-9.]/g, '');
+        const n = parseFloat(cleaned);
         if (Number.isNaN(n)) return 0;
         const clamped = Math.max(0, Math.min(100, n));
         return clamped / 100;
@@ -394,7 +393,7 @@ function UpdateProduct() {
                 shadeHex: restockVariantTarget.shadeHex || null,
                 price: restockVariantTarget.price || 0,
                 unitPrice: restockVariantTarget.unitPrice || null,
-                tax: restockVariantTarget.taxPercent ? Number(restockVariantTarget.taxPercent) : null,
+                tax: restockVariantTarget.taxPercent ? Number(restockVariantTarget.taxPercent) / 100 : null,
                 purchasePrice: restockVariantTarget.purchasePrice || null,
                 stockQuantity: newStock,
                 isDefault: Boolean(restockVariantTarget.isDefault),
@@ -602,6 +601,8 @@ function UpdateProduct() {
                 tax: taxDecimalValue,
                 categoryId: (categoryId || '').trim(),
             };
+
+            console.log('Sending payload for product update:', JSON.stringify(payload, null, 2));
 
             // Thêm các field optional
             if (weight && Number(weight) > 0) {
@@ -1142,7 +1143,11 @@ function UpdateProduct() {
                                                 placeholder="Ví dụ: 5 hoặc 10"
                                                 inputMode="numeric"
                                                 value={taxPercent}
-                                                onChange={(e) => setTaxPercent(e.target.value)}
+                                                onChange={(e) => {
+                                                    const raw = e.target.value.replace(',', '.');
+                                                    const cleaned = raw.replace(/[^0-9.]/g, '');
+                                                    setTaxPercent(cleaned);
+                                                }}
                                             />
                                             <span className={cx('suffix')}>%</span>
                                         </div>
@@ -1219,12 +1224,16 @@ function UpdateProduct() {
                                         };
 
                                         const handleNumericInput = (value, max = null) => {
-                                            const cleaned = (value || '').replace(/[^0-9]/g, '');
+                                            // Hỗ trợ số thập phân bằng cách thay dấu phẩy thành dấu chấm và loại bỏ ký tự lạ
+                                            const raw = (value || '').replace(',', '.');
+                                            const cleaned = raw.replace(/[^0-9.]/g, '');
+
                                             if (cleaned === '') return '';
-                                            const num = parseInt(cleaned, 10);
+                                            const num = parseFloat(cleaned);
                                             if (isNaN(num)) return '';
+
                                             if (max !== null && num > max) return max.toString();
-                                            return num < 0 ? '0' : num.toString();
+                                            return num < 0 ? '0' : cleaned;
                                         };
 
                                         const handlePriceInput = (value) => {

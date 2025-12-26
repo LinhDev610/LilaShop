@@ -408,23 +408,19 @@ export default function AddProductPage() {
         });
     }, []);
 
-    // Hàm xử lý nhập thuế (chỉ cho phép số nguyên từ 0-99)
+    // Hàm xử lý nhập thuế (cho phép số thập phân từ 0-99)
     const handleTaxInput = useCallback((value) => {
-        // Chỉ lấy số nguyên, loại bỏ tất cả ký tự không phải số
-        const cleaned = (value || '').replace(/[^0-9]/g, '');
+        // Hỗ trợ số thập phân
+        const raw = (value || '').replace(',', '.');
+        const cleaned = raw.replace(/[^0-9.]/g, '');
 
         if (cleaned === '') {
             setTaxPercent('');
             return;
         }
 
-        // Chuyển thành số nguyên
-        const num = parseInt(cleaned, 10);
-
-        // Nếu không phải số hợp lệ, không cập nhật
-        if (isNaN(num)) {
-            return;
-        }
+        const num = parseFloat(cleaned);
+        if (isNaN(num)) return;
 
         // Giới hạn trong khoảng 0-99
         if (num < 0) {
@@ -432,7 +428,7 @@ export default function AddProductPage() {
         } else if (num > 99) {
             setTaxPercent('99');
         } else {
-            setTaxPercent(num.toString());
+            setTaxPercent(cleaned);
         }
     }, []);
 
@@ -586,9 +582,9 @@ export default function AddProductPage() {
             if (taxPercent === undefined || taxPercent === null || taxPercent === '') {
                 newErrors.taxPercent = 'Vui lòng nhập thuế (từ 0 đến 99%).';
             } else {
-                const taxNum = parseInt(taxPercent, 10);
+                const taxNum = parseFloat(taxPercent);
                 if (isNaN(taxNum) || taxNum < 0 || taxNum > 99) {
-                    newErrors.taxPercent = 'Thuế phải là số nguyên từ 0 đến 99.';
+                    newErrors.taxPercent = 'Thuế phải là số từ 0 đến 99.';
                 }
             }
         } else {
@@ -646,10 +642,8 @@ export default function AddProductPage() {
 
     // Tính thuế dưới dạng decimal (0.05 = 5%)
     const taxDecimal = useMemo(() => {
-        const n = Number.parseInt(
-            (taxPercent || '0').toString().replace(/[^0-9]/g, ''),
-            10,
-        );
+        const cleaned = (taxPercent || '0').toString().replace(/[^0-9.]/g, '');
+        const n = parseFloat(cleaned);
         if (Number.isNaN(n)) return 0;
         // Giới hạn trong khoảng 0-99
         const clamped = Math.max(0, Math.min(99, n));
@@ -911,6 +905,8 @@ export default function AddProductPage() {
 
             // Build payload
             const payload = buildProductPayload(imageUrls, videoUrls, defaultUrl);
+
+            console.log('Sending payload for product creation:', JSON.stringify(payload, null, 2));
 
             // Create product (tự retry nếu token hết hạn)
             const response = await submitProductWithRetry(payload, token);
@@ -1371,14 +1367,15 @@ export default function AddProductPage() {
                                     return Math.round(unitPrice * (1 + taxDecimal));
                                 };
 
-                                // Helper xử lý số nguyên
+                                // Helper xử lý số thập phân
                                 const handleNumericInput = (value, max = null) => {
-                                    const cleaned = (value || '').replace(/[^0-9]/g, '');
+                                    const raw = (value || '').replace(',', '.');
+                                    const cleaned = raw.replace(/[^0-9.]/g, '');
                                     if (cleaned === '') return '';
-                                    const num = parseInt(cleaned, 10);
+                                    const num = parseFloat(cleaned);
                                     if (isNaN(num)) return '';
                                     if (max !== null && num > max) return max.toString();
-                                    return num < 0 ? '0' : num.toString();
+                                    return num < 0 ? '0' : cleaned;
                                 };
 
                                 // Helper xử lý giá tiền

@@ -156,7 +156,7 @@ function UpdateProductPage() {
                         ? product.purchasePrice
                         : '',
                 );
-                setTaxPercent(product.tax ? String(Math.round(product.tax * 100)) : '0');
+                setTaxPercent(product.tax ? String(Number((product.tax * 100).toFixed(2)).toString()) : '0');
                 setDiscountValue(product.discountValue || 0.0);
                 setCategoryId(product.categoryId || '');
                 const inventoryQuantity = product.stockQuantity ?? null;
@@ -176,7 +176,7 @@ function UpdateProductPage() {
                             // Nếu tax < 1, coi như decimal (0.1 = 10%), nhân 100
                             // Nếu tax >= 1, coi như percentage (10 = 10%), giữ nguyên
                             if (v.tax < 1) {
-                                taxPercent = String(Math.round(v.tax * 100));
+                                taxPercent = String(Number((v.tax * 100).toFixed(2)).toString());
                             } else {
                                 taxPercent = String(Math.round(v.tax));
                             }
@@ -322,10 +322,9 @@ function UpdateProductPage() {
 
     // Tính thuế dưới dạng decimal (0.05 = 5%)
     const taxDecimal = useMemo(() => {
-        const n = Number.parseInt(
-            (taxPercent || '0').toString().replace(/[^0-9]/g, ''),
-            10,
-        );
+        // Loại bỏ các ký tự không phải số hoặc dấu chấm
+        const cleaned = (taxPercent || '0').toString().replace(/[^0-9.]/g, '');
+        const n = parseFloat(cleaned);
         if (Number.isNaN(n)) return 0;
         const clamped = Math.max(0, Math.min(100, n));
         return clamped / 100;
@@ -1316,7 +1315,11 @@ function UpdateProductPage() {
                                                 placeholder="Ví dụ: 5 hoặc 10"
                                                 inputMode="numeric"
                                                 value={taxPercent}
-                                                onChange={(e) => setTaxPercent(e.target.value)}
+                                                onChange={(e) => {
+                                                    const raw = e.target.value.replace(',', '.');
+                                                    const cleaned = raw.replace(/[^0-9.]/g, '');
+                                                    setTaxPercent(cleaned);
+                                                }}
                                             />
                                             <span className={cx('suffix')}>%</span>
                                         </div>
@@ -1449,14 +1452,15 @@ function UpdateProductPage() {
                                             return Math.round(Number(unitPrice) * (1 + taxDecimal));
                                         };
 
-                                        // Helper xử lý số nguyên
+                                        // Helper xử lý số thập phân
                                         const handleNumericInput = (value, max = null) => {
-                                            const cleaned = (value || '').replace(/[^0-9]/g, '');
+                                            const raw = (value || '').replace(',', '.');
+                                            const cleaned = raw.replace(/[^0-9.]/g, '');
                                             if (cleaned === '') return '';
-                                            const num = parseInt(cleaned, 10);
+                                            const num = parseFloat(cleaned);
                                             if (isNaN(num)) return '';
                                             if (max !== null && num > max) return max.toString();
-                                            return num < 0 ? '0' : num.toString();
+                                            return num < 0 ? '0' : cleaned;
                                         };
 
                                         // Helper xử lý giá tiền

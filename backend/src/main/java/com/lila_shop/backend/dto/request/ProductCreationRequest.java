@@ -79,6 +79,14 @@ public class ProductCreationRequest {
     @DecimalMax(value = "1.0", message = "Thuế tối đa là 1.0 (100%)")
     Double tax;
 
+    public void setTax(Double tax) {
+        if (tax != null && tax > 1.0 && tax <= 100.0) {
+            this.tax = tax / 100.0;
+        } else {
+            this.tax = tax;
+        }
+    }
+
     @DecimalMin(value = "0.0", message = "Giá trị giảm giá phải lớn hơn hoặc bằng 0")
     Double discountValue;
 
