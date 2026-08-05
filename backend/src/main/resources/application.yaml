@@ -9,6 +9,8 @@ server:
 
 #  Config cau hinh database
 spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   datasource:
     url: jdbc:mysql://localhost:3307/lila_shop
     driverClassName: com.mysql.cj.jdbc.Driver

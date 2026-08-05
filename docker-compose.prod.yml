@@ -1,0 +1,169 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0.43-debian
+    container_name: lila-shop-mysql
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DBMS_PASSWORD:-root}
+      - MYSQL_DATABASE=lila_shop
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DBMS_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - lilashop-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  backend:
+    image: ${DOCKER_USERNAME}/lila-shop-backend:latest
+    container_name: lila-shop-backend
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=${DBMS_CONNECTION:-jdbc:mysql://mysql:3306/lila_shop}
+      - SPRING_DATASOURCE_USERNAME=${DBMS_USERNAME:-root}
+      - SPRING_DATASOURCE_PASSWORD=${DBMS_PASSWORD:-root}
+      - BREVO_API_KEY=${BREVO_API_KEY}
+      - BREVO_EMAIL=${BREVO_EMAIL}
+      - GHN_TOKEN=${GHN_TOKEN}
+      - GHN_SHOP_ID=${GHN_SHOP_ID}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - JWT_SIGNERKEY=${JWT_SIGNERKEY}
+      - JAVA_OPTS=-Xms256m -Xmx512m
+    volumes:
+      - spring_logs:/var/log/spring-boot
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - lilashop-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  frontend:
+    image: ${DOCKER_USERNAME}/lila-shop-frontend:latest
+    container_name: lila-shop-frontend
+    depends_on:
+      - backend
+    networks:
+      - lilashop-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: nginx-proxy-manager
+    ports:
+      - "80:80"       # Public HTTP
+      - "443:443"     # Public HTTPS
+      - "81:81"       # Admin Web UI
+    volumes:
+      - ./npm/data:/data
+      - ./npm/letsencrypt:/etc/letsencrypt
+    networks:
+      - lilashop-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  duckdns:
+    image: linuxserver/duckdns:latest
+    container_name: duckdns
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Ho_Chi_Minh
+      - SUBDOMAINS=${DUCKDNS_SUBDOMAINS} # ví dụ: mylilashop
+      - TOKEN=${DUCKDNS_TOKEN}
+      - LOG_FILE=false
+    networks:
+      - lilashop-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # Giới hạn RAM của JVM
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - lilashop-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.1
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - lilashop-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.12.1
+    container_name: filebeat
+    user: root
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - spring_logs:/var/log/spring-boot:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: filebeat -e -strict.perms=false
+    depends_on:
+      - elasticsearch
+    networks:
+      - lilashop-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+volumes:
+  mysql_data:
+  spring_logs:
+  es_data:
+
+networks:
+  lilashop-network:
+    driver: bridge
