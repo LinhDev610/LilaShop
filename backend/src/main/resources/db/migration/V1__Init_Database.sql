@@ -4,6 +4,29 @@ CREATE DATABASE IF NOT EXISTS identity_service;
 -- Sử dụng database
 USE identity_service;
 
+-- Tạo bảng roles
+CREATE TABLE IF NOT EXISTS roles (
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT
+);
+
+-- Tạo bảng permissions
+CREATE TABLE IF NOT EXISTS permissions (
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT
+);
+
+-- Tạo bảng role_permissions (many-to-many)
+CREATE TABLE IF NOT EXISTS role_permissions (
+    role_id VARCHAR(36),
+    permission_id VARCHAR(36),
+    PRIMARY KEY (role_id, permission_id),
+    FOREIGN KEY (role_id) REFERENCES roles(id),
+    FOREIGN KEY (permission_id) REFERENCES permissions(id)
+);
+
 -- Tạo bảng users (đã được đổi tên từ user)
 CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(36) PRIMARY KEY,
@@ -29,29 +52,6 @@ CREATE TABLE IF NOT EXISTS otp (
     is_used BOOLEAN NOT NULL DEFAULT FALSE
 );
 
--- Tạo bảng roles
-CREATE TABLE IF NOT EXISTS roles (
-    id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(255) UNIQUE NOT NULL,
-    description TEXT
-);
-
--- Tạo bảng permissions
-CREATE TABLE IF NOT EXISTS permissions (
-    id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(255) UNIQUE NOT NULL,
-    description TEXT
-);
-
--- Tạo bảng role_permissions (many-to-many)
-CREATE TABLE IF NOT EXISTS role_permissions (
-    role_id VARCHAR(36),
-    permission_id VARCHAR(36),
-    PRIMARY KEY (role_id, permission_id),
-    FOREIGN KEY (role_id) REFERENCES roles(id),
-    FOREIGN KEY (permission_id) REFERENCES permissions(id)
-);
-
 -- Tạo bảng invalidated_tokens
 CREATE TABLE IF NOT EXISTS invalidated_tokens (
     id VARCHAR(36) PRIMARY KEY,
@@ -59,3 +59,8 @@ CREATE TABLE IF NOT EXISTS invalidated_tokens (
     expiry_time DATETIME NOT NULL
 );
 
+-- Add contentType column to banners table
+ALTER TABLE banners ADD COLUMN IF NOT EXISTS content_type VARCHAR(50);
+
+-- Update existing banners to have default contentType 'banner'
+UPDATE banners SET content_type = 'banner' WHERE content_type IS NULL;

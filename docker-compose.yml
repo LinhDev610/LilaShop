@@ -1,0 +1,65 @@
+services:
+  mysql:
+    image: mysql:8.0.43-debian
+    container_name: lila-shop-mysql
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=lila_shop
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - lilashop-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lila-shop-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=${DBMS_CONNECTION:-jdbc:mysql://mysql:3306/lila_shop}
+      - SPRING_DATASOURCE_USERNAME=${DBMS_USERNAME:-root}
+      - SPRING_DATASOURCE_PASSWORD=${DBMS_PASSWORD:-root}
+      # Third-party integrations
+      - BREVO_API_KEY=${BREVO_API_KEY}
+      - BREVO_EMAIL=${BREVO_EMAIL}
+      - GHN_TOKEN=${GHN_TOKEN}
+      - GHN_SHOP_ID=${GHN_SHOP_ID}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - JWT_SIGNERKEY=${JWT_SIGNERKEY}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - lilashop-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: lila-shop-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - lilashop-network
+
+volumes:
+  mysql_data:
+
+networks:
+  lilashop-network:
+    driver: bridge
