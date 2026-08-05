@@ -241,7 +241,7 @@ export default function UpdateContentPage() {
         setIsSubmitting(true);
 
         try {
-            const token = getStoredToken();
+            let token = getStoredToken();
             if (!token) {
                 notifyError('Vui lòng đăng nhập');
                 setIsSubmitting(false);
