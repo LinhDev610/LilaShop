@@ -459,8 +459,14 @@ LilaShop/
 
 ---
 
-## 📚 Tài liệu Tham khảo
+## 📚 Tài liệu Dự án
 
+- **Kiến trúc hệ thống (Architecture Diagram)**: [Architecture Diagram](./docs/architecture_diagram.md)
+- **Thiết kế Cơ sở dữ liệu (ERD)**: [ERD Diagram](./docs/erd.md)
+- **Hướng dẫn Triển khai (Deployment Guide)**: [Deployment Guide](./docs/deployment_guide.md)
+- **Tài liệu API (REST API Spec)**: [API Document](./docs/api_document.md)
+- **Sơ đồ tuần tự (Sequence Diagrams)**: [Sequence Diagrams](./docs/sequence_diagram.md)
+- **Sơ đồ CI/CD (Pipeline Flow)**: [CI/CD Diagram](./docs/cicd_diagram.md)
 - **Backend README**: [backend/readme.md](./backend/readme.md)
 - **Frontend README**: [frontend/README.md](./frontend/README.md)
 - **Frontend Structure**: [frontend/FOLDER_STRUCTURE.md](./frontend/FOLDER_STRUCTURE.md)
