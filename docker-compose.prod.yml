@@ -87,23 +87,19 @@ services:
         limits:
           memory: 256M
 
-  duckdns:
-    image: linuxserver/duckdns:latest
-    container_name: duckdns
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflare-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Asia/Ho_Chi_Minh
-      - SUBDOMAINS=${DUCKDNS_SUBDOMAINS} # ví dụ: mylilashop
-      - TOKEN=${DUCKDNS_TOKEN}
-      - LOG_FILE=false
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
     networks:
       - lilashop-network
-    restart: unless-stopped
     deploy:
       resources:
         limits:
-          memory: 64M
+          memory: 128M
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.12.1
@@ -158,7 +154,6 @@ services:
       resources:
         limits:
           memory: 128M
-
 volumes:
   mysql_data:
   spring_logs:
