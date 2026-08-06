@@ -243,7 +243,7 @@ export default function UpdateContentPage() {
         try {
             let token = getStoredToken();
             if (!token) {
-                notifyError('Vui lòng đăng nhập');
+                notifyError('Vui lòng đăng nhập!');
                 setIsSubmitting(false);
                 return;
             }
