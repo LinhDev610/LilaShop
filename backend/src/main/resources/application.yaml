@@ -47,6 +47,7 @@ app:
   default-avatar: "/assets/images/default-avatar.png"
   frontend:
     base-url: ${APP_BACKEND_URL:http://localhost:8080/lila_shop}
+  frontend-url: ${APP_FRONTEND_URL:http://localhost:3000}
   init-categories: true
   init-products: true
 
@@ -70,9 +71,6 @@ momo:
   access-key: "mTCKt9W3eU1m39TW"
   secret-key: "SetA5RDnLHvt51AULf51DyauxUo3kDU6"
   request-type: "captureWallet"
-
-app:
-  frontend-url: ${APP_FRONTEND_URL:http://localhost:3000}
 
 # Cloudinary Configuration
 cloudinary:
