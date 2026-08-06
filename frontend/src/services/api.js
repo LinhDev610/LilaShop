@@ -21,7 +21,16 @@ const {
 // Priority: Environment Variable → Fallback
 export function getApiBaseUrl() {
     const envUrl = process.env.REACT_APP_API_BASE_URL;
-    return (envUrl && String(envUrl).trim()) || API_BASE_URL_FALLBACK;
+    if (envUrl && String(envUrl).trim()) {
+        return envUrl;
+    }
+    if (typeof window !== 'undefined') {
+        if (window.location.hostname === 'localhost') {
+            return API_BASE_URL_FALLBACK;
+        }
+        return `${window.location.origin}/lila_shop`;
+    }
+    return API_BASE_URL_FALLBACK;
 }
 
 // Get stored token from localStorage or sessionStorage
