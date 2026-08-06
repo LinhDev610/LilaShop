@@ -33,6 +33,8 @@ jobs:
 
       - name: Build Frontend
         working-directory: ./frontend
+        env:
+          REACT_APP_API_BASE_URL: https://linhdev.shop/lila_shop
         run: |
           npm install --legacy-peer-deps
           npm run build
