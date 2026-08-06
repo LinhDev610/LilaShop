@@ -43,6 +43,10 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - JWT_SIGNERKEY=${JWT_SIGNERKEY}
       - JAVA_OPTS=-Xms256m -Xmx512m
+      - MOMO_RETURN_URL=https://linhdev.shop/order-success
+      - MOMO_IPN_URL=https://linhdev.shop/lila_shop/api/momo/ipn-handler
+      - APP_FRONTEND_URL=https://linhdev.shop
+      - APP_BACKEND_URL=https://linhdev.shop/lila_shop
     volumes:
       - spring_logs:/var/log/spring-boot
     depends_on:

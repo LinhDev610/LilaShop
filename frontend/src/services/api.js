@@ -20,7 +20,7 @@ const {
 // Get API base URL
 // Priority: Environment Variable → Fallback
 export function getApiBaseUrl() {
-    const envUrl = typeof process !== 'undefined' ? process.env?.REACT_APP_API_BASE_URL : undefined;
+    const envUrl = process.env.REACT_APP_API_BASE_URL;
     return (envUrl && String(envUrl).trim()) || API_BASE_URL_FALLBACK;
 }
 

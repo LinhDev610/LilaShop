@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLocalStorage from '../hooks/useLocalStorage';
+import { getApiBaseUrl } from '../services/api';
 
 // Component để xử lý redirect admin một cách mượt mà
-const API_BASE_URL = 'http://localhost:8080/lila_shop';
+const API_BASE_URL = getApiBaseUrl();
 
 function AdminRedirectHandler() {
     const navigate = useNavigate();

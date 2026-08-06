@@ -25,11 +25,15 @@ public class BrevoEmailService {
     RestTemplate restTemplate = new RestTemplate();
     String apiKey;
     String senderEmail;
+    String frontendUrl;
 
     public BrevoEmailService(
-            @Value("${brevo.api.key}") String apiKey, @Value("${brevo.sender.email}") String senderEmail) {
+            @Value("${brevo.api.key}") String apiKey, 
+            @Value("${brevo.sender.email}") String senderEmail,
+            @Value("${app.frontend-url}") String frontendUrl) {
         this.apiKey = apiKey;
         this.senderEmail = senderEmail;
+        this.frontendUrl = frontendUrl;
     }
 
     private static final String BREVO_API_URL =
@@ -97,7 +101,7 @@ public class BrevoEmailService {
                             + "- Mật khẩu: %s\n"
                             + "- Vai trò: %s\n\n"
                             + "Vui lòng đăng nhập và thay đổi mật khẩu ngay lần đầu tiên để bảo mật tài khoản.\n"
-                            + "Địa chỉ đăng nhập: http://localhost:3000\n\n"
+                            + "Địa chỉ đăng nhập: " + frontendUrl + "\n\n"
                             + "Lưu ý: Vui lòng không chia sẻ thông tin này với bất kỳ ai.\n\n"
                             + "Trân trọng,\n"
                             + "Đội ngũ LilaShop",
@@ -340,7 +344,7 @@ public class BrevoEmailService {
                             + "CHI TIẾT SẢN PHẨM:\n%s\n"
                             + "ĐỊA CHỈ GIAO HÀNG:\n%s\n\n"
                             + "Chúng tôi sẽ liên hệ với bạn khi đơn hàng được giao cho đơn vị vận chuyển.\n"
-                            + "Bạn có thể theo dõi trạng thái đơn hàng tại: http://localhost:3000/customer-account/orders\n\n"
+                            + "Bạn có thể theo dõi trạng thái đơn hàng tại: " + frontendUrl + "/customer-account/orders\n\n"
                             + "Trân trọng,\nĐội ngũ LilaShop",
                     customerName,
                     order.getCode(),
@@ -395,7 +399,7 @@ public class BrevoEmailService {
                     "</div>" +
                     "<p>Chúng tôi sẽ liên hệ với bạn khi đơn hàng được giao cho đơn vị vận chuyển.</p>" +
                     "<p>Bạn có thể theo dõi trạng thái đơn hàng tại: " +
-                    "<a href='http://localhost:3000/customer-account/orders'>Xem đơn hàng của tôi</a></p>" +
+                    "<a href='" + frontendUrl + "/customer-account/orders'>Xem đơn hàng của tôi</a></p>" +
                     "</div>" +
                     "<div class='footer'>" +
                     "<p>Trân trọng,<br>Đội ngũ LilaShop</p>" +
