@@ -67,6 +67,8 @@ jobs:
           context: ./frontend
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/lila-shop-frontend:latest
+          build-args: |
+            REACT_APP_API_BASE_URL=https://linhdev.shop/lila_shop
 
   deploy-to-server:
     needs: docker-build-push

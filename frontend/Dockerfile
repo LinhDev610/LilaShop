@@ -11,6 +11,8 @@ RUN if [ -f yarn.lock ]; then yarn install; else npm install; fi
 
 # Copy all project files and build
 COPY . .
+ARG REACT_APP_API_BASE_URL
+ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
 RUN if [ -f yarn.lock ]; then yarn build; else npm run build; fi
 
 # Stage 2: Serve the React application using Nginx
